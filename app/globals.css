@@ -1,26 +1,83 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #fafaf7;
+  --foreground: #17211d;
+  --card: #ffffff;
+  --card-foreground: #17211d;
+  --primary: #0f766e;
+  --primary-hover: #115e59;
+  --primary-foreground: #ffffff;
+  --secondary: #f1f5f3;
+  --secondary-foreground: #293832;
+  --muted: #f1f5f3;
+  --muted-foreground: #66736d;
+  --border: #dde4e0;
+  --brand-coral: #e8674c;
+  --brand-sand: #f4efe7;
+  --brand-teal-subtle: #eaf7f4;
+  --success: #16835b;
+  --success-subtle: #e9f8f1;
+  --warning: #a66516;
+  --warning-subtle: #fff5dc;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-brand-coral: var(--brand-coral);
+  --color-brand-sand: var(--brand-sand);
+  --color-brand-teal-subtle: var(--brand-teal-subtle);
+  --color-success: var(--success);
+  --color-success-subtle: var(--success-subtle);
+  --color-warning: var(--warning);
+  --color-warning-subtle: var(--warning-subtle);
+  --font-sans: var(--font-inter);
+  --font-display: var(--font-manrope);
+  --shadow-card: 0 18px 45px -24px rgba(23, 33, 29, 0.32);
+  --shadow-search: 0 28px 80px -28px rgba(23, 33, 29, 0.5);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  box-sizing: border-box;
+  border-color: var(--border);
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
+  min-height: 100vh;
+  margin: 0;
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-inter), system-ui, sans-serif;
+  text-rendering: optimizeLegibility;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+::selection {
+  background: #bcece4;
+  color: var(--foreground);
+}
+
+input[type="date"] {
+  color-scheme: light;
 }
