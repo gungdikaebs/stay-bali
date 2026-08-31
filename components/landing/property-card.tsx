@@ -1,13 +1,12 @@
 import Image from "next/image";
 import Link from "next/link";
 import {
+  ArrowUpRight,
   BedDouble,
   MapPin,
   ShieldCheck,
   Sparkles,
   UsersRound,
-  Waves,
-  Wifi,
 } from "lucide-react";
 
 type PropertyCardProps = {
@@ -19,6 +18,7 @@ type PropertyCardProps = {
   image: string;
   highlight: string;
   href: string;
+  priority?: boolean;
 };
 
 export function PropertyCard({
@@ -30,6 +30,7 @@ export function PropertyCard({
   image,
   highlight,
   href,
+  priority = false,
 }: PropertyCardProps) {
   return (
     <Link className="group block" href={href} aria-label={`View ${name}`}>
@@ -37,6 +38,7 @@ export function PropertyCard({
       <div className="relative aspect-[4/3] overflow-hidden bg-secondary">
         <Image
           fill
+          priority={priority}
           alt={`${name} accommodation in ${area}`}
           className="object-cover transition duration-500 group-hover:scale-[1.035]"
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
@@ -71,15 +73,7 @@ export function PropertyCard({
           </span>
           <span className="inline-flex items-center gap-1.5">
             <BedDouble className="size-4" aria-hidden="true" />
-            1 room
-          </span>
-          <span className="inline-flex items-center gap-1.5">
-            <Wifi className="size-4" aria-hidden="true" />
-            Wi-Fi
-          </span>
-          <span className="inline-flex items-center gap-1.5">
-            <Waves className="size-4" aria-hidden="true" />
-            Pool
+            Room options available
           </span>
         </div>
 
@@ -96,10 +90,9 @@ export function PropertyCard({
             </p>
             <p className="text-xs text-muted-foreground">per night</p>
           </div>
-          <span className="text-right text-xs leading-5 text-muted-foreground">
-            Price details
-            <br />
-            Fees shown before booking
+          <span className="inline-flex items-center gap-1 text-sm font-bold text-primary transition group-hover:gap-2">
+            View stay
+            <ArrowUpRight className="size-4" aria-hidden="true" />
           </span>
         </div>
       </div>

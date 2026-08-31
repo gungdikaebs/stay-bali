@@ -17,7 +17,8 @@ import {
 } from "lucide-react";
 import { StayBaliLogo } from "@/components/landing/public-header";
 import { createBookingSummary } from "@/lib/booking-summary";
-import { demoStays, formatIdr, getDemoStay } from "@/lib/demo-stays";
+import { formatIdr } from "@/lib/demo-stays";
+import { getPublishedStayBySlug } from "@/lib/public/catalog";
 import { parseSearchQuery } from "@/lib/search-query";
 
 type StayPageProps = {
@@ -26,7 +27,7 @@ type StayPageProps = {
 };
 
 export async function generateMetadata({ params }: StayPageProps): Promise<Metadata> {
-  const stay = getDemoStay((await params).slug);
+  const stay = await getPublishedStayBySlug((await params).slug);
   return stay
     ? { title: stay.name, description: stay.description }
     : { title: "Stay not found" };
@@ -34,7 +35,7 @@ export async function generateMetadata({ params }: StayPageProps): Promise<Metad
 
 export default async function StayPage({ params, searchParams }: StayPageProps) {
   const { slug } = await params;
-  const stay = getDemoStay(slug);
+  const stay = await getPublishedStayBySlug(slug);
   if (!stay) notFound();
 
   const rawQuery = await searchParams;
@@ -48,10 +49,6 @@ export default async function StayPage({ params, searchParams }: StayPageProps) 
     checkout: query.values.checkout,
     guests: String(query.values.guests),
   });
-  const gallery = [
-    stay.image,
-    ...demoStays.filter((item) => item.slug !== stay.slug).map((item) => item.image),
-  ].slice(0, 5);
 
   return (
     <main className="min-h-screen bg-background">
@@ -101,22 +98,10 @@ export default async function StayPage({ params, searchParams }: StayPageProps) 
           </p>
         </div>
 
-        <section className="grid h-[520px] grid-cols-2 gap-2 overflow-hidden rounded-3xl md:grid-cols-4" aria-label="Property gallery">
-          {gallery.map((image, index) => (
-            <div
-              className={`relative overflow-hidden bg-secondary ${index === 0 ? "col-span-2 row-span-2" : "hidden md:block"}`}
-              key={`${image}-${index}`}
-            >
-              <Image
-                fill
-                priority={index === 0}
-                alt={index === 0 ? `${stay.name} in ${stay.area}` : `${stay.name} gallery view ${index + 1}`}
-                className="object-cover transition duration-500 hover:scale-[1.03]"
-                sizes={index === 0 ? "(max-width: 768px) 100vw, 60vw" : "25vw"}
-                src={image}
-              />
-            </div>
-          ))}
+        <section className="relative h-[360px] overflow-hidden rounded-3xl bg-secondary sm:h-[520px]" aria-label="Property gallery">
+          <Image fill priority alt={`${stay.name} in ${stay.area}`} className="object-cover transition duration-700 hover:scale-[1.02]" sizes="(max-width: 1200px) 100vw, 1200px" src={stay.image} />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent" />
+          <span className="absolute right-5 bottom-5 rounded-xl bg-white/95 px-4 py-2 text-sm font-bold text-foreground shadow-sm backdrop-blur-sm">Property gallery</span>
         </section>
 
         <div className="mt-10 grid gap-10 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start">

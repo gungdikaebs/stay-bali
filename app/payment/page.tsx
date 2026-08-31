@@ -4,7 +4,8 @@ import { notFound } from "next/navigation";
 import { Building2, Check, Clock3, CreditCard, LockKeyhole, ShieldCheck, Smartphone } from "lucide-react";
 import { StayBaliLogo } from "@/components/landing/public-header";
 import { createBookingSummary } from "@/lib/booking-summary";
-import { formatIdr, getDemoStay } from "@/lib/demo-stays";
+import { formatIdr, formatStayDate } from "@/lib/demo-stays";
+import { getPublishedStayBySlug } from "@/lib/public/catalog";
 import { parseSearchQuery } from "@/lib/search-query";
 
 export const metadata: Metadata = {
@@ -22,7 +23,7 @@ function first(value: string | string[] | undefined) {
 
 export default async function PaymentPage({ searchParams }: PaymentPageProps) {
   const rawQuery = await searchParams;
-  const stay = getDemoStay(first(rawQuery.stay) ?? "");
+  const stay = await getPublishedStayBySlug(first(rawQuery.stay) ?? "");
   if (!stay) notFound();
 
   const query = parseSearchQuery({ ...rawQuery, location: stay.location });
@@ -78,7 +79,7 @@ export default async function PaymentPage({ searchParams }: PaymentPageProps) {
         <aside className="rounded-3xl border border-border bg-white p-6 lg:sticky lg:top-6">
           <p className="text-xs font-bold uppercase tracking-[0.1em] text-primary">Booking summary</p>
           <h2 className="font-display mt-2 text-xl font-bold">{stay.name}</h2>
-          <p className="mt-1 text-sm leading-6 text-muted-foreground">{query.values.checkin} → {query.values.checkout}<br />{query.nights} nights · {query.values.guests} guests</p>
+          <p className="mt-1 text-sm leading-6 text-muted-foreground">{formatStayDate(query.values.checkin)} → {formatStayDate(query.values.checkout)}<br />{query.nights} nights · {query.values.guests} guests</p>
           <div className="mt-5 space-y-3 border-t border-border pt-5 text-sm">
             <div className="flex justify-between"><span className="text-muted-foreground">Stay</span><span>{formatIdr(summary.subtotal)}</span></div>
             <div className="flex justify-between"><span className="text-muted-foreground">Service fee</span><span>{formatIdr(summary.serviceFee)}</span></div>

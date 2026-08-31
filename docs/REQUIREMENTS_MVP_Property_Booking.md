@@ -136,7 +136,7 @@ available = sellable_units - active_holds - inventory_consuming_bookings
 ## Non-functional
 
 - Secure session cookie, server validation, CSRF sesuai mekanisme, rate limit login/register/payment/upload, output escaping, dan parameterized query.
-- MySQL/InnoDB transaction untuk hold/booking; Redis bukan source of truth inventory.
+- Postgresql transaction untuk hold/booking; Redis bukan source of truth inventory.
 - Target seed: catalog p95 <800 ms dan search 30 malam p95 <1.500 ms; hindari N+1 dan unbounded query.
 - Responsive mulai 360 px; keyboard/focus/label/error; status tidak hanya warna; WCAG 2.2 AA untuk alur utama.
 - Structured log + correlation ID, health/readiness, backup database/media harian retensi ≥7 hari, restore rehearsal, disk alert 80%.
@@ -146,7 +146,7 @@ available = sellable_units - active_holds - inventory_consuming_bookings
 
 - **Unit:** night count, price override/fallback, fee, cancellation eligibility, state machine, provider mapping, media validation.
 - **Integration:** availability range, stop sell, hold expiry, ownership, quote/hold owner, booking idempotency, webhook signature/duplicate/amount mismatch, media rollback.
-- **Concurrency (MySQL nyata):** dua hold unit terakhir; hold vs manual booking; duplicate booking; dua webhook sukses—masing-masing hanya satu hasil valid.
+- **Concurrency (PostgreSQL nyata):** dua hold unit terakhir; hold vs manual booking; duplicate booking; dua webhook sukses—masing-masing hanya satu hasil valid.
 - **E2E:** approval property; search-to-voucher; inventory update; manual reservation; cancellation/refund; akses lintas role ditolak.
 
 ## Definition of Done P0

@@ -1,0 +1,282 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  TRAVELER
+  PARTNER
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+}
+
+enum PartnerStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+  REJECTED
+}
+
+enum PropertyStatus {
+  DRAFT
+  PENDING_REVIEW
+  PUBLISHED
+  REJECTED
+  SUSPENDED
+}
+
+enum PropertyType {
+  VILLA
+  HOTEL
+  HOMESTAY
+}
+
+enum MediaStatus {
+  PROCESSING
+  READY
+  FAILED
+  ORPHANED
+}
+
+model User {
+  id              String             @id @default(cuid()) @db.VarChar(30)
+  email           String             @unique @db.VarChar(254)
+  name            String             @db.VarChar(100)
+  phone           String?            @db.VarChar(20)
+  role            UserRole           @default(TRAVELER)
+  status          UserStatus         @default(ACTIVE)
+  sessionVersion  Int                @default(1) @map("session_version")
+  createdAt       DateTime           @default(now()) @map("created_at") @db.Timestamp(3)
+  updatedAt       DateTime           @updatedAt @map("updated_at") @db.Timestamp(3)
+  credential      AccountCredential?
+  partnerProfile  PartnerProfile?
+  uploadedMedia   MediaAsset[]       @relation("MediaUploader")
+  propertyReviews PropertyReview[]   @relation("PropertyReviewer")
+  auditLogs       AuditLog[]         @relation("AuditActor")
+
+  @@index([role, status])
+  @@map("users")
+}
+
+model AccountCredential {
+  id           String   @id @default(cuid()) @db.VarChar(30)
+  userId       String   @unique @map("user_id") @db.VarChar(30)
+  passwordHash String   @map("password_hash") @db.VarChar(255)
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamp(3)
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamp(3)
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("account_credentials")
+}
+
+model PartnerProfile {
+  id           String        @id @default(cuid()) @db.VarChar(30)
+  userId       String        @unique @map("user_id") @db.VarChar(30)
+  businessName String        @map("business_name") @db.VarChar(150)
+  status       PartnerStatus @default(PENDING)
+  adminNote    String?       @map("admin_note") @db.Text
+  createdAt    DateTime      @default(now()) @map("created_at") @db.Timestamp(3)
+  updatedAt    DateTime      @updatedAt @map("updated_at") @db.Timestamp(3)
+  user         User          @relation(fields: [userId], references: [id], onDelete: Restrict)
+  properties   Property[]
+
+  @@index([status])
+  @@map("partner_profiles")
+}
+
+model Property {
+  id                 String             @id @default(cuid()) @db.VarChar(30)
+  ownerPartnerId     String             @map("owner_partner_id") @db.VarChar(30)
+  name               String             @db.VarChar(150)
+  slug               String             @unique @db.VarChar(180)
+  type               PropertyType
+  status             PropertyStatus     @default(DRAFT)
+  description        String             @db.Text
+  area               String             @db.VarChar(100)
+  address            String             @db.VarChar(500)
+  latitude           Decimal?           @db.Decimal(10, 7)
+  longitude          Decimal?           @db.Decimal(10, 7)
+  checkInTime        String             @default("15:00") @map("check_in_time") @db.Char(5)
+  checkOutTime       String             @default("11:00") @map("check_out_time") @db.Char(5)
+  cancellationPolicy String             @map("cancellation_policy") @db.Text
+  publishedAt        DateTime?          @map("published_at") @db.Timestamp(3)
+  archivedAt         DateTime?          @map("archived_at") @db.Timestamp(3)
+  createdAt          DateTime           @default(now()) @map("created_at") @db.Timestamp(3)
+  updatedAt          DateTime           @updatedAt @map("updated_at") @db.Timestamp(3)
+  owner              PartnerProfile     @relation(fields: [ownerPartnerId], references: [id], onDelete: Restrict)
+  rooms              RoomType[]
+  facilities         PropertyFacility[]
+  media              PropertyMedia[]
+  reviews            PropertyReview[]
+
+  @@index([status, area])
+  @@index([ownerPartnerId, status])
+  @@map("properties")
+}
+
+model PropertyReview {
+  id            String         @id @default(cuid()) @db.VarChar(30)
+  propertyId    String         @map("property_id") @db.VarChar(30)
+  reviewerId    String         @map("reviewer_id") @db.VarChar(30)
+  previousState PropertyStatus @map("previous_state")
+  nextState     PropertyStatus @map("next_state")
+  note          String?        @db.Text
+  createdAt     DateTime       @default(now()) @map("created_at") @db.Timestamp(3)
+  property      Property       @relation(fields: [propertyId], references: [id], onDelete: Restrict)
+  reviewer      User           @relation("PropertyReviewer", fields: [reviewerId], references: [id], onDelete: Restrict)
+
+  @@index([propertyId, createdAt])
+  @@index([reviewerId, createdAt])
+  @@map("property_reviews")
+}
+
+model RoomType {
+  id            String          @id @default(cuid()) @db.VarChar(30)
+  propertyId    String          @map("property_id") @db.VarChar(30)
+  name          String          @db.VarChar(150)
+  description   String          @db.Text
+  adultCapacity Int             @map("adult_capacity") @db.SmallInt
+  childCapacity Int             @default(0) @map("child_capacity") @db.SmallInt
+  bedType       String          @map("bed_type") @db.VarChar(100)
+  sizeSqm       Int?            @map("size_sqm") @db.Integer
+  basePrice     Int             @map("base_price") @db.Integer
+  totalUnits    Int             @map("total_units") @db.SmallInt
+  isActive      Boolean         @default(true) @map("is_active")
+  archivedAt    DateTime?       @map("archived_at") @db.Timestamp(3)
+  createdAt     DateTime        @default(now()) @map("created_at") @db.Timestamp(3)
+  updatedAt     DateTime        @updatedAt @map("updated_at") @db.Timestamp(3)
+  property      Property        @relation(fields: [propertyId], references: [id], onDelete: Restrict)
+  facilities    RoomFacility[]
+  media         RoomMedia[]
+  inventory     InventoryDate[]
+
+  @@index([propertyId, isActive])
+  @@map("room_types")
+}
+
+model Facility {
+  id         String             @id @default(cuid()) @db.VarChar(30)
+  name       String             @unique @db.VarChar(100)
+  slug       String             @unique @db.VarChar(120)
+  createdAt  DateTime           @default(now()) @map("created_at") @db.Timestamp(3)
+  properties PropertyFacility[]
+  rooms      RoomFacility[]
+
+  @@map("facilities")
+}
+
+model PropertyFacility {
+  propertyId String   @map("property_id") @db.VarChar(30)
+  facilityId String   @map("facility_id") @db.VarChar(30)
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  facility   Facility @relation(fields: [facilityId], references: [id], onDelete: Restrict)
+
+  @@id([propertyId, facilityId])
+  @@index([facilityId])
+  @@map("property_facilities")
+}
+
+model RoomFacility {
+  roomTypeId String   @map("room_type_id") @db.VarChar(30)
+  facilityId String   @map("facility_id") @db.VarChar(30)
+  roomType   RoomType @relation(fields: [roomTypeId], references: [id], onDelete: Cascade)
+  facility   Facility @relation(fields: [facilityId], references: [id], onDelete: Restrict)
+
+  @@id([roomTypeId, facilityId])
+  @@index([facilityId])
+  @@map("room_facilities")
+}
+
+model MediaAsset {
+  id            String          @id @default(cuid()) @db.VarChar(30)
+  uploadedById  String          @map("uploaded_by_id") @db.VarChar(30)
+  status        MediaStatus     @default(PROCESSING)
+  originalKey   String          @map("original_key") @db.VarChar(500)
+  displayKey    String?         @map("display_key") @db.VarChar(500)
+  thumbnailKey  String?         @map("thumbnail_key") @db.VarChar(500)
+  mimeType      String          @map("mime_type") @db.VarChar(100)
+  sizeBytes     Int             @map("size_bytes") @db.Integer
+  width         Int             @db.Integer
+  height        Int             @db.Integer
+  altText       String?         @map("alt_text") @db.VarChar(255)
+  orphanedAt    DateTime?       @map("orphaned_at") @db.Timestamp(3)
+  createdAt     DateTime        @default(now()) @map("created_at") @db.Timestamp(3)
+  updatedAt     DateTime        @updatedAt @map("updated_at") @db.Timestamp(3)
+  uploadedBy    User            @relation("MediaUploader", fields: [uploadedById], references: [id], onDelete: Restrict)
+  propertyLinks PropertyMedia[]
+  roomLinks     RoomMedia[]
+
+  @@index([status, orphanedAt])
+  @@index([uploadedById, createdAt])
+  @@map("media_assets")
+}
+
+model PropertyMedia {
+  propertyId String     @map("property_id") @db.VarChar(30)
+  mediaId    String     @map("media_id") @db.VarChar(30)
+  sortOrder  Int        @default(0) @map("sort_order") @db.Integer
+  isCover    Boolean    @default(false) @map("is_cover")
+  property   Property   @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  media      MediaAsset @relation(fields: [mediaId], references: [id], onDelete: Restrict)
+
+  @@id([propertyId, mediaId])
+  @@index([propertyId, sortOrder])
+  @@index([mediaId])
+  @@map("property_media")
+}
+
+model RoomMedia {
+  roomTypeId String     @map("room_type_id") @db.VarChar(30)
+  mediaId    String     @map("media_id") @db.VarChar(30)
+  sortOrder  Int        @default(0) @map("sort_order") @db.Integer
+  isCover    Boolean    @default(false) @map("is_cover")
+  roomType   RoomType   @relation(fields: [roomTypeId], references: [id], onDelete: Cascade)
+  media      MediaAsset @relation(fields: [mediaId], references: [id], onDelete: Restrict)
+
+  @@id([roomTypeId, mediaId])
+  @@index([roomTypeId, sortOrder])
+  @@index([mediaId])
+  @@map("room_media")
+}
+
+model InventoryDate {
+  id                 String   @id @default(cuid()) @db.VarChar(30)
+  roomTypeId         String   @map("room_type_id") @db.VarChar(30)
+  stayDate           DateTime @map("stay_date") @db.Date
+  priceOverride      Int?     @map("price_override") @db.Integer
+  totalUnitsOverride Int?     @map("total_units_override") @db.SmallInt
+  heldUnits          Int      @default(0) @map("held_units") @db.SmallInt
+  bookedUnits        Int      @default(0) @map("booked_units") @db.SmallInt
+  stopSell           Boolean  @default(false) @map("stop_sell")
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamp(3)
+  updatedAt          DateTime @updatedAt @map("updated_at") @db.Timestamp(3)
+  roomType           RoomType @relation(fields: [roomTypeId], references: [id], onDelete: Restrict)
+
+  @@unique([roomTypeId, stayDate])
+  @@index([stayDate, stopSell])
+  @@map("inventory_dates")
+}
+
+model AuditLog {
+  id         String   @id @default(cuid()) @db.VarChar(30)
+  actorId    String?  @map("actor_id") @db.VarChar(30)
+  action     String   @db.VarChar(100)
+  entityType String   @map("entity_type") @db.VarChar(100)
+  entityId   String   @map("entity_id") @db.VarChar(100)
+  metadata   Json?
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamp(3)
+  actor      User?    @relation("AuditActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([actorId, createdAt])
+  @@index([entityType, entityId, createdAt])
+  @@index([action, createdAt])
+  @@map("audit_logs")
+}

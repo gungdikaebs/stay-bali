@@ -71,7 +71,7 @@ Semua authorization wajib dilakukan di server. Partner hanya boleh mengakses dat
 
 ## Batas MVP
 
-- Satu VPS, MySQL, Redis/BullMQ, dan disk lokal/VPS; tanpa kewajiban Docker, CDN, S3, Kubernetes, atau microservices.
+- Satu VPS, Postgres, Redis/BullMQ, dan disk lokal/VPS; tanpa kewajiban Docker, CDN, S3, Kubernetes, atau microservices.
 - Payment hanya sandbox; email menjadi notifikasi utama.
 - Seed: 10–15 properti, masing-masing 2–5 room type.
 - Public UI English-first; Bahasa Indonesia/localization adalah P1.

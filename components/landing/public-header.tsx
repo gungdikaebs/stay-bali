@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Menu, UserRound } from "lucide-react";
+import { UserRound } from "lucide-react";
+import { MobileMenu } from "@/components/landing/mobile-menu";
 
 export function StayBaliLogo({ inverted = false }: { inverted?: boolean }) {
   return (
@@ -35,23 +36,17 @@ export function PublicHeader() {
         </nav>
 
         <div className="flex items-center gap-2">
-          <span className="hidden rounded-lg px-3 py-2 text-sm font-semibold text-white/90 sm:inline-flex">
+          <Link className="hidden rounded-lg px-3 py-2 text-sm font-semibold text-white/90 transition hover:text-white sm:inline-flex" href="/sign-in">
             Sign in
-          </span>
-          <button
+          </Link>
+          <Link
             className="inline-flex size-11 items-center justify-center rounded-full border border-white/25 bg-white/10 text-white backdrop-blur-sm transition hover:bg-white/20"
-            type="button"
-            aria-label="Open account menu"
+            href="/sign-in"
+            aria-label="Sign in to your account"
           >
             <UserRound className="size-5" aria-hidden="true" />
-          </button>
-          <button
-            className="inline-flex size-11 items-center justify-center rounded-full border border-white/25 bg-white/10 text-white backdrop-blur-sm transition hover:bg-white/20 md:hidden"
-            type="button"
-            aria-label="Open navigation"
-          >
-            <Menu className="size-5" aria-hidden="true" />
-          </button>
+          </Link>
+          <MobileMenu />
         </div>
       </div>
     </header>

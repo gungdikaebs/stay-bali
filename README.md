@@ -1,36 +1,41 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# StayBali
 
-## Getting Started
+English-first accommodation booking MVP for villas, hotels, and homestays across Bali.
 
-First, run the development server:
+## Local setup
+
+Requirements: Node.js 24+, Postgres, and npm.
 
 ```bash
+npm install
+cp .env.example .env
+npm run db:generate
+npm run db:deploy
+npm run db:seed
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open `http://localhost:3000`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+The development seed creates one Admin, one Traveler, and three active Partner accounts. Configure their passwords with `ADMIN_SEED_PASSWORD`, `TRAVELER_SEED_PASSWORD`, and `PARTNER_SEED_PASSWORD`.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Commands
 
-## Learn More
+```bash
+npm run dev          # Next.js development server
+npm run lint         # ESLint
+npm test             # Domain policy and supply workflow tests
+npm run build        # Production build
+npm run db:validate  # Validate Prisma schema
+npm run db:migrate   # Create/apply development migration
+npm run db:deploy    # Apply committed migrations
+npm run db:status    # Check migration state
+npm run db:seed      # Recreate development seed data
+npm run db:studio    # Open Prisma Studio
+```
 
-To learn more about Next.js, take a look at the following resources:
+Technical summaries:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `docs/DATABASE_FOUNDATION.md`
+- `docs/AUTHENTICATION.md`
+- `docs/SUPPLY_WORKFLOW.md`

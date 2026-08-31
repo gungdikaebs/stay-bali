@@ -4,7 +4,8 @@ import { notFound } from "next/navigation";
 import { CalendarCheck2, CheckCircle2, Home, Mail, ShieldCheck } from "lucide-react";
 import { StayBaliLogo } from "@/components/landing/public-header";
 import { createBookingSummary } from "@/lib/booking-summary";
-import { formatIdr, getDemoStay } from "@/lib/demo-stays";
+import { formatIdr, formatStayDate } from "@/lib/demo-stays";
+import { getPublishedStayBySlug } from "@/lib/public/catalog";
 import { parseSearchQuery } from "@/lib/search-query";
 
 export const metadata: Metadata = {
@@ -22,7 +23,7 @@ function first(value: string | string[] | undefined) {
 
 export default async function ConfirmationPage({ searchParams }: ConfirmationPageProps) {
   const rawQuery = await searchParams;
-  const stay = getDemoStay(first(rawQuery.stay) ?? "");
+  const stay = await getPublishedStayBySlug(first(rawQuery.stay) ?? "");
   if (!stay) notFound();
 
   const query = parseSearchQuery({ ...rawQuery, location: stay.location });
@@ -57,7 +58,7 @@ export default async function ConfirmationPage({ searchParams }: ConfirmationPag
 
             <div className="grid gap-8 py-8 sm:grid-cols-2">
               <div><p className="text-xs font-bold uppercase tracking-[0.1em] text-primary">Property</p><h2 className="font-display mt-2 text-xl font-bold">{stay.name}</h2><p className="mt-1 text-sm text-muted-foreground">{stay.roomName}<br />{stay.area}</p></div>
-              <div className="grid grid-cols-2 gap-4 text-sm"><div><span className="block text-xs text-muted-foreground">Check-in</span><strong>{query.values.checkin}</strong></div><div><span className="block text-xs text-muted-foreground">Check-out</span><strong>{query.values.checkout}</strong></div><div><span className="block text-xs text-muted-foreground">Guests</span><strong>{query.values.guests}</strong></div><div><span className="block text-xs text-muted-foreground">Length</span><strong>{query.nights} nights</strong></div></div>
+              <div className="grid grid-cols-2 gap-4 text-sm"><div><span className="block text-xs text-muted-foreground">Check-in</span><strong>{formatStayDate(query.values.checkin)}</strong></div><div><span className="block text-xs text-muted-foreground">Check-out</span><strong>{formatStayDate(query.values.checkout)}</strong></div><div><span className="block text-xs text-muted-foreground">Guests</span><strong>{query.values.guests}</strong></div><div><span className="block text-xs text-muted-foreground">Length</span><strong>{query.nights} nights</strong></div></div>
             </div>
 
             <div className="rounded-2xl bg-secondary p-5">

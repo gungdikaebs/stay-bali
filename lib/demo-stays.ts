@@ -90,6 +90,81 @@ export const demoStays: DemoStay[] = [
     bed: "3 king beds",
     amenities: ["Private pool", "Kitchen", "Fast Wi-Fi", "Air conditioning", "Living room", "Daily housekeeping"],
   },
+  {
+    slug: "sawah-senja-retreat",
+    name: "Sawah Senja Retreat",
+    location: "ubud",
+    area: "Tegallalang, Gianyar",
+    type: "Hotel",
+    guests: 2,
+    pricePerNight: 1_075_000,
+    image: "/images/stay-ubud.jpg",
+    highlight: "Rice field views and daily breakfast",
+    description: "A quiet boutique retreat overlooking rice fields north of Ubud, with thoughtful local hospitality and restorative surroundings.",
+    roomName: "Rice field suite",
+    bed: "1 king bed",
+    amenities: ["Rice field view", "Breakfast", "Shared pool", "Fast Wi-Fi", "Air conditioning", "Yoga space"],
+  },
+  {
+    slug: "batu-bolong-lofts",
+    name: "Batu Bolong Lofts",
+    location: "canggu",
+    area: "Batu Bolong, Badung",
+    type: "Hotel",
+    guests: 2,
+    pricePerNight: 1_450_000,
+    image: "/images/stay-canggu.jpg",
+    highlight: "Rooftop pool near Batu Bolong Beach",
+    description: "Modern loft-style rooms for travelers who want a comfortable base close to Canggu's beach, cafés, and creative community.",
+    roomName: "Studio loft",
+    bed: "1 king bed",
+    amenities: ["Rooftop pool", "Fast Wi-Fi", "Workspace", "Air conditioning", "Café", "Luggage storage"],
+  },
+  {
+    slug: "melasti-cliff-house",
+    name: "Melasti Cliff House",
+    location: "uluwatu",
+    area: "Ungasan, Badung",
+    type: "Villa",
+    guests: 4,
+    pricePerNight: 2_750_000,
+    image: "/images/stay-uluwatu.jpg",
+    highlight: "Private sunset terrace",
+    description: "A private southern Bali villa with open living spaces, a sunset terrace, and easy access to the beaches around Ungasan.",
+    roomName: "Two-bedroom cliff villa",
+    bed: "2 king beds",
+    amenities: ["Private pool", "Sunset terrace", "Kitchen", "Fast Wi-Fi", "Air conditioning", "Daily housekeeping"],
+  },
+  {
+    slug: "segara-sanur-house",
+    name: "Segara Sanur House",
+    location: "sanur",
+    area: "Sanur, Denpasar",
+    type: "Hotel",
+    guests: 2,
+    pricePerNight: 1_180_000,
+    image: "/images/stay-sanur.jpg",
+    highlight: "Breakfast and beach shuttle included",
+    description: "A relaxed hotel with garden courtyards and warm service, well placed for sunrise walks and laid-back days by the sea.",
+    roomName: "Courtyard king room",
+    bed: "1 king bed",
+    amenities: ["Garden pool", "Breakfast", "Beach shuttle", "Fast Wi-Fi", "Air conditioning", "Restaurant"],
+  },
+  {
+    slug: "petitenget-palm-suites",
+    name: "Petitenget Palm Suites",
+    location: "seminyak",
+    area: "Petitenget, Badung",
+    type: "Hotel",
+    guests: 2,
+    pricePerNight: 1_650_000,
+    image: "/images/stay-seminyak.jpg",
+    highlight: "Near Petitenget Beach and dining",
+    description: "Contemporary suites with a calm palm-lined courtyard in one of Seminyak's most convenient neighborhoods.",
+    roomName: "Palm courtyard suite",
+    bed: "1 king bed",
+    amenities: ["Courtyard pool", "Breakfast", "Fast Wi-Fi", "Air conditioning", "Restaurant", "Airport pickup"],
+  },
 ];
 
 export function formatIdr(value: number) {
@@ -98,6 +173,17 @@ export function formatIdr(value: number) {
     currency: "IDR",
     maximumFractionDigits: 0,
   }).format(value);
+}
+
+export function formatStayDate(value: string) {
+  const date = new Date(`${value}T00:00:00Z`);
+  if (Number.isNaN(date.getTime())) return value;
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(date);
 }
 
 export function getDemoStay(slug: string) {

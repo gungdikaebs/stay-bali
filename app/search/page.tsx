@@ -4,7 +4,8 @@ import { ArrowLeft, Filter, SlidersHorizontal } from "lucide-react";
 import { PropertyCard } from "@/components/landing/property-card";
 import { StayBaliLogo } from "@/components/landing/public-header";
 import { SearchPanel } from "@/components/landing/search-panel";
-import { demoStays, formatIdr } from "@/lib/demo-stays";
+import { formatIdr } from "@/lib/demo-stays";
+import { searchPublishedStays } from "@/lib/public/catalog";
 import { parseSearchQuery } from "@/lib/search-query";
 
 export const metadata: Metadata = {
@@ -17,6 +18,7 @@ type SearchPageProps = {
 };
 
 const locationLabels: Record<string, string> = {
+  all: "Across Bali",
   ubud: "Ubud",
   canggu: "Canggu",
   seminyak: "Seminyak",
@@ -28,19 +30,9 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   const query = parseSearchQuery(await searchParams);
   const { values, nights, errors } = query;
 
-  const stays = demoStays
-    .filter((stay) => stay.location === values.location)
-    .filter((stay) => stay.guests >= values.guests)
-    .filter(
-      (stay) => values.type === "all" || stay.type.toLowerCase() === values.type,
-    )
-    .sort((a, b) => {
-      if (values.sort === "price-low") return a.pricePerNight - b.pricePerNight;
-      if (values.sort === "price-high") return b.pricePerNight - a.pricePerNight;
-      return 0;
-    });
+  const stays = await searchPublishedStays(values);
 
-  const canClaimAvailability = errors.length === 0 && nights !== null;
+  const hasValidStayDates = errors.length === 0 && nights !== null;
   const stayQuery = new URLSearchParams();
   if (values.checkin) stayQuery.set("checkin", values.checkin);
   if (values.checkout) stayQuery.set("checkout", values.checkout);
@@ -79,14 +71,14 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
         <div className="mb-8 flex flex-col justify-between gap-5 md:flex-row md:items-end">
           <div>
             <p className="mb-2 text-sm font-bold tracking-[0.12em] text-primary uppercase">
-              {locationLabels[values.location]}, Bali
+              {values.location === "all" ? locationLabels.all : `${locationLabels[values.location]}, Bali`}
             </p>
             <h1 className="font-display text-3xl font-extrabold tracking-[-0.04em] text-foreground sm:text-4xl">
               {stays.length} {stays.length === 1 ? "stay" : "stays"} found
             </h1>
             <p className="mt-2 text-sm text-muted-foreground">
-              {canClaimAvailability
-                ? `${nights} ${nights === 1 ? "night" : "nights"} · ${values.guests} ${values.guests === 1 ? "guest" : "guests"}`
+              {hasValidStayDates
+                ? `${nights} ${nights === 1 ? "night" : "nights"} · ${values.guests} ${values.guests === 1 ? "guest" : "guests"} · Published catalog match`
                 : "Choose valid dates to check availability."}
             </p>
           </div>

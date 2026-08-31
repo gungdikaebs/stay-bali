@@ -14,7 +14,7 @@
 | UI | shadcn/ui + Tailwind + CSS design tokens |
 | Validation | Zod pada server boundary |
 | Auth | Auth.js Credentials, JWT cookie, password hash modern |
-| Data | Prisma + MySQL 8/InnoDB sebagai source of truth |
+| Data | Prisma + Postgres sebagai source of truth |
 | Concurrency | Transaction + ordered `SELECT ... FOR UPDATE` |
 | Jobs | Redis + BullMQ worker; transactional outbox |
 | Payment | Midtrans Snap Sandbox melalui adapter |
@@ -23,12 +23,12 @@
 | Runtime | Node.js LTS, Nginx, systemd; Docker tidak wajib |
 | Observability | Structured logs, correlation ID, health checks |
 
-Redis tidak authoritative untuk inventory/booking. Media metadata berada di MySQL; bytes berada di persistent VPS disk.
+Redis tidak authoritative untuk inventory/booking. Media metadata berada di Postgres; bytes berada di persistent VPS disk.
 
 ## Runtime
 
 ```text
-Browser → Nginx → Next.js web → MySQL
+Browser → Nginx → Next.js web → Postgres
                          ├── Redis/BullMQ ← worker
                          ├── Midtrans Sandbox
                          ├── SMTP provider
@@ -126,7 +126,7 @@ Availability valid jika setiap malam tidak `stop_sell` dan `available_units ≥ 
 
 **Release:** hanya bila record masih aktif dan `inventory_released_at` belum terisi. Lock selalu dalam urutan yang sama; retry deadlock terbatas. Queue yang terlambat tidak mengubah availability karena query juga memeriksa expiry absolut.
 
-Redis lock tidak dipakai untuk correctness inventory; MySQL transaction adalah boundary atomiknya.
+Redis lock tidak dipakai untuk correctness inventory; Postgresql transaction adalah boundary atomiknya.
 
 ## Idempotency dan outbox
 
@@ -164,7 +164,7 @@ Late success pada booking expired/cancelled menjadi payment exception untuk reso
 - HTTPS; secure/HttpOnly/SameSite cookie; CSRF sesuai mekanisme; rate limit auth/payment/upload.
 - Escape user content, parameterized query, safe upload path, security headers, secret via environment.
 - Jangan menyimpan nomor kartu/CVV/OTP; sanitasi log, webhook, audit, dan guest PII.
-- Daily MySQL + media backup, retensi ≥7 hari, dan restore rehearsal sebelum release.
+- Daily Postgres + media backup, retensi ≥7 hari, dan restore rehearsal sebelum release.
 - Deploy: install lockfile → build → migration aman → restart worker/web → health + smoke test.
 - Rollback code tidak otomatis rollback destructive migration; release lama tetap tersedia.
 
@@ -172,7 +172,7 @@ Late success pada booking expired/cancelled menjadi payment exception untuk reso
 
 - Unit: pricing/date/policy/state machine/provider mapping.
 - Integration: transaction, ownership, webhook, outbox, media metadata.
-- Concurrency harus memakai MySQL/InnoDB nyata, bukan SQLite/mock.
+- Concurrency harus memakai Postgres nyata, bukan SQLite/mock.
 - E2E: approval property dan search-to-voucher.
 
 Release ditolak bila UI mengakses Prisma, domain mengimpor provider/framework, owner berasal dari input client, transaction inventory tidak memakai lock konsisten, webhook tidak diverifikasi/dideduplikasi, atau backup/restore belum diuji.

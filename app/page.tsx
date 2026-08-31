@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import type { ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
 import {
   ArrowRight,
   CalendarCheck2,
@@ -13,25 +13,35 @@ import {
 } from "lucide-react";
 import { PropertyCard } from "@/components/landing/property-card";
 import {
+  HeroMedia,
+  HeroReveal,
+  HomeMotion,
+  ScrollReveal,
+} from "@/components/landing/home-motion";
+import {
   PublicHeader,
   StayBaliLogo,
 } from "@/components/landing/public-header";
 import { SearchPanel } from "@/components/landing/search-panel";
-import { demoStays, formatIdr } from "@/lib/demo-stays";
+import { formatIdr } from "@/lib/demo-stays";
+import { listFeaturedPublishedStays } from "@/lib/public/catalog";
 
 const areas = [
   {
     name: "Ubud",
+    slug: "ubud",
     description: "Jungle calm, culture, and slow mornings",
     image: "/images/stay-ubud.jpg",
   },
   {
     name: "Canggu",
+    slug: "canggu",
     description: "Creative energy near Bali's west coast",
     image: "/images/stay-canggu.jpg",
   },
   {
     name: "Uluwatu",
+    slug: "uluwatu",
     description: "Cliff views and memorable sunsets",
     image: "/images/stay-uluwatu.jpg",
   },
@@ -39,7 +49,7 @@ const areas = [
 
 function AreaCard({ area }: { area: (typeof areas)[number] }) {
   return (
-    <article className="group relative min-h-72 overflow-hidden rounded-2xl bg-foreground">
+    <Link className="group relative block min-h-72 overflow-hidden rounded-2xl bg-foreground" href={`/search?location=${area.slug}&guests=2`} aria-label={`Explore stays in ${area.name}`}>
       <Image
         fill
         alt={`Accommodation inspiration for ${area.name}, Bali`}
@@ -57,7 +67,7 @@ function AreaCard({ area }: { area: (typeof areas)[number] }) {
           {area.description}
         </p>
       </div>
-    </article>
+    </Link>
   );
 }
 
@@ -87,119 +97,165 @@ function TrustFeature({
   );
 }
 
+async function PublishedStayGrid() {
+  const stays = await listFeaturedPublishedStays(8);
+
+  if (!stays.length) {
+    return (
+      <div className="rounded-3xl border border-dashed border-border bg-white px-6 py-14 text-center sm:col-span-2 xl:col-span-4">
+        <h3 className="font-display text-xl font-bold">Published stays are being prepared</h3>
+        <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-muted-foreground">
+          Approved Partner properties will appear here automatically.
+        </p>
+      </div>
+    );
+  }
+
+  return stays.map((stay, index) => (
+    <ScrollReveal key={stay.slug} delay={index * 0.05}>
+      <PropertyCard
+        area={stay.area}
+        guests={stay.guests}
+        highlight={stay.highlight}
+        href={`/stays/${stay.slug}?guests=2`}
+        image={stay.image}
+        name={stay.name}
+        price={formatIdr(stay.pricePerNight)}
+        priority={index < 4}
+        type={stay.type}
+      />
+    </ScrollReveal>
+  ));
+}
+
+function StayGridFallback() {
+  return Array.from({ length: 4 }, (_, index) => (
+    <div className="animate-pulse overflow-hidden rounded-2xl border border-border bg-white" key={index}>
+      <div className="aspect-[4/3] bg-secondary" />
+      <div className="space-y-3 p-5">
+        <div className="h-4 w-2/5 rounded bg-secondary" />
+        <div className="h-6 w-4/5 rounded bg-secondary" />
+        <div className="h-16 rounded-xl bg-secondary" />
+      </div>
+    </div>
+  ));
+}
+
 export default function Home() {
   return (
+    <HomeMotion>
     <main className="overflow-hidden">
-      <section className="relative min-h-[820px] bg-foreground lg:min-h-[780px]">
-        <Image
-          fill
-          priority
-          alt="Private Bali villa pool overlooking a tropical sunset"
-          className="object-cover object-[62%_center]"
-          sizes="100vw"
-          src="/images/hero-bali-villa.jpg"
-        />
+      <section className="relative min-h-[720px] bg-foreground lg:min-h-[700px]">
+        <HeroMedia>
+          <Image
+            fill
+            priority
+            alt="Private Bali villa pool overlooking a tropical sunset"
+            className="object-cover object-[62%_center]"
+            sizes="100vw"
+            src="/images/hero-bali-villa.jpg"
+          />
+        </HeroMedia>
         <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(10,28,24,0.9)_0%,rgba(10,28,24,0.68)_42%,rgba(10,28,24,0.16)_75%,rgba(10,28,24,0.28)_100%)]" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-black/30" />
 
         <PublicHeader />
 
-        <div className="relative z-10 mx-auto flex min-h-[820px] w-full min-w-0 max-w-[1280px] flex-col justify-center px-4 pt-28 pb-10 sm:px-6 lg:min-h-[780px] lg:px-8 lg:pt-24">
+        <div className="relative z-10 mx-auto flex min-h-[720px] w-full min-w-0 max-w-[1280px] flex-col justify-center px-4 pt-28 pb-10 sm:px-6 lg:min-h-[700px] lg:px-8 lg:pt-24">
           <div className="max-w-3xl">
-            <span className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-semibold text-white backdrop-blur-sm">
-              <Sparkles className="size-4 text-[#ffb7a8]" aria-hidden="true" />
-              Local stays, thoughtfully presented
-            </span>
-            <h1 className="font-display max-w-3xl text-[38px] leading-[1.08] font-extrabold tracking-[-0.05em] text-balance text-white sm:text-6xl lg:text-[72px]">
-              Find your place in Bali.
-            </h1>
-            <p className="mt-6 max-w-2xl text-lg leading-8 text-pretty text-white/[0.82] sm:text-xl">
-              Verified stays, clear prices, and real availability—built for a
-              calmer way to book across Bali.
-            </p>
+            <HeroReveal delay={0.12}>
+              <span className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-semibold text-white backdrop-blur-sm">
+                <Sparkles className="size-4 text-[#ffb7a8]" aria-hidden="true" />
+                Local stays, thoughtfully presented
+              </span>
+            </HeroReveal>
+            <HeroReveal delay={0.22}>
+              <h1 className="font-display max-w-3xl text-[38px] leading-[1.08] font-extrabold tracking-[-0.05em] text-balance text-white sm:text-6xl lg:text-[72px]">
+                Find your place in Bali.
+              </h1>
+            </HeroReveal>
+            <HeroReveal delay={0.34}>
+              <p className="mt-6 max-w-2xl text-lg leading-8 text-pretty text-white/[0.82] sm:text-xl">
+                Verified stays, clear prices, and real availability—built for a
+                calmer way to book across Bali.
+              </p>
+            </HeroReveal>
           </div>
 
-          <div className="mt-10 max-w-[1180px]">
+          <HeroReveal className="mt-10 max-w-[1180px]" delay={0.46}>
             <SearchPanel />
             <p className="mt-3 flex items-center gap-2 text-sm text-white/[0.72]">
               <Clock3 className="size-4" aria-hidden="true" />
-              Choose your dates to find a stay that fits your Bali plans.
+              Browse all Bali now, or add dates when you are ready.
             </p>
-          </div>
+          </HeroReveal>
 
           <div className="mt-10 grid max-w-4xl gap-3 text-sm text-white/80 sm:grid-cols-3">
-            <span className="flex items-center gap-2">
+            <HeroReveal className="flex items-center gap-2" delay={0.58}>
               <ShieldCheck className="size-5 text-[#8ce0d4]" aria-hidden="true" />
               Properties reviewed before publishing
-            </span>
-            <span className="flex items-center gap-2">
+            </HeroReveal>
+            <HeroReveal className="flex items-center gap-2" delay={0.66}>
               <WalletCards className="size-5 text-[#8ce0d4]" aria-hidden="true" />
               Full IDR price shown before payment
-            </span>
-            <span className="flex items-center gap-2">
+            </HeroReveal>
+            <HeroReveal className="flex items-center gap-2" delay={0.74}>
               <CalendarCheck2 className="size-5 text-[#8ce0d4]" aria-hidden="true" />
               Availability checked for every night
-            </span>
+            </HeroReveal>
           </div>
         </div>
       </section>
 
-      <section className="bg-background py-20 sm:py-24">
+      <section className="bg-background py-16 sm:py-20" id="stays">
+        <div className="mx-auto max-w-[1360px] px-4 sm:px-6 lg:px-8">
+          <ScrollReveal className="mb-10 flex flex-col justify-between gap-5 md:flex-row md:items-end">
+            <div>
+              <span className="mb-3 inline-flex items-center gap-2 text-sm font-bold tracking-[0.14em] text-primary uppercase">
+                <CheckCircle2 className="size-4" aria-hidden="true" />
+                Published stays
+              </span>
+              <h2 className="font-display max-w-3xl text-3xl font-extrabold tracking-[-0.045em] text-balance text-foreground sm:text-4xl">
+                Find a stay that is ready to explore.
+              </h2>
+            </div>
+            <Link className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-border bg-white px-5 text-sm font-bold text-foreground transition hover:border-primary hover:text-primary" href="/search?location=all&guests=2">View all stays<ArrowRight className="size-4" /></Link>
+          </ScrollReveal>
+
+          <div className="mb-7 flex flex-wrap gap-2" aria-label="Quick property filters">
+            <Link className="rounded-full bg-foreground px-4 py-2 text-sm font-bold text-white" href="/search?location=all&guests=2">All stays</Link>
+            {[["Villas", "villa"], ["Hotels", "hotel"], ["Homestays", "homestay"]].map(([label, type]) => <Link className="rounded-full border border-border bg-white px-4 py-2 text-sm font-bold text-foreground transition hover:border-primary hover:text-primary" href={`/search?location=all&type=${type}&guests=2`} key={type}>{label}</Link>)}
+          </div>
+
+          <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
+            <Suspense fallback={<StayGridFallback />}>
+              <PublishedStayGrid />
+            </Suspense>
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-white py-20 sm:py-24">
         <div className="mx-auto max-w-[1280px] px-4 sm:px-6 lg:px-8">
-          <div className="mb-10 flex flex-col justify-between gap-5 md:flex-row md:items-end">
+          <ScrollReveal className="mb-10 flex flex-col justify-between gap-5 md:flex-row md:items-end">
             <div>
               <p className="mb-3 text-sm font-bold tracking-[0.14em] text-primary uppercase">
-                Bali, one stay at a time
+                Explore by destination
               </p>
               <h2 className="font-display max-w-2xl text-3xl font-extrabold tracking-[-0.045em] text-balance text-foreground sm:text-4xl">
                 Start with the area that matches your rhythm.
               </h2>
             </div>
             <p className="max-w-md text-base leading-7 text-muted-foreground">
-              From quiet mornings in Ubud to sunset stays in Uluwatu, each area
-              offers a different side of Bali.
+              From quiet mornings in Ubud to sunset stays in Uluwatu, each area offers a different side of Bali.
             </p>
-          </div>
+          </ScrollReveal>
 
           <div className="grid gap-5 md:grid-cols-3">
-            {areas.map((area) => (
-              <AreaCard key={area.name} area={area} />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="bg-white py-20 sm:py-24" id="stays">
-        <div className="mx-auto max-w-[1360px] px-4 sm:px-6 lg:px-8">
-          <div className="mb-10 flex flex-col justify-between gap-5 md:flex-row md:items-end">
-            <div>
-              <span className="mb-3 inline-flex items-center gap-2 text-sm font-bold tracking-[0.14em] text-primary uppercase">
-                <CheckCircle2 className="size-4" aria-hidden="true" />
-                Handpicked stays
-              </span>
-              <h2 className="font-display text-3xl font-extrabold tracking-[-0.045em] text-foreground sm:text-4xl">
-                Stays worth discovering across Bali.
-              </h2>
-            </div>
-            <p className="max-w-md text-sm leading-6 text-muted-foreground">
-              From peaceful hideaways to stays near Bali&apos;s favorite beaches,
-              find a place that feels right for your trip.
-            </p>
-          </div>
-
-          <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
-            {demoStays.slice(0, 4).map((stay) => (
-              <PropertyCard
-                key={stay.slug}
-                area={stay.area}
-                guests={stay.guests}
-                highlight={stay.highlight}
-                href={`/stays/${stay.slug}`}
-                image={stay.image}
-                name={stay.name}
-                price={formatIdr(stay.pricePerNight)}
-                type={stay.type}
-              />
+            {areas.map((area, index) => (
+              <ScrollReveal key={area.name} delay={index * 0.08}>
+                <AreaCard area={area} />
+              </ScrollReveal>
             ))}
           </div>
         </div>
@@ -207,7 +263,7 @@ export default function Home() {
 
       <section className="bg-foreground py-20 text-white sm:py-24" id="why-staybali">
         <div className="mx-auto grid max-w-[1280px] gap-12 px-4 sm:px-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-center lg:px-8">
-          <div>
+          <ScrollReveal>
             <p className="mb-4 text-sm font-bold tracking-[0.14em] text-[#8ce0d4] uppercase">
               Clarity over pressure
             </p>
@@ -218,36 +274,26 @@ export default function Home() {
               StayBali avoids fake urgency. Prices, cancellation terms, and booking
               status stay close to the decision you are making.
             </p>
-          </div>
+          </ScrollReveal>
 
           <div className="grid gap-4 sm:grid-cols-2">
-            <TrustFeature
-              icon={<WalletCards className="size-5" aria-hidden="true" />}
-              title="Clear price breakdown"
-              description="Nightly rates, service fee, and total are shown together before payment."
-            />
-            <TrustFeature
-              icon={<CalendarCheck2 className="size-5" aria-hidden="true" />}
-              title="Availability by date"
-              description="Every night in the selected range will be checked before checkout."
-            />
-            <TrustFeature
-              icon={<ShieldCheck className="size-5" aria-hidden="true" />}
-              title="Reviewed properties"
-              description="Only properties approved by an administrator appear publicly."
-            />
-            <TrustFeature
-              icon={<HeartHandshake className="size-5" aria-hidden="true" />}
-              title="Local partner workflow"
-              description="Local operators manage rooms and reservations from one clear workspace."
-            />
+            {[
+              { icon: <WalletCards className="size-5" aria-hidden="true" />, title: "Clear price breakdown", description: "Nightly rates, service fee, and total are shown together before payment." },
+              { icon: <CalendarCheck2 className="size-5" aria-hidden="true" />, title: "Availability by date", description: "Every night in the selected range will be checked before checkout." },
+              { icon: <ShieldCheck className="size-5" aria-hidden="true" />, title: "Reviewed properties", description: "Only properties approved by an administrator appear publicly." },
+              { icon: <HeartHandshake className="size-5" aria-hidden="true" />, title: "Local partner workflow", description: "Local operators manage rooms and reservations from one clear workspace." },
+            ].map((feature, index) => (
+              <ScrollReveal key={feature.title} delay={index * 0.07}>
+                <TrustFeature {...feature} />
+              </ScrollReveal>
+            ))}
           </div>
         </div>
       </section>
 
       <section className="bg-brand-sand py-20 sm:py-24" id="partners">
         <div className="mx-auto max-w-[1280px] px-4 sm:px-6 lg:px-8">
-          <div className="relative overflow-hidden rounded-[24px] bg-primary px-6 py-12 text-white shadow-card sm:px-10 lg:px-14 lg:py-16">
+          <ScrollReveal className="relative overflow-hidden rounded-[24px] bg-primary px-6 py-12 text-white shadow-card sm:px-10 lg:px-14 lg:py-16">
             <div className="absolute -top-32 -right-24 size-80 rounded-full border-[48px] border-white/5" />
             <div className="absolute -bottom-24 left-1/2 size-64 rounded-full bg-[#e8674c]/20 blur-3xl" />
             <div className="relative flex flex-col justify-between gap-8 lg:flex-row lg:items-center">
@@ -268,7 +314,7 @@ export default function Home() {
                 <ArrowRight className="size-5" aria-hidden="true" />
               </span>
             </div>
-          </div>
+          </ScrollReveal>
         </div>
       </section>
 
@@ -308,5 +354,6 @@ export default function Home() {
         </div>
       </footer>
     </main>
+    </HomeMotion>
   );
 }

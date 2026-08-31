@@ -38,9 +38,10 @@ export function SearchPanel({
             </span>
             <select
               className={fieldClassName}
-              defaultValue={initialValues?.location ?? "ubud"}
+              defaultValue={initialValues?.location ?? "all"}
               name="location"
             >
+              <option value="all">All Bali</option>
               <option value="ubud">Ubud, Bali</option>
               <option value="canggu">Canggu, Bali</option>
               <option value="seminyak">Seminyak, Bali</option>
@@ -60,7 +61,6 @@ export function SearchPanel({
               className={fieldClassName}
               defaultValue={initialValues?.checkin}
               name="checkin"
-              required
               type="date"
             />
           </span>
@@ -76,7 +76,6 @@ export function SearchPanel({
               className={fieldClassName}
               defaultValue={initialValues?.checkout}
               name="checkout"
-              required
               type="date"
             />
           </span>
@@ -110,11 +109,11 @@ export function SearchPanel({
           type="submit"
         >
           <Search className="size-5" aria-hidden="true" />
-          Search
+          Search stays
         </button>
       </form>
       <p className="sr-only" id="search-form-note">
-        Select a Bali area, travel dates, and guest count to search available stays.
+        Select a Bali area and guest count. Travel dates are optional until availability is implemented.
       </p>
     </div>
   );

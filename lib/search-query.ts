@@ -1,4 +1,4 @@
-const locations = ["ubud", "canggu", "seminyak", "uluwatu", "sanur"] as const;
+const locations = ["all", "ubud", "canggu", "seminyak", "uluwatu", "sanur"] as const;
 const propertyTypes = ["all", "villa", "hotel", "homestay"] as const;
 const sortOptions = ["recommended", "price-low", "price-high"] as const;
 
@@ -55,7 +55,7 @@ export function parseSearchQuery(raw: RawSearchParams) {
   const errors: string[] = [];
 
   const values: SearchValues = {
-    location: isOneOf(rawLocation, locations) ? rawLocation : "ubud",
+    location: isOneOf(rawLocation, locations) ? rawLocation : "all",
     checkin,
     checkout,
     guests: Number.isInteger(parsedGuests) && parsedGuests >= 1 && parsedGuests <= 10
