@@ -1,3 +1,5 @@
+import { addUtcDays, baliToday } from "@/lib/inventory/rules";
+
 const locations = ["all", "ubud", "canggu", "seminyak", "uluwatu", "sanur"] as const;
 const propertyTypes = ["all", "villa", "hotel", "homestay"] as const;
 const sortOptions = ["recommended", "price-low", "price-high"] as const;
@@ -9,8 +11,13 @@ export type SearchValues = {
   checkin: string;
   checkout: string;
   guests: number;
+  children: number;
   type: (typeof propertyTypes)[number];
   sort: (typeof sortOptions)[number];
+  minPrice: number | null;
+  maxPrice: number | null;
+  page: number;
+  pageSize: 12 | 24;
 };
 
 function first(value: string | string[] | undefined) {
@@ -36,15 +43,6 @@ function nightsBetween(checkin: string, checkout: string) {
   return Math.round((end - start) / 86_400_000);
 }
 
-function baliToday() {
-  return new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Makassar",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(new Date());
-}
-
 export function parseSearchQuery(raw: RawSearchParams) {
   const rawLocation = first(raw.location)?.toLowerCase();
   const rawType = first(raw.type)?.toLowerCase();
@@ -52,6 +50,11 @@ export function parseSearchQuery(raw: RawSearchParams) {
   const checkin = first(raw.checkin) ?? "";
   const checkout = first(raw.checkout) ?? "";
   const parsedGuests = Number.parseInt(first(raw.guests) ?? "2", 10);
+  const parsedChildren = Number.parseInt(first(raw.children) ?? "0", 10);
+  const parsedMinPrice = Number.parseInt(first(raw.minPrice) ?? "", 10);
+  const parsedMaxPrice = Number.parseInt(first(raw.maxPrice) ?? "", 10);
+  const parsedPage = Number.parseInt(first(raw.page) ?? "1", 10);
+  const parsedPageSize = Number.parseInt(first(raw.pageSize) ?? "12", 10);
   const errors: string[] = [];
 
   const values: SearchValues = {
@@ -61,9 +64,26 @@ export function parseSearchQuery(raw: RawSearchParams) {
     guests: Number.isInteger(parsedGuests) && parsedGuests >= 1 && parsedGuests <= 10
       ? parsedGuests
       : 2,
+    children: Number.isInteger(parsedChildren) && parsedChildren >= 0 && parsedChildren <= 10
+      ? parsedChildren
+      : 0,
     type: isOneOf(rawType, propertyTypes) ? rawType : "all",
     sort: isOneOf(rawSort, sortOptions) ? rawSort : "recommended",
+    minPrice: Number.isInteger(parsedMinPrice) && parsedMinPrice >= 0 ? parsedMinPrice : null,
+    maxPrice: Number.isInteger(parsedMaxPrice) && parsedMaxPrice > 0 ? parsedMaxPrice : null,
+    page: Number.isInteger(parsedPage) && parsedPage >= 1 ? parsedPage : 1,
+    pageSize: parsedPageSize === 24 ? 24 : 12,
   };
+
+  if (!Number.isInteger(parsedGuests) || parsedGuests < 1 || parsedGuests > 10) {
+    errors.push("Adults must be between 1 and 10.");
+  }
+  if (!Number.isInteger(parsedChildren) || parsedChildren < 0 || parsedChildren > 10) {
+    errors.push("Children must be between 0 and 10.");
+  }
+  if (values.minPrice !== null && values.maxPrice !== null && values.minPrice > values.maxPrice) {
+    errors.push("Minimum price cannot be higher than maximum price.");
+  }
 
   let nights: number | null = null;
 
@@ -72,7 +92,10 @@ export function parseSearchQuery(raw: RawSearchParams) {
       errors.push("Choose a valid check-in and check-out date.");
     } else {
       nights = nightsBetween(checkin, checkout);
-      if (checkin < baliToday()) errors.push("Check-in cannot be in the past.");
+      const today = baliToday();
+      const latestCheckin = addUtcDays(today, 365);
+      if (checkin < today) errors.push("Check-in cannot be in the past.");
+      if (latestCheckin && checkin > latestCheckin) errors.push("Check-in can be up to 365 days ahead.");
       if (nights < 1) errors.push("Check-out must be after check-in.");
       if (nights > 30) errors.push("A stay can be up to 30 nights.");
     }

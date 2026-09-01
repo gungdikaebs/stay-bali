@@ -22,9 +22,26 @@ Setiap perubahan status disimpan di `PropertyReview`. Create, update, submit, ar
 - `/admin/properties` — antrean review dan kontrol status.
 - `/search` serta `/stays/[slug]` — katalog publik dari PostgreSQL.
 
-## Batas fase saat ini
+## Media lifecycle
 
-Metadata media dan gate submission sudah menjadi bagian workflow, tetapi upload file, validasi konten MIME/dimensi, pembuatan display/thumbnail, reorder/cover, rollback, dan orphan cleanup masih menjadi bagian Supply M2 berikutnya. Search pada fase ini memfilter area, tipe, dan kapasitas room; kalkulasi availability berdasarkan tanggal serta harga override masuk Discovery M3.
+Partner dapat mengunggah JPEG, PNG, atau WebP hingga 5 MB per file dan 20 foto per property. Konten dibaca dengan Sharp—bukan dipercaya dari nama file—dan harus berukuran 800×600 sampai 6000×6000. Pipeline membuat original ter-normalisasi, display, serta thumbnail WebP tanpa metadata melalui staging dan atomic move. Cover dan urutan dapat diubah dari workspace Partner.
+
+Archive menghapus reference dan menandai asset sebagai `ORPHANED`. Cleanup selalu dry-run kecuali diberi flag eksekusi, menunggu sedikitnya 24 jam, dan mengecek ulang reference:
+
+```bash
+npm run media:cleanup
+npm run media:cleanup -- --execute
+```
+
+## Inventory dan discovery
+
+Partner dapat menerapkan bulk update atomic hingga 90 hari untuk harga malam, sellable unit, dan `stop_sell` pada setiap room miliknya. Override kosong memakai kembali default room. Server menolak unit yang lebih rendah daripada hold dan booking yang sudah mengonsumsi inventory, serta menulis satu audit entry untuk setiap bulk command.
+
+Search dengan tanggal hanya menampilkan property yang memiliki sedikitnya satu room berkapasitas cukup dan tersedia pada seluruh malam `[check-in, check-out)`. Row inventory yang tidak ada memakai default room; row yang ada menerapkan override harga/unit, `stop_sell`, hold, dan booking. Harga hasil dan sorting memakai rata-rata harga aktual selama periode pencarian, lalu detail menghitung subtotal serta service fee 5% dari nightly rate server-side.
+
+Search tanpa tanggal tetap menampilkan katalog published tanpa klaim availability. Search mendukung adult/child capacity, filter harga malam, sorting, serta pagination 12 atau 24 hasil.
+
+Quote menyimpan room terpilih, seluruh nightly rate, subtotal, service fee 5%, grand total, kapasitas tamu, dan expiry absolut 10 menit. Quote terikat ke user aktif atau cookie sesi tamu HTTP-only; checkout memverifikasi kepemilikan dan mewajibkan akun Traveler. Quote tidak menahan inventory. Payment sengaja dinonaktifkan sampai atomic hold dan concurrency test selesai.
 
 ## Verifikasi
 

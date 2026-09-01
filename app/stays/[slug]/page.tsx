@@ -16,7 +16,7 @@ import {
   UsersRound,
 } from "lucide-react";
 import { StayBaliLogo } from "@/components/landing/public-header";
-import { createBookingSummary } from "@/lib/booking-summary";
+import { QuoteButton } from "@/components/booking/quote-button";
 import { formatIdr } from "@/lib/demo-stays";
 import { getPublishedStayBySlug } from "@/lib/public/catalog";
 import { parseSearchQuery } from "@/lib/search-query";
@@ -35,21 +35,19 @@ export async function generateMetadata({ params }: StayPageProps): Promise<Metad
 
 export default async function StayPage({ params, searchParams }: StayPageProps) {
   const { slug } = await params;
-  const stay = await getPublishedStayBySlug(slug);
+  const rawQuery = await searchParams;
+  const preliminaryQuery = parseSearchQuery(rawQuery);
+  const requestedDatesAreValid = preliminaryQuery.errors.length === 0 && preliminaryQuery.nights !== null;
+  const stay = await getPublishedStayBySlug(
+    slug,
+    requestedDatesAreValid ? preliminaryQuery.values : undefined,
+  );
   if (!stay) notFound();
 
-  const rawQuery = await searchParams;
   const query = parseSearchQuery({ ...rawQuery, location: stay.location });
-  const validDates = query.errors.length === 0 && query.nights !== null;
+  const validDates = query.errors.length === 0 && query.nights !== null && stay.isAvailable === true;
   const nights = validDates ? query.nights : null;
-  const price = nights ? createBookingSummary(stay, nights) : null;
-  const checkoutQuery = new URLSearchParams({
-    stay: stay.slug,
-    checkin: query.values.checkin,
-    checkout: query.values.checkout,
-    guests: String(query.values.guests),
-  });
-
+  const price = nights ? stay.pricing : null;
   return (
     <main className="min-h-screen bg-background">
       <header className="border-b border-border bg-white">
@@ -98,10 +96,15 @@ export default async function StayPage({ params, searchParams }: StayPageProps) 
           </p>
         </div>
 
-        <section className="relative h-[360px] overflow-hidden rounded-3xl bg-secondary sm:h-[520px]" aria-label="Property gallery">
-          <Image fill priority alt={`${stay.name} in ${stay.area}`} className="object-cover transition duration-700 hover:scale-[1.02]" sizes="(max-width: 1200px) 100vw, 1200px" src={stay.image} />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent" />
-          <span className="absolute right-5 bottom-5 rounded-xl bg-white/95 px-4 py-2 text-sm font-bold text-foreground shadow-sm backdrop-blur-sm">Property gallery</span>
+        <section className="relative grid h-[360px] grid-cols-1 gap-1 overflow-hidden rounded-3xl bg-secondary sm:h-[520px] md:grid-cols-[2fr_1fr]" aria-label="Property gallery">
+          <div className="group relative overflow-hidden">
+            <Image fill priority alt={`${stay.name} in ${stay.area}`} className="object-cover transition duration-700 group-hover:scale-[1.02]" sizes="(max-width: 768px) 100vw, 67vw" src={stay.images[0]} />
+          </div>
+          <div className="hidden grid-rows-2 gap-1 md:grid">
+            {(stay.images.slice(1, 3).length ? stay.images.slice(1, 3) : [stay.images[0], stay.images[0]]).map((image, index) => <div className="relative overflow-hidden" key={`${image}-${index}`}><Image fill alt={`${stay.name} gallery view ${index + 2}`} className="object-cover transition duration-700 hover:scale-[1.03]" sizes="33vw" src={image} /></div>)}
+          </div>
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-transparent" />
+          <span className="absolute right-5 bottom-5 rounded-xl bg-white/95 px-4 py-2 text-sm font-bold text-foreground shadow-sm backdrop-blur-sm">{stay.images.length} photos</span>
         </section>
 
         <div className="mt-10 grid gap-10 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start">
@@ -165,21 +168,30 @@ export default async function StayPage({ params, searchParams }: StayPageProps) 
                   <input className="mt-1 w-full bg-transparent text-sm font-semibold outline-none" defaultValue={query.values.checkout} name="checkout" required type="date" />
                 </label>
               </div>
-              <label className="block rounded-xl border border-border p-3">
-                <span className="block text-[11px] font-bold uppercase text-muted-foreground">Guests</span>
-                <select className="mt-1 w-full bg-transparent text-sm font-semibold outline-none" defaultValue={String(query.values.guests)} name="guests">
-                  {Array.from({ length: stay.guests }, (_, index) => index + 1).map((guest) => <option key={guest} value={guest}>{guest} {guest === 1 ? "guest" : "guests"}</option>)}
-                </select>
-              </label>
+              <div className="grid grid-cols-2 overflow-hidden rounded-xl border border-border">
+                <label className="border-r border-border p-3">
+                  <span className="block text-[11px] font-bold uppercase text-muted-foreground">Adults</span>
+                  <select className="mt-1 w-full bg-transparent text-sm font-semibold outline-none" defaultValue={String(query.values.guests)} name="guests">
+                    {Array.from({ length: stay.guests }, (_, index) => index + 1).map((guest) => <option key={guest} value={guest}>{guest}</option>)}
+                  </select>
+                </label>
+                <label className="p-3">
+                  <span className="block text-[11px] font-bold uppercase text-muted-foreground">Children</span>
+                  <select className="mt-1 w-full bg-transparent text-sm font-semibold outline-none" defaultValue={String(query.values.children)} name="children">
+                    {Array.from({ length: stay.children + 1 }, (_, count) => <option key={count} value={count}>{count}</option>)}
+                  </select>
+                </label>
+              </div>
 
               {query.errors.length > 0 ? <p className="text-sm font-semibold text-warning">{query.errors[0]}</p> : null}
+              {requestedDatesAreValid && stay.isAvailable === false ? <p className="rounded-xl bg-warning-subtle p-3 text-sm font-semibold text-warning">This stay is not available for every selected night. Try another date range.</p> : null}
 
               {price && nights ? (
                 <div className="space-y-3 border-t border-border pt-4 text-sm">
-                  <div className="flex justify-between"><span className="text-muted-foreground">{formatIdr(stay.pricePerNight)} × {nights} nights</span><span>{formatIdr(price.subtotal)}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">{nights} {nights === 1 ? "night" : "nights"}</span><span>{formatIdr(price.subtotal)}</span></div>
                   <div className="flex justify-between"><span className="text-muted-foreground">Service fee</span><span>{formatIdr(price.serviceFee)}</span></div>
-                  <div className="flex justify-between border-t border-border pt-3 text-base font-extrabold"><span>Total</span><span>{formatIdr(price.total)}</span></div>
-                  <Link className="flex min-h-12 w-full items-center justify-center rounded-xl bg-primary px-5 font-bold text-white transition hover:bg-primary-hover" href={`/checkout?${checkoutQuery.toString()}`}>Reserve this stay</Link>
+                  <div className="flex justify-between border-t border-border pt-3 text-base font-extrabold"><span>Total</span><span>{formatIdr(price.grandTotal)}</span></div>
+                  <QuoteButton adults={query.values.guests} checkin={query.values.checkin} checkout={query.values.checkout} childGuests={query.values.children} slug={stay.slug} />
                 </div>
               ) : (
                 <button className="min-h-12 w-full rounded-xl bg-primary px-5 font-bold text-white transition hover:bg-primary-hover" type="submit">Check availability</button>

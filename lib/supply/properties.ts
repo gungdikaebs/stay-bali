@@ -149,7 +149,7 @@ export async function getOwnedPropertyWorkspace(propertyId: string) {
         },
         media: {
           where: { media: { status: "READY" } },
-          select: { mediaId: true, isCover: true, media: { select: { altText: true } } },
+          select: { mediaId: true, sortOrder: true, isCover: true, media: { select: { altText: true } } },
           orderBy: { sortOrder: "asc" },
         },
         reviews: {
@@ -271,10 +271,20 @@ export async function updateOwnedRoom(roomId: string, input: RoomFormInput) {
   await prisma.$transaction(async (transaction) => {
     const room = await transaction.roomType.findFirst({
       where: { id: roomId, property: { ownerPartnerId: partner.partnerProfile.id } },
-      select: { id: true, property: { select: { id: true, status: true } } },
+      select: {
+        id: true,
+        inventory: {
+          where: { totalUnitsOverride: null },
+          select: { heldUnits: true, bookedUnits: true },
+        },
+        property: { select: { id: true, status: true } },
+      },
     });
     if (!room || !canPartnerEditProperty(room.property.status)) {
       throw new Error("Room cannot be edited.");
+    }
+    if (room.inventory.some((night) => input.totalUnits < night.heldUnits + night.bookedUnits)) {
+      throw new Error("Room units cannot be lower than existing holds and bookings.");
     }
     await assertFacilitiesExist(input.facilityIds, transaction);
     await transaction.roomType.update({

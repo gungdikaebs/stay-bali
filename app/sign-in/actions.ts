@@ -3,10 +3,12 @@
 import { AuthError } from "next-auth";
 import { z } from "zod";
 import { signIn } from "@/auth";
+import { safeInternalRedirect } from "@/lib/auth/redirects";
 
 const signInSchema = z.object({
   email: z.string().trim().toLowerCase().email(),
   password: z.string().min(8).max(128),
+  callbackUrl: z.string().optional(),
 });
 
 export type SignInState = {
@@ -20,6 +22,7 @@ export async function authenticate(
   const result = signInSchema.safeParse({
     email: formData.get("email"),
     password: formData.get("password"),
+    callbackUrl: formData.get("callbackUrl"),
   });
 
   if (!result.success) {
@@ -30,7 +33,7 @@ export async function authenticate(
     await signIn("credentials", {
       email: result.data.email,
       password: result.data.password,
-      redirectTo: "/workspace",
+      redirectTo: safeInternalRedirect(result.data.callbackUrl),
     });
   } catch (error) {
     if (error instanceof AuthError) {

@@ -3,6 +3,8 @@ import Link from "next/link";
 import { ArrowLeft, CheckCircle2, CircleAlert } from "lucide-react";
 import { archivePropertyAction, archiveRoomAction, submitPropertyAction } from "@/app/partner/properties/actions";
 import { PropertyForm, RoomForm } from "@/components/partner/supply-forms";
+import { PropertyMediaManager } from "@/components/partner/property-media-manager";
+import { InventoryForm } from "@/components/partner/inventory-form";
 import { formatIdr } from "@/lib/demo-stays";
 import { getOwnedPropertyWorkspace } from "@/lib/supply/properties";
 
@@ -29,6 +31,11 @@ export default async function PropertyWorkspacePage({ params }: PropertyWorkspac
       </div>
 
       <section className="mt-8 rounded-3xl border border-border bg-white p-5 sm:p-8">
+        <div className="mb-6"><h2 className="font-display text-2xl font-bold">Property photos</h2><p className="mt-2 text-sm text-muted-foreground">Upload at least three photos, choose a cover, and arrange their public order.</p></div>
+        <PropertyMediaManager canEdit={canEdit} media={property.media} propertyId={property.id} />
+      </section>
+
+      <section className="mt-8 rounded-3xl border border-border bg-white p-5 sm:p-8">
         <h2 className="font-display text-2xl font-bold">Submission readiness</h2>
         {submissionIssues.length ? <ul className="mt-4 space-y-2">{submissionIssues.map((issue) => <li className="flex items-center gap-2 text-sm font-semibold text-warning" key={issue}><CircleAlert className="size-4" />{issue}</li>)}</ul> : <p className="mt-4 flex items-center gap-2 text-sm font-semibold text-success"><CheckCircle2 className="size-4" />Property meets the submission checklist.</p>}
         <form action={submitPropertyAction} className="mt-5"><input name="propertyId" type="hidden" value={property.id} /><button className="min-h-10 rounded-xl bg-primary px-5 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-40" disabled={!canSubmit} type="submit">Submit for Admin review</button></form>
@@ -45,6 +52,7 @@ export default async function PropertyWorkspacePage({ params }: PropertyWorkspac
           <article className="rounded-3xl border border-border bg-white p-5 sm:p-8" key={room.id}>
             <div className="mb-5 flex flex-wrap items-start justify-between gap-4"><div><h3 className="font-display text-xl font-bold">{room.name}</h3><p className="mt-1 text-sm text-muted-foreground">{formatIdr(room.basePrice)} · {room.totalUnits} units · {room.adultCapacity} adults</p></div>{canEdit ? <form action={archiveRoomAction}><input name="propertyId" type="hidden" value={property.id} /><input name="roomId" type="hidden" value={room.id} /><button className="rounded-xl border border-red-200 px-4 py-2 text-xs font-bold text-red-700 hover:bg-red-50" type="submit">Archive room</button></form> : null}</div>
             {canEdit ? <RoomForm facilities={facilities} initial={{ id: room.id, name: room.name, description: room.description, adultCapacity: room.adultCapacity, childCapacity: room.childCapacity, bedType: room.bedType, sizeSqm: room.sizeSqm, basePrice: room.basePrice, totalUnits: room.totalUnits, facilityIds: room.facilities.map((item) => item.facilityId) }} propertyId={property.id} /> : null}
+            {room.isActive ? <InventoryForm propertyId={property.id} roomTypeId={room.id} /> : null}
           </article>
         ))}
         {canEdit ? <article className="rounded-3xl border border-dashed border-border bg-white p-5 sm:p-8"><h3 className="font-display text-xl font-bold">Add room type</h3><div className="mt-5"><RoomForm facilities={facilities} propertyId={property.id} /></div></article> : null}

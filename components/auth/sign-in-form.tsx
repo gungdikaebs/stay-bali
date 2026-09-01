@@ -5,13 +5,14 @@ import { authenticate, type SignInState } from "@/app/sign-in/actions";
 
 const initialState: SignInState = { message: "" };
 
-export function SignInForm() {
+export function SignInForm({ callbackUrl = "/workspace" }: { callbackUrl?: string }) {
   const [state, formAction, pending] = useActionState(authenticate, initialState);
 
   const fieldClassName = "mt-2 h-12 w-full rounded-xl border border-border bg-white px-4 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15";
 
   return (
     <form action={formAction} className="mt-8 space-y-5">
+      <input name="callbackUrl" type="hidden" value={callbackUrl} />
       <label className="block text-sm font-semibold" htmlFor="email">
         Email address
         <input className={fieldClassName} autoComplete="email" id="email" name="email" required type="email" placeholder="you@example.com" />

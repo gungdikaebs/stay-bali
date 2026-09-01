@@ -61,6 +61,7 @@ model User {
   uploadedMedia   MediaAsset[]       @relation("MediaUploader")
   propertyReviews PropertyReview[]   @relation("PropertyReviewer")
   auditLogs       AuditLog[]         @relation("AuditActor")
+  quotes          Quote[]
 
   @@index([role, status])
   @@map("users")
@@ -157,6 +158,7 @@ model RoomType {
   facilities    RoomFacility[]
   media         RoomMedia[]
   inventory     InventoryDate[]
+  quotes        Quote[]
 
   @@index([propertyId, isActive])
   @@map("room_types")
@@ -263,6 +265,40 @@ model InventoryDate {
   @@unique([roomTypeId, stayDate])
   @@index([stayDate, stopSell])
   @@map("inventory_dates")
+}
+
+model Quote {
+  id             String       @id @default(cuid()) @db.VarChar(30)
+  roomTypeId     String       @map("room_type_id") @db.VarChar(30)
+  userId         String?      @map("user_id") @db.VarChar(30)
+  guestSessionId String?      @map("guest_session_id") @db.VarChar(64)
+  checkinDate    DateTime     @map("checkin_date") @db.Date
+  checkoutDate   DateTime     @map("checkout_date") @db.Date
+  adultCount     Int          @map("adult_count") @db.SmallInt
+  childCount     Int          @map("child_count") @db.SmallInt
+  subtotal       Int          @db.Integer
+  serviceFee     Int          @map("service_fee") @db.Integer
+  grandTotal     Int          @map("grand_total") @db.Integer
+  expiresAt      DateTime     @map("expires_at") @db.Timestamp(3)
+  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamp(3)
+  roomType       RoomType     @relation(fields: [roomTypeId], references: [id], onDelete: Restrict)
+  user           User?        @relation(fields: [userId], references: [id], onDelete: Restrict)
+  nights         QuoteNight[]
+
+  @@index([userId, expiresAt])
+  @@index([guestSessionId, expiresAt])
+  @@index([roomTypeId, checkinDate, checkoutDate])
+  @@map("quotes")
+}
+
+model QuoteNight {
+  quoteId   String   @map("quote_id") @db.VarChar(30)
+  stayDate  DateTime @map("stay_date") @db.Date
+  unitPrice Int      @map("unit_price") @db.Integer
+  quote     Quote    @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+
+  @@id([quoteId, stayDate])
+  @@map("quote_nights")
 }
 
 model AuditLog {

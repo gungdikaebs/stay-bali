@@ -8,20 +8,23 @@ import { SignInForm } from "@/components/auth/sign-in-form";
 import { StayBaliLogo } from "@/components/landing/public-header";
 import { getCurrentUser } from "@/lib/auth/authorization";
 import { getRoleHome } from "@/lib/auth/policies";
+import { safeInternalRedirect } from "@/lib/auth/redirects";
 
 export const metadata: Metadata = {
   title: "Sign in",
   description: "Secure access to your StayBali workspace.",
 };
 
-export default async function SignInPage() {
+export default async function SignInPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+  const rawCallback = (await searchParams).callbackUrl;
+  const callbackUrl = safeInternalRedirect(Array.isArray(rawCallback) ? rawCallback[0] : rawCallback);
   const user = await getCurrentUser();
   if (
     user &&
     (user.role !== UserRole.PARTNER ||
       user.partnerProfile?.status === PartnerStatus.ACTIVE)
   ) {
-    redirect(getRoleHome(user.role));
+    redirect(user.role === UserRole.TRAVELER ? callbackUrl : getRoleHome(user.role));
   }
 
   return (
@@ -45,7 +48,7 @@ export default async function SignInPage() {
           <span className="flex size-11 items-center justify-center rounded-xl bg-brand-teal-subtle text-primary"><ShieldCheck className="size-5" /></span>
           <h2 className="font-display mt-5 text-4xl font-extrabold tracking-[-0.05em]">Welcome back.</h2>
           <p className="mt-3 leading-7 text-muted-foreground">Use your credentials to access the workspace assigned to your account.</p>
-          <SignInForm />
+          <SignInForm callbackUrl={callbackUrl} />
           <p className="mt-7 text-center text-sm text-muted-foreground">Looking for a stay? <Link className="font-bold text-primary hover:underline" href="/">Return to StayBali</Link></p>
         </div>
       </section>

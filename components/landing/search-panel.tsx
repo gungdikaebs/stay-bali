@@ -14,6 +14,7 @@ type SearchPanelProps = {
     checkin?: string;
     checkout?: string;
     guests?: string;
+    children?: string;
   };
   compact?: boolean;
 };
@@ -27,7 +28,7 @@ export function SearchPanel({
       <form
         action="/search"
         method="get"
-        className="grid min-w-0 gap-1 lg:grid-cols-[1.15fr_1fr_1fr_0.9fr_auto]"
+        className="grid min-w-0 gap-1 lg:grid-cols-[1.15fr_1fr_1fr_0.75fr_0.75fr_auto]"
         aria-describedby="search-form-note"
       >
         <label className="group flex min-w-0 items-center gap-3 rounded-2xl px-4 py-2 transition hover:bg-secondary focus-within:bg-secondary">
@@ -85,19 +86,24 @@ export function SearchPanel({
           <UsersRound className="size-5 shrink-0 text-primary" aria-hidden="true" />
           <span className="min-w-0 flex-1">
             <span className="block text-[11px] font-bold tracking-[0.1em] text-muted-foreground uppercase">
-              Guests
+              Adults
             </span>
             <select
               className={fieldClassName}
               defaultValue={initialValues?.guests ?? "2"}
               name="guests"
             >
-              <option value="1">1 guest</option>
-              <option value="2">2 guests</option>
-              <option value="3">3 guests</option>
-              <option value="4">4 guests</option>
-              <option value="5">5 guests</option>
-              <option value="6">6 guests</option>
+              {Array.from({ length: 10 }, (_, index) => index + 1).map((count) => <option key={count} value={count}>{count}</option>)}
+            </select>
+          </span>
+        </label>
+
+        <label className="group flex min-w-0 items-center gap-3 rounded-2xl px-4 py-2 transition hover:bg-secondary focus-within:bg-secondary lg:border-l lg:border-border">
+          <UsersRound className="size-5 shrink-0 text-primary" aria-hidden="true" />
+          <span className="min-w-0 flex-1">
+            <span className="block text-[11px] font-bold tracking-[0.1em] text-muted-foreground uppercase">Children</span>
+            <select className={fieldClassName} defaultValue={initialValues?.children ?? "0"} name="children">
+              {Array.from({ length: 11 }, (_, count) => <option key={count} value={count}>{count}</option>)}
             </select>
           </span>
         </label>
@@ -113,7 +119,7 @@ export function SearchPanel({
         </button>
       </form>
       <p className="sr-only" id="search-form-note">
-        Select a Bali area and guest count. Travel dates are optional until availability is implemented.
+        Select a Bali area, dates, and adult and child guest counts. Dates are optional for catalog browsing.
       </p>
     </div>
   );

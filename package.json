@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "tsx --test lib/auth/policies.test.ts lib/supply/rules.test.ts",
+    "test": "tsx --test lib/auth/policies.test.ts lib/supply/rules.test.ts lib/media/rules.test.ts lib/inventory/rules.test.ts lib/search-query.test.ts",
+    "media:cleanup": "tsx scripts/cleanup-orphan-media.ts",
     "db:generate": "prisma generate",
     "db:validate": "prisma validate",
     "db:migrate": "prisma migrate dev",
@@ -27,6 +28,7 @@
     "next-auth": "^5.0.0-beta.32",
     "react": "19.2.8",
     "react-dom": "19.2.8",
+    "sharp": "^0.35.4",
     "zod": "^4.5.4"
   },
   "devDependencies": {

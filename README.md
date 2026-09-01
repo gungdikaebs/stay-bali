@@ -32,6 +32,7 @@ npm run db:deploy    # Apply committed migrations
 npm run db:status    # Check migration state
 npm run db:seed      # Recreate development seed data
 npm run db:studio    # Open Prisma Studio
+npm run media:cleanup # Dry-run orphan media cleanup (add -- --execute to delete)
 ```
 
 Technical summaries:
@@ -39,3 +40,5 @@ Technical summaries:
 - `docs/DATABASE_FOUNDATION.md`
 - `docs/AUTHENTICATION.md`
 - `docs/SUPPLY_WORKFLOW.md`
+
+Current vertical slice: authenticated supply management, secure media lifecycle, bulk room inventory, paginated availability search, and expiring server-side quotes.

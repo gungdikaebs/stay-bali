@@ -43,6 +43,8 @@ function slugify(value: string) {
 async function clearSeedData() {
   await prisma.auditLog.deleteMany();
   await prisma.propertyReview.deleteMany();
+  await prisma.quoteNight.deleteMany();
+  await prisma.quote.deleteMany();
   await prisma.inventoryDate.deleteMany();
   await prisma.roomMedia.deleteMany();
   await prisma.propertyMedia.deleteMany();

@@ -2,6 +2,7 @@ import "server-only";
 
 import { connection } from "next/server";
 import type { PropertyType } from "@/generated/prisma/client";
+import { calculateStayPrice, listStayDates } from "@/lib/inventory/rules";
 import { prisma } from "@/lib/prisma";
 import type { SearchValues } from "@/lib/search-query";
 
@@ -32,29 +33,44 @@ const publicCardSelect = {
   type: true,
   area: true,
   cancellationPolicy: true,
+  media: {
+    where: { media: { status: "READY" } },
+    select: { mediaId: true },
+    orderBy: [{ isCover: "desc" }, { sortOrder: "asc" }],
+    take: 1,
+  },
   rooms: {
     where: { archivedAt: null, isActive: true },
-    select: { adultCapacity: true, basePrice: true },
+    select: { adultCapacity: true, childCapacity: true, basePrice: true },
     orderBy: { basePrice: "asc" },
   },
 } satisfies import("@/generated/prisma/client").Prisma.PropertySelect;
 
-function toPublicCard(property: {
+type PublicCardProperty = {
   name: string;
   slug: string;
   type: PropertyType;
   area: string;
   cancellationPolicy: string;
-  rooms: { adultCapacity: number; basePrice: number }[];
-}) {
+  media: { mediaId: string }[];
+  rooms: { adultCapacity: number; childCapacity: number; basePrice: number }[];
+};
+
+function toPublicCard(
+  property: PublicCardProperty,
+  selectedRoom = property.rooms[0],
+  pricePerNight = selectedRoom?.basePrice ?? 0,
+) {
   return {
     slug: property.slug,
     name: property.name,
     area: property.area,
     type: typeLabels[property.type],
-    guests: property.rooms[0]?.adultCapacity ?? 1,
-    pricePerNight: property.rooms[0]?.basePrice ?? 0,
-    image: imageFromArea(property.area),
+    guests: selectedRoom?.adultCapacity ?? 1,
+    pricePerNight,
+    image: property.media[0]
+      ? `/media/${property.media[0].mediaId}/display`
+      : imageFromArea(property.area),
     highlight: shortPolicy(property.cancellationPolicy),
   };
 }
@@ -72,7 +88,7 @@ export async function listFeaturedPublishedStays(limit = 8) {
     take: limit,
   });
 
-  return properties.map(toPublicCard);
+  return properties.map((property) => toPublicCard(property));
 }
 
 function imageFromArea(area: string) {
@@ -84,6 +100,13 @@ function shortPolicy(policy: string) {
 }
 
 export async function searchPublishedStays(values: SearchValues) {
+  const requestedDates = listStayDates(values.checkin, values.checkout);
+  const inventoryDateFilter = requestedDates
+    ? {
+        gte: new Date(`${requestedDates[0]}T00:00:00.000Z`),
+        lt: new Date(`${values.checkout}T00:00:00.000Z`),
+      }
+    : undefined;
   const properties = await prisma.property.findMany({
     where: {
       status: "PUBLISHED",
@@ -97,33 +120,89 @@ export async function searchPublishedStays(values: SearchValues) {
           archivedAt: null,
           isActive: true,
           adultCapacity: { gte: values.guests },
+          childCapacity: { gte: values.children },
         },
       },
     },
     select: {
       ...publicCardSelect,
       rooms: {
-        ...publicCardSelect.rooms,
         where: {
           archivedAt: null,
           isActive: true,
           adultCapacity: { gte: values.guests },
+          childCapacity: { gte: values.children },
         },
+        select: {
+          adultCapacity: true,
+          childCapacity: true,
+          basePrice: true,
+          totalUnits: true,
+          inventory: {
+            where: inventoryDateFilter ? { stayDate: inventoryDateFilter } : { id: "__no_inventory__" },
+            select: {
+              stayDate: true,
+              priceOverride: true,
+              totalUnitsOverride: true,
+              heldUnits: true,
+              bookedUnits: true,
+              stopSell: true,
+            },
+            orderBy: { stayDate: "asc" },
+          },
+        },
+        orderBy: { basePrice: "asc" },
       },
     },
-    take: 24,
+    take: 250,
   });
 
-  const stays = properties.map(toPublicCard);
+  const stays = properties.flatMap((property) => {
+    if (!requestedDates) return [toPublicCard(property)];
 
-  return stays.sort((left, right) => {
+    const availableRooms = property.rooms.flatMap((room) => {
+      const price = calculateStayPrice({
+        checkin: values.checkin,
+        checkout: values.checkout,
+        basePrice: room.basePrice,
+        totalUnits: room.totalUnits,
+        inventory: room.inventory,
+      });
+      return price ? [{ room, price }] : [];
+    }).sort((left, right) => left.price.averageNightlyPrice - right.price.averageNightlyPrice);
+    const best = availableRooms[0];
+    return best
+      ? [toPublicCard(property, best.room, best.price.averageNightlyPrice)]
+      : [];
+  });
+
+  const filteredStays = stays.filter((stay) =>
+    (values.minPrice === null || stay.pricePerNight >= values.minPrice) &&
+    (values.maxPrice === null || stay.pricePerNight <= values.maxPrice),
+  ).sort((left, right) => {
     if (values.sort === "price-low") return left.pricePerNight - right.pricePerNight;
     if (values.sort === "price-high") return right.pricePerNight - left.pricePerNight;
     return left.name.localeCompare(right.name);
   });
+  const total = filteredStays.length;
+  const totalPages = Math.max(1, Math.ceil(total / values.pageSize));
+  const page = Math.min(values.page, totalPages);
+  const offset = (page - 1) * values.pageSize;
+
+  return {
+    stays: filteredStays.slice(offset, offset + values.pageSize),
+    total,
+    page,
+    pageSize: values.pageSize,
+    totalPages,
+  };
 }
 
-export async function getPublishedStayBySlug(slug: string) {
+export async function getPublishedStayBySlug(
+  slug: string,
+  search?: Pick<SearchValues, "checkin" | "checkout" | "guests" | "children">,
+) {
+  const requestedDates = search ? listStayDates(search.checkin, search.checkout) : null;
   const property = await prisma.property.findFirst({
     where: { slug, status: "PUBLISHED", archivedAt: null },
     select: {
@@ -133,22 +212,68 @@ export async function getPublishedStayBySlug(slug: string) {
       type: true,
       description: true,
       cancellationPolicy: true,
+      media: {
+        where: { media: { status: "READY" } },
+        select: { mediaId: true },
+        orderBy: [{ isCover: "desc" }, { sortOrder: "asc" }],
+        take: 5,
+      },
       facilities: { select: { facility: { select: { name: true } } } },
       rooms: {
-        where: { archivedAt: null, isActive: true },
+        where: {
+          archivedAt: null,
+          isActive: true,
+        },
         select: {
           name: true,
           description: true,
           adultCapacity: true,
+          childCapacity: true,
           bedType: true,
           basePrice: true,
+          totalUnits: true,
           facilities: { select: { facility: { select: { name: true } } } },
+          inventory: {
+            where: requestedDates
+              ? {
+                  stayDate: {
+                    gte: new Date(`${requestedDates[0]}T00:00:00.000Z`),
+                    lt: new Date(`${search?.checkout}T00:00:00.000Z`),
+                  },
+                }
+              : { id: "__no_inventory__" },
+            select: {
+              stayDate: true,
+              priceOverride: true,
+              totalUnitsOverride: true,
+              heldUnits: true,
+              bookedUnits: true,
+              stopSell: true,
+            },
+            orderBy: { stayDate: "asc" },
+          },
         },
         orderBy: { basePrice: "asc" },
       },
     },
   });
-  const room = property?.rooms[0];
+  const pricedRooms = requestedDates && search && property
+    ? property.rooms.filter((room) =>
+        room.adultCapacity >= search.guests &&
+        room.childCapacity >= search.children,
+      ).flatMap((room) => {
+        const pricing = calculateStayPrice({
+          checkin: search.checkin,
+          checkout: search.checkout,
+          basePrice: room.basePrice,
+          totalUnits: room.totalUnits,
+          inventory: room.inventory,
+        });
+        return pricing ? [{ room, pricing }] : [];
+      }).sort((left, right) => left.pricing.averageNightlyPrice - right.pricing.averageNightlyPrice)
+    : [];
+  const pricedRoom = pricedRooms[0];
+  const room = pricedRoom?.room ?? property?.rooms[0];
   if (!property || !room) return null;
 
   const amenities = [...new Set([
@@ -163,8 +288,16 @@ export async function getPublishedStayBySlug(slug: string) {
     area: property.area,
     type: typeLabels[property.type],
     guests: room.adultCapacity,
-    pricePerNight: room.basePrice,
-    image: imageFromArea(property.area),
+    children: room.childCapacity,
+    pricePerNight: pricedRoom?.pricing.averageNightlyPrice ?? room.basePrice,
+    pricing: pricedRoom?.pricing ?? null,
+    isAvailable: requestedDates ? Boolean(pricedRoom) : null,
+    image: property.media[0]
+      ? `/media/${property.media[0].mediaId}/display`
+      : imageFromArea(property.area),
+    images: property.media.length
+      ? property.media.map((item) => `/media/${item.mediaId}/display`)
+      : [imageFromArea(property.area)],
     highlight: shortPolicy(property.cancellationPolicy),
     description: property.description,
     roomName: room.name,

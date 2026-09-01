@@ -30,13 +30,32 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   const query = parseSearchQuery(await searchParams);
   const { values, nights, errors } = query;
 
-  const stays = await searchPublishedStays(values);
+  const result = await searchPublishedStays(values);
+  const { stays, total, page, totalPages } = result;
 
   const hasValidStayDates = errors.length === 0 && nights !== null;
   const stayQuery = new URLSearchParams();
   if (values.checkin) stayQuery.set("checkin", values.checkin);
   if (values.checkout) stayQuery.set("checkout", values.checkout);
   stayQuery.set("guests", String(values.guests));
+  stayQuery.set("children", String(values.children));
+
+  function pageHref(targetPage: number) {
+    const params = new URLSearchParams({
+      location: values.location,
+      checkin: values.checkin,
+      checkout: values.checkout,
+      guests: String(values.guests),
+      children: String(values.children),
+      type: values.type,
+      sort: values.sort,
+      pageSize: String(values.pageSize),
+      page: String(targetPage),
+    });
+    if (values.minPrice !== null) params.set("minPrice", String(values.minPrice));
+    if (values.maxPrice !== null) params.set("maxPrice", String(values.maxPrice));
+    return `/search?${params.toString()}`;
+  }
 
   return (
     <main className="min-h-screen bg-background">
@@ -62,6 +81,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
               checkin: values.checkin,
               checkout: values.checkout,
               guests: String(values.guests),
+              children: String(values.children),
             }}
           />
         </div>
@@ -74,11 +94,11 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
               {values.location === "all" ? locationLabels.all : `${locationLabels[values.location]}, Bali`}
             </p>
             <h1 className="font-display text-3xl font-extrabold tracking-[-0.04em] text-foreground sm:text-4xl">
-              {stays.length} {stays.length === 1 ? "stay" : "stays"} found
+              {total} {total === 1 ? "stay" : "stays"} found
             </h1>
             <p className="mt-2 text-sm text-muted-foreground">
               {hasValidStayDates
-                ? `${nights} ${nights === 1 ? "night" : "nights"} · ${values.guests} ${values.guests === 1 ? "guest" : "guests"} · Published catalog match`
+                ? `${nights} ${nights === 1 ? "night" : "nights"} · ${values.guests} adults · ${values.children} children · Available for every night`
                 : "Choose valid dates to check availability."}
             </p>
           </div>
@@ -88,6 +108,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
             <input name="checkin" type="hidden" value={values.checkin} />
             <input name="checkout" type="hidden" value={values.checkout} />
             <input name="guests" type="hidden" value={values.guests} />
+            <input name="children" type="hidden" value={values.children} />
             <label className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-border bg-white px-3 text-sm font-semibold">
               <Filter className="size-4 text-primary" aria-hidden="true" />
               <span className="sr-only">Property type</span>
@@ -103,6 +124,14 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
               </select>
             </label>
             <label className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-border bg-white px-3 text-sm font-semibold">
+              <span className="sr-only">Minimum nightly price</span>
+              <input className="w-28 bg-transparent outline-none" defaultValue={values.minPrice ?? ""} min={0} name="minPrice" placeholder="Min IDR" type="number" />
+            </label>
+            <label className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-border bg-white px-3 text-sm font-semibold">
+              <span className="sr-only">Maximum nightly price</span>
+              <input className="w-28 bg-transparent outline-none" defaultValue={values.maxPrice ?? ""} min={1} name="maxPrice" placeholder="Max IDR" type="number" />
+            </label>
+            <label className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-border bg-white px-3 text-sm font-semibold">
               <SlidersHorizontal className="size-4 text-primary" aria-hidden="true" />
               <span className="sr-only">Sort results</span>
               <select
@@ -113,6 +142,13 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
                 <option value="recommended">Recommended</option>
                 <option value="price-low">Price: low to high</option>
                 <option value="price-high">Price: high to low</option>
+              </select>
+            </label>
+            <label className="inline-flex min-h-11 items-center rounded-xl border border-border bg-white px-3 text-sm font-semibold">
+              <span className="sr-only">Results per page</span>
+              <select className="bg-transparent outline-none" defaultValue={values.pageSize} name="pageSize">
+                <option value="12">12 per page</option>
+                <option value="24">24 per page</option>
               </select>
             </label>
             <button
@@ -134,8 +170,9 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
         ) : null}
 
         {stays.length > 0 ? (
-          <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
-            {stays.map((stay) => (
+          <>
+            <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+              {stays.map((stay) => (
               <PropertyCard
                 key={stay.slug}
                 area={stay.area}
@@ -147,8 +184,16 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
                 price={formatIdr(stay.pricePerNight)}
                 type={stay.type}
               />
-            ))}
-          </div>
+              ))}
+            </div>
+            {totalPages > 1 ? (
+              <nav className="mt-10 flex items-center justify-center gap-3" aria-label="Search result pages">
+                {page > 1 ? <Link className="rounded-xl border border-border bg-white px-4 py-2 text-sm font-bold hover:border-primary" href={pageHref(page - 1)}>Previous</Link> : null}
+                <span className="px-2 text-sm font-semibold text-muted-foreground">Page {page} of {totalPages}</span>
+                {page < totalPages ? <Link className="rounded-xl border border-border bg-white px-4 py-2 text-sm font-bold hover:border-primary" href={pageHref(page + 1)}>Next</Link> : null}
+              </nav>
+            ) : null}
+          </>
         ) : (
           <div className="rounded-3xl border border-dashed border-border bg-white px-6 py-16 text-center">
             <h2 className="font-display text-2xl font-bold text-foreground">

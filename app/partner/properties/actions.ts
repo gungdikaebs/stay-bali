@@ -4,6 +4,16 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import {
+  archiveOwnedPropertyMedia,
+  moveOwnedPropertyMedia,
+  setOwnedPropertyCover,
+} from "@/lib/media/property-media";
+import { bulkUpdateOwnedInventory } from "@/lib/inventory/inventory";
+import {
+  bulkInventorySchema,
+  type InventoryActionState,
+} from "@/lib/inventory/schemas";
+import {
   archiveOwnedProperty,
   archiveOwnedRoom,
   createOwnedProperty,
@@ -163,4 +173,96 @@ export async function submitPropertyAction(formData: FormData) {
   revalidatePath("/partner/properties");
   revalidatePath("/admin");
   revalidatePath("/admin/properties");
+}
+
+const mediaActionSchema = z.object({
+  propertyId: entityIdSchema,
+  mediaId: entityIdSchema,
+});
+
+function revalidatePropertyMedia(propertyId: string) {
+  revalidatePath("/");
+  revalidatePath("/search");
+  revalidatePath("/partner");
+  revalidatePath("/partner/properties");
+  revalidatePath(`/partner/properties/${propertyId}`);
+  revalidatePath("/admin/properties");
+}
+
+export async function archivePropertyMediaAction(formData: FormData) {
+  const result = mediaActionSchema.safeParse({
+    propertyId: formData.get("propertyId"),
+    mediaId: formData.get("mediaId"),
+  });
+  if (!result.success) throw new Error("Invalid media archive request.");
+  await archiveOwnedPropertyMedia(result.data.propertyId, result.data.mediaId);
+  revalidatePropertyMedia(result.data.propertyId);
+}
+
+export async function setPropertyCoverAction(formData: FormData) {
+  const result = mediaActionSchema.safeParse({
+    propertyId: formData.get("propertyId"),
+    mediaId: formData.get("mediaId"),
+  });
+  if (!result.success) throw new Error("Invalid cover request.");
+  await setOwnedPropertyCover(result.data.propertyId, result.data.mediaId);
+  revalidatePropertyMedia(result.data.propertyId);
+}
+
+export async function movePropertyMediaAction(formData: FormData) {
+  const result = mediaActionSchema.extend({ direction: z.enum(["up", "down"]) }).safeParse({
+    propertyId: formData.get("propertyId"),
+    mediaId: formData.get("mediaId"),
+    direction: formData.get("direction"),
+  });
+  if (!result.success) throw new Error("Invalid media reorder request.");
+  await moveOwnedPropertyMedia(result.data.propertyId, result.data.mediaId, result.data.direction);
+  revalidatePropertyMedia(result.data.propertyId);
+}
+
+export async function updateInventoryAction(
+  propertyId: string,
+  roomTypeId: string,
+  _previousState: InventoryActionState,
+  formData: FormData,
+): Promise<InventoryActionState> {
+  const ids = z.object({ propertyId: entityIdSchema, roomTypeId: entityIdSchema }).safeParse({
+    propertyId,
+    roomTypeId,
+  });
+  const result = bulkInventorySchema.safeParse({
+    startDate: formData.get("startDate"),
+    endDate: formData.get("endDate"),
+    priceOverride: formData.get("priceOverride"),
+    totalUnitsOverride: formData.get("totalUnitsOverride"),
+    stopSell: formData.get("stopSell") === "on",
+  });
+  if (!ids.success || !result.success) {
+    return {
+      status: "error",
+      message: "Review the inventory date range and override values.",
+      errors: result.success ? undefined : result.error.flatten().fieldErrors,
+    };
+  }
+
+  try {
+    await bulkUpdateOwnedInventory(ids.data.roomTypeId, result.data);
+    revalidatePath(`/partner/properties/${ids.data.propertyId}`);
+    revalidatePath("/");
+    revalidatePath("/search");
+    revalidatePath("/stays/[slug]", "page");
+    return { status: "success", message: "Inventory updated for the selected date range." };
+  } catch (error) {
+    const safeMessage = error instanceof Error && [
+      "Invalid inventory date range.",
+      "Room type not found.",
+      "Units cannot be lower than existing holds and bookings.",
+    ].includes(error.message)
+      ? error.message
+      : "Inventory could not be updated.";
+    return {
+      status: "error",
+      message: safeMessage,
+    };
+  }
 }

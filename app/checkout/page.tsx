@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { cookies } from "next/headers";
 import {
   ArrowLeft,
   CalendarDays,
@@ -12,10 +13,10 @@ import {
   UserRound,
 } from "lucide-react";
 import { StayBaliLogo } from "@/components/landing/public-header";
-import { createBookingSummary } from "@/lib/booking-summary";
+import { UserRole } from "@/generated/prisma/client";
 import { formatIdr, formatStayDate } from "@/lib/demo-stays";
-import { getPublishedStayBySlug } from "@/lib/public/catalog";
-import { parseSearchQuery } from "@/lib/search-query";
+import { getCurrentUser } from "@/lib/auth/authorization";
+import { getOwnedQuote } from "@/lib/quote/quotes";
 
 export const metadata: Metadata = {
   title: "Checkout",
@@ -32,24 +33,53 @@ function first(value: string | string[] | undefined) {
 
 export default async function CheckoutPage({ searchParams }: CheckoutPageProps) {
   const rawQuery = await searchParams;
-  const stay = await getPublishedStayBySlug(first(rawQuery.stay) ?? "");
-  if (!stay) notFound();
+  const quoteId = first(rawQuery.quote) ?? "";
+  const user = await getCurrentUser();
+  const guestSessionId = (await cookies()).get("staybali_guest_session")?.value;
+  const quote = await getOwnedQuote(quoteId, { userId: user?.id, guestSessionId });
+  if (!quote) notFound();
 
-  const query = parseSearchQuery({ ...rawQuery, location: stay.location });
-  if (query.errors.length > 0 || query.nights === null) {
+  if (quote.expiresAt <= new Date()) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-background px-4">
         <div className="max-w-md text-center">
           <CalendarDays className="mx-auto size-10 text-primary" aria-hidden="true" />
-          <h1 className="font-display mt-4 text-3xl font-extrabold">Your dates need another look.</h1>
-          <p className="mt-3 leading-7 text-muted-foreground">Choose valid check-in and check-out dates before continuing to checkout.</p>
-          <Link className="mt-7 inline-flex min-h-12 items-center justify-center rounded-xl bg-primary px-6 font-bold text-white hover:bg-primary-hover" href={`/stays/${stay.slug}`}>Return to {stay.name}</Link>
+          <h1 className="font-display mt-4 text-3xl font-extrabold">This quote has expired.</h1>
+          <p className="mt-3 leading-7 text-muted-foreground">Rates and availability are held in a quote for 10 minutes. Check the dates again to create a fresh quote.</p>
+          <Link className="mt-7 inline-flex min-h-12 items-center justify-center rounded-xl bg-primary px-6 font-bold text-white hover:bg-primary-hover" href={`/stays/${quote.roomType.property.slug}`}>Return to {quote.roomType.property.name}</Link>
         </div>
       </main>
     );
   }
 
-  const summary = createBookingSummary(stay, query.nights);
+  if (!user || user.role !== UserRole.TRAVELER) {
+    const callbackUrl = `/checkout?quote=${encodeURIComponent(quote.id)}`;
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-background px-4">
+        <div className="max-w-md rounded-3xl border border-border bg-white p-8 text-center shadow-card">
+          <UserRound className="mx-auto size-10 text-primary" aria-hidden="true" />
+          <h1 className="font-display mt-4 text-3xl font-extrabold">Traveler sign-in required.</h1>
+          <p className="mt-3 leading-7 text-muted-foreground">Your secure quote is ready. Sign in with a Traveler account before entering booking details.</p>
+          {!user ? <Link className="mt-7 inline-flex min-h-12 items-center justify-center rounded-xl bg-primary px-6 font-bold text-white hover:bg-primary-hover" href={`/sign-in?callbackUrl=${encodeURIComponent(callbackUrl)}`}>Sign in to continue</Link> : <Link className="mt-7 inline-flex min-h-12 items-center justify-center rounded-xl bg-primary px-6 font-bold text-white hover:bg-primary-hover" href="/workspace">Return to workspace</Link>}
+        </div>
+      </main>
+    );
+  }
+
+  const property = quote.roomType.property;
+  const checkin = quote.checkinDate.toISOString().slice(0, 10);
+  const checkout = quote.checkoutDate.toISOString().slice(0, 10);
+  const nights = quote.nights.length;
+  const stay = {
+    slug: property.slug,
+    name: property.name,
+    roomName: quote.roomType.name,
+    area: property.area,
+    image: property.media[0] ? `/media/${property.media[0].mediaId}/display` : "/images/hero-bali-villa.jpg",
+    pricePerNight: Math.round(quote.subtotal / nights),
+  };
+  const query = { values: { checkin, checkout, guests: quote.adultCount, children: quote.childCount }, nights };
+  const summary = { subtotal: quote.subtotal, serviceFee: quote.serviceFee, total: quote.grandTotal };
   const fieldClassName = "mt-2 h-12 w-full rounded-xl border border-border bg-white px-4 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15";
 
   return (
@@ -65,7 +95,7 @@ export default async function CheckoutPage({ searchParams }: CheckoutPageProps) 
       </header>
 
       <div className="mx-auto max-w-[1120px] px-4 py-8 sm:px-6 sm:py-12">
-        <Link className="mb-7 inline-flex items-center gap-2 text-sm font-bold text-muted-foreground hover:text-primary" href={`/stays/${stay.slug}?checkin=${query.values.checkin}&checkout=${query.values.checkout}&guests=${query.values.guests}`}>
+        <Link className="mb-7 inline-flex items-center gap-2 text-sm font-bold text-muted-foreground hover:text-primary" href={`/stays/${stay.slug}?checkin=${query.values.checkin}&checkout=${query.values.checkout}&guests=${query.values.guests}&children=${query.values.children}`}>
           <ArrowLeft className="size-4" aria-hidden="true" />
           Back to property
         </Link>
@@ -77,18 +107,15 @@ export default async function CheckoutPage({ searchParams }: CheckoutPageProps) 
             <p className="mt-3 text-muted-foreground">We&apos;ll use these details for your booking confirmation and arrival information.</p>
 
             <form action="/payment" method="get" className="mt-8 space-y-8">
-              <input type="hidden" name="stay" value={stay.slug} />
-              <input type="hidden" name="checkin" value={query.values.checkin} />
-              <input type="hidden" name="checkout" value={query.values.checkout} />
-              <input type="hidden" name="guests" value={query.values.guests} />
+              <input type="hidden" name="quote" value={quote.id} />
 
               <section className="rounded-2xl border border-border bg-white p-5 sm:p-6">
                 <h2 className="flex items-center gap-3 font-display text-xl font-bold"><UserRound className="size-5 text-primary" />Guest details</h2>
                 <div className="mt-6 grid gap-5 sm:grid-cols-2">
-                  <label className="text-sm font-semibold sm:col-span-2">Full name<input className={fieldClassName} autoComplete="name" required type="text" placeholder="Name as shown on ID" /></label>
-                  <label className="text-sm font-semibold">Email address<input className={fieldClassName} autoComplete="email" required type="email" placeholder="you@example.com" /></label>
-                  <label className="text-sm font-semibold">Phone number<input className={fieldClassName} autoComplete="tel" required type="tel" placeholder="+62 812 3456 7890" /></label>
-                  <label className="text-sm font-semibold sm:col-span-2">Special requests <span className="font-normal text-muted-foreground">(optional)</span><textarea className="mt-2 min-h-28 w-full resize-y rounded-xl border border-border bg-white p-4 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15" placeholder="Arrival time, accessibility needs, or anything the property should know" /></label>
+                  <label className="text-sm font-semibold sm:col-span-2">Full name<input className={fieldClassName} autoComplete="name" name="guestName" required type="text" placeholder="Name as shown on ID" /></label>
+                  <label className="text-sm font-semibold">Email address<input className={fieldClassName} autoComplete="email" name="guestEmail" required type="email" placeholder="you@example.com" /></label>
+                  <label className="text-sm font-semibold">Phone number<input className={fieldClassName} autoComplete="tel" name="guestPhone" required type="tel" placeholder="+62 812 3456 7890" /></label>
+                  <label className="text-sm font-semibold sm:col-span-2">Special requests <span className="font-normal text-muted-foreground">(optional)</span><textarea className="mt-2 min-h-28 w-full resize-y rounded-xl border border-border bg-white p-4 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15" maxLength={500} name="specialRequest" placeholder="Arrival time, accessibility needs, or anything the property should know" /></label>
                 </div>
               </section>
 
@@ -123,7 +150,7 @@ export default async function CheckoutPage({ searchParams }: CheckoutPageProps) 
                 <div><span className="block text-xs text-muted-foreground">Check-in</span><strong>{formatStayDate(query.values.checkin)}</strong></div>
                 <div><span className="block text-xs text-muted-foreground">Check-out</span><strong>{formatStayDate(query.values.checkout)}</strong></div>
                 <div><span className="block text-xs text-muted-foreground">Length</span><strong>{query.nights} nights</strong></div>
-                <div><span className="block text-xs text-muted-foreground">Guests</span><strong>{query.values.guests}</strong></div>
+                <div><span className="block text-xs text-muted-foreground">Guests</span><strong>{query.values.guests} adults · {query.values.children} children</strong></div>
               </div>
 
               <div className="mt-6 space-y-3 text-sm">
