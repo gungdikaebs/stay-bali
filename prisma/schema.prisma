@@ -353,24 +353,30 @@ model HoldNight {
 }
 
 model Booking {
-  id             String                 @id @default(cuid()) @db.VarChar(30)
-  bookingCode    String                 @unique @map("booking_code") @db.VarChar(20)
-  roomTypeId     String                 @map("room_type_id") @db.VarChar(30)
-  userId         String?                @map("user_id") @db.VarChar(30)
-  checkinDate    DateTime               @map("checkin_date") @db.Date
-  checkoutDate   DateTime               @map("checkout_date") @db.Date
-  adultCount     Int                    @map("adult_count") @db.SmallInt
-  childCount     Int                    @map("child_count") @db.SmallInt
-  subtotal       Int                    @db.Integer
-  serviceFee     Int                    @map("service_fee") @db.Integer
-  grandTotal     Int                    @map("grand_total") @db.Integer
-  status         BookingStatus          @default(PENDING_PAYMENT)
-  specialRequest String?                @map("special_request") @db.Text
-  createdAt      DateTime               @default(now()) @map("created_at") @db.Timestamp(3)
-  roomType       RoomType               @relation(fields: [roomTypeId], references: [id], onDelete: Restrict)
-  user           User?                  @relation(fields: [userId], references: [id], onDelete: Restrict)
-  nights         BookingNight[]
-  statusHistory  BookingStatusHistory[]
+  id                 String                 @id @default(cuid()) @db.VarChar(30)
+  bookingCode        String                 @unique @map("booking_code") @db.VarChar(20)
+  roomTypeId         String                 @map("room_type_id") @db.VarChar(30)
+  userId             String?                @map("user_id") @db.VarChar(30)
+  checkinDate        DateTime               @map("checkin_date") @db.Date
+  checkoutDate       DateTime               @map("checkout_date") @db.Date
+  adultCount         Int                    @map("adult_count") @db.SmallInt
+  childCount         Int                    @map("child_count") @db.SmallInt
+  propertyName       String                 @map("property_name") @db.VarChar(150)
+  roomName           String                 @map("room_name") @db.VarChar(150)
+  guestName          String                 @map("guest_name") @db.VarChar(100)
+  guestEmail         String                 @map("guest_email") @db.VarChar(254)
+  guestPhone         String                 @map("guest_phone") @db.VarChar(20)
+  cancellationPolicy String                 @map("cancellation_policy") @db.Text
+  subtotal           Int                    @db.Integer
+  serviceFee         Int                    @map("service_fee") @db.Integer
+  grandTotal         Int                    @map("grand_total") @db.Integer
+  status             BookingStatus          @default(PENDING_PAYMENT)
+  specialRequest     String?                @map("special_request") @db.Text
+  createdAt          DateTime               @default(now()) @map("created_at") @db.Timestamp(3)
+  roomType           RoomType               @relation(fields: [roomTypeId], references: [id], onDelete: Restrict)
+  user               User?                  @relation(fields: [userId], references: [id], onDelete: Restrict)
+  nights             BookingNight[]
+  statusHistory      BookingStatusHistory[]
 
   @@index([userId, status, createdAt])
   @@index([status, createdAt])

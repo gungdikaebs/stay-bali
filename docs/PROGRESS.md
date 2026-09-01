@@ -1,320 +1,198 @@
 # Progress — StayBali MVP
 
-> **Tujuan dokumen ini:** Menjadi sumber kebenaran untuk melanjutkan pekerjaan antar sesi.
-> Diperbarui setiap kali satu milestone selesai atau ada perubahan arsitektur.
+Dokumen ini adalah sumber kebenaran untuk status implementasi dan handoff antar-sesi. Jangan menaruh password, connection string, secret, atau data pribadi di sini.
 
----
+Terakhir diperbarui: 2 September 2026.
 
-## 1. Ringkasan Status
+## Ringkasan milestone
 
-| Fase   | Status          | Catatan |
-|--------|-----------------|---------|
-| M1 Foundation | ✅ Selesai | Auth, RBAC, audit, partner lifecycle |
-| M2 Supply     | ✅ Selesai | Property/Room CRUD, approval, media |
-| M3 Discovery  | ✅ Selesai | Inventory, search, quote (10 min) |
-| M4 Booking    | 🟡 In Progress | Hold & Booking domain ditambahkan; integrasi UI setengah |
-| M5 Payment    | ⏸️ Tertunda | Menunggu M4 stabil |
-| M6 Operations | ⏸️ Tertunda | — |
-| M7 Release    | ⏸️ Tertunda | — |
+| Milestone | Status | Cakupan |
+| --- | --- | --- |
+| M1 Foundation | Selesai | Auth, RBAC, audit, partner lifecycle |
+| M2 Supply | Selesai | Property/room CRUD, approval, media |
+| M3 Discovery | Selesai | Inventory calendar, search, availability, quote |
+| M4 Booking | Hampir selesai | Hold, booking, snapshot, manual reservation, checkout wiring |
+| M5 Payment | Belum dimulai | Midtrans sandbox, webhook, payment attempts |
+| M6 Operations | Belum dimulai | History, voucher, cancellation/refund, operational dashboards |
+| M7 Release | Belum dimulai | Worker, backup/restore, observability, deployment |
 
----
+## Implementasi yang tersedia
 
-## 2. Setup Awal yang Sudah Berjalan
+### Identity dan authorization
 
-### Environment
-- **Node.js**: v24.20.0
-- **PostgreSQL**: 18 (service `postgresql-x64-18 Running`)
-- **Database**: `staybali` & `staybali_shadow` di `127.0.0.1:5432`
-- **User**: `staybali` dengan password `sb2026bali` (bukan `change-me`)
-- **Next.js**: 16.3.3 (Turbopack)
-- **Prisma**: 7.10.0
+- Credentials authentication melalui Auth.js.
+- Role `TRAVELER`, `PARTNER`, dan `ADMIN`.
+- Session version untuk revocation.
+- Partner lifecycle dan ownership diperiksa dari database.
+- Policy transisi booking membatasi Admin, Partner, dan Traveler sesuai ownership dan status akun.
 
-### File `.env` (lokasi: `D:\Project\stay-bali\.env`)
-```dotenv
-DATABASE_URL="postgresql://staybali:sb2026bali@127.0.0.1:5432/staybali?schema=public"
-SHADOW_DATABASE_URL="postgresql://staybali:sb2026bali@127.0.0.1:5432/staybali_shadow?schema=public"
-ADMIN_SEED_PASSWORD="admin123"
-PARTNER_SEED_PASSWORD="admin123"
-TRAVELER_SEED_PASSWORD="admin123"
-AUTH_SECRET="Ru/2XnH3DJJywk0KlwiObwZe77EjB8h7QhVdqdA3/N0="
-MEDIA_STORAGE_ROOT="./storage/media"
-```
+### Supply dan discovery
 
-### Akun Demo
-| Role      | Email                      | Password   |
-|-----------|----------------------------|-----------|
-| Admin     | `admin@staybali.test`      | `admin123` |
-| Traveler  | `traveler@staybali.test`   | `admin123` |
-| Partner 1 | `partner1@staybali.test`   | `admin123` |
-| Partner 2 | `partner2@staybali.test`   | `admin123` |
-| Partner 3 | `partner3@staybali.test`   | `admin123` |
+- Partner property/room management, facilities, media, dan inventory bulk update.
+- Admin partner management dan property approval.
+- Public catalog, search, pagination, property detail, dan availability.
+- Quote server-side dengan nightly price, service fee 5%, dan expiry 10 menit.
 
----
+### Hold dan booking
 
-## 3. Migrasi Database
+- Hold memeriksa ulang seluruh malam di transaksi PostgreSQL `Serializable`.
+- Baris inventory yang belum ada dibuat saat diperlukan.
+- Hold menaikkan `heldUnits`; konfirmasi booking mengubahnya menjadi `bookedUnits`.
+- Hold expiry dan status terminal yang sesuai melepaskan inventory.
+- Online dan manual booking memakai service inventory yang sama.
+- Duplicate submit memakai idempotency key dan mengembalikan hasil booking yang sudah tersimpan.
+- Booking menyimpan snapshot property, room, guest, cancellation policy, nightly price, subtotal, service fee, dan total.
+- Guest quote dapat diklaim oleh Traveler setelah login tanpa mempercayai user ID dari client.
 
-Tiga migration sudah ada di `prisma/migrations/`:
+### UI booking
 
-```
+- Checkout memakai Server Action untuk membuat/reuse hold dan membuat booking.
+- Checkout mengarahkan booking yang berhasil ke `/payment?booking=<id>`.
+- Payment placeholder membaca booking snapshot yang owner-scoped.
+- Partner dan Admin memiliki halaman `Reservations`.
+- Manual reservation form memvalidasi room ownership, guest capacity, date range, availability, dan server-side price.
+- Daftar 50 booking terbaru mengikuti scope Admin atau Partner.
+
+## Migrasi database
+
+```text
 prisma/migrations/
-├── 20260830000000_database_foundation/migration.sql      (M1 + M2)
-├── 20260831000000_quote_foundation/migration.sql        (M3)
-└── 20260901000000_hold_and_booking_foundation/migration.sql  (M4 — BARU)
+├── 20260830000000_database_foundation/
+├── 20260831000000_quote_foundation/
+├── 20260901000000_hold_and_booking_foundation/
+└── 20260902000000_booking_snapshots/
 ```
 
-**Cara apply migration:**
-```bash
-npx prisma migrate deploy
-npx prisma db seed
+Migration booking snapshot menambahkan:
+
+- `property_name`
+- `room_name`
+- `guest_name`
+- `guest_email`
+- `guest_phone`
+- `cancellation_policy`
+
+Migration melakukan backfill untuk booking lama sebelum mengubah kolom menjadi `NOT NULL`.
+
+## Struktur M4 penting
+
+```text
+app/
+├── actions/
+│   ├── booking-actions.ts
+│   └── hold-actions.ts
+├── admin/bookings/page.tsx
+├── partner/bookings/page.tsx
+├── checkout/page.tsx
+└── payment/page.tsx
+
+components/booking/
+├── checkout-booking-form.tsx
+├── manual-booking-form.tsx
+├── quote-button.tsx
+└── reservations-workspace.tsx
+
+lib/
+├── booking/
+│   ├── booking.ts
+│   ├── queries.ts
+│   ├── rules.ts
+│   └── schemas.ts
+├── hold/
+│   ├── expiry.ts
+│   ├── hold.ts
+│   └── rules.ts
+└── inventory/
+    └── reservations.ts
 ```
 
----
+## Alur booking online saat ini
 
-## 4. Skema Prisma — Model Baru di M4
-
-Ditambahkan di `prisma/schema.prisma`:
-
-### Enum
-```prisma
-enum BookingStatus {
-  PENDING_PAYMENT
-  CONFIRMED
-  PAYMENT_FAILED
-  EXPIRED
-  CANCELLATION_REQUESTED
-  CANCELLED
-  REFUND_PENDING
-  REFUNDED
-  CHECKED_IN
-  COMPLETED
-}
+```text
+/search
+  → /stays/[slug]
+  → createQuoteAction
+  → /checkout?quote=<id>
+  → Traveler login jika diperlukan
+  → confirmBookingAction
+      → create/reuse hold
+      → confirm booking
+      → heldUnits -1, bookedUnits +1
+  → /payment?booking=<id>
 ```
 
-### Hold & HoldNight
-- **`Hold`**: tahan unit sementara (10 menit) terkait ke `Quote` (1-to-1 via `quoteId @unique`).
-- **`HoldNight`**: perincian per malam dari hold. `@@unique([holdId, stayDate])`.
+Payment page masih placeholder karena Midtrans belum diimplementasikan. Booking dibuat dengan status `PENDING_PAYMENT`.
 
-### Booking & BookingNight
-- **`Booking`**: booking dengan `bookingCode` unik format `SB-YYYY-XXXXX`, snapshot immutable (subtotal, serviceFee, grandTotal, specialRequest).
-- **`BookingNight`**: nightly rate snapshot per booking. `@@unique([bookingId, stayDate])`.
-- **`BookingStatusHistory`**: audit trail transisi status, simpan `previousStatus`, `nextStatus`, `actorId`, `note`.
+## Alur reservasi manual
 
-### IdempotencyRecord
-- **`IdempotencyRecord`**: `@@unique([scope, key])` — dipakai untuk mencegah double submit. Schema field: `scope`, `key`, `actorId`, `request` (SHA-256 hash), `result` (JSON opsional).
-
-### Relasi ke Model Existing
-- `User`: tambah relasi ke `Hold`, `Booking`, `BookingStatusHistory`, `IdempotencyRecord`.
-- `RoomType`: tambah relasi ke `HoldNight` & `BookingNight`.
-- `Quote`: tambah relasi `hold Hold?` (one-to-one opsional).
-
----
-
-## 5. Pola Kode (PENTING untuk Agent Baru)
-
-### 5.1 Pola Service Layer
-- Lokasi: `lib/<domain>/<service>.ts`
-- Baris pertama **harus**: `"server-only";`
-- Import Prisma dari `@/lib/prisma` (singleton dengan HMR guard)
-- Transaksi pakai `prisma.$transaction(async (tx) => { ... }, { isolationLevel: "Serializable" })`
-- Selalu catat audit log di dalam transaction
-
-### 5.2 Pola Validation
-- Zod schemas di `lib/<domain>/schemas.ts`
-- Tipe form state: `{ status: "idle" | "error" | "success"; message: string; errors?: Record<string, string[] | undefined> }`
-
-### 5.3 Pola Authorization
-- Guards di `lib/auth/authorization.ts`: `requireTraveler()`, `requireActivePartner()`, `requireAdmin()`
-- Service tidak boleh menerima actor dari parameter client; pakai `getCurrentUser()` dari session
-
-### 5.4 Pola Audit Log
-- Selalu di dalam transaction
-- Action strings pakai UPPER_SNAKE_CASE: `HOLD_CREATED`, `BOOKING_CONFIRMED_ONLINE`, `QUOTE_CREATED`
-
----
-
-## 6. File yang Sudah Dibuat/Diubah di M4
-
-### File Baru
-```
-lib/hold/
-├── rules.ts                # createHoldSchema, isHoldExpired, HoldActionState
-├── hold.ts                 # createHold() — atomic hold via serializable transaction
-└── expiry.ts               # cleanupExpiredHolds() + reconcileInventoryFromExpiredHolds()
-
-lib/booking/
-├── rules.ts                # isBookingStatusTransitionAllowed, generateBookingCode
-├── schemas.ts              # confirmBookingSchema, manualBookingSchema, BookingActionState
-└── booking.ts              # confirmBookingOnline, createBookingManual, transitionBookingStatus
-
-lib/idempotency.ts          # generateIdempotencyKey(), checkIdempotency()
-
-lib/hold/rules.test.ts      # Tests: isHoldExpired
-lib/booking/rules.test.ts   # Tests: state machine, generateBookingCode
-
-app/actions/hold-actions.ts     # createHoldAction (server action)
-app/actions/booking-actions.ts  # confirmBookingAction (server action)
+```text
+/partner/bookings atau /admin/bookings
+  → pilih published room
+  → isi tanggal, jumlah tamu, data guest, dan alasan internal
+  → validasi authorization + availability di server
+  → bookedUnits +1
+  → booking CONFIRMED + nightly snapshot + audit
 ```
 
-### File Diubah
-- `prisma/schema.prisma` — Tambah model M4 + enum BookingStatus
-- `prisma/migrations/20260901000000_hold_and_booking_foundation/migration.sql` — DDL
-- `lib/quote/quotes.ts` — `getOwnedQuote()` sekarang `select` field `hold: { select: { id: true } }`
-- `lib/hold/hold.ts` — memakai `quote.hold` (bukan `quote.holdId`) untuk type safety
-- `lib/booking/booking.ts` — memakai `holdId = quote.hold.id` lalu disconnect
-- `app/checkout/page.tsx` — tampilkan **hold status pill** (active/expired/none) + tombol "Hold & continue" / "Confirm & continue"
-- `app/stays/[slug]/page.tsx` — **HINDARI NESTED FORM** (lihat §9 di bawah)
+Partner hanya dapat memilih dan melihat room/booking miliknya. Admin dapat mengakses seluruh scope.
 
-### Konfigurasi
-- `package.json` — test script mencakup file test baru
+## Pekerjaan berikutnya
 
----
+### Penyelesaian M4
 
-## 7. Perintah Penting
+- Jalankan review end-to-end pada browser untuk Guest quote → Traveler login → checkout → booking → payment placeholder.
+- Review UI manual reservation pada mobile dan desktop.
+- Tambahkan scheduler/worker idempotent untuk `cleanupExpiredHolds()`.
+- Tambahkan expiry job untuk booking `PENDING_PAYMENT`.
+
+### M5 Payment
+
+- Tambahkan model payment attempt/event.
+- Buat adapter Midtrans Snap Sandbox.
+- Verifikasi signature, amount, currency, dan booking reference pada webhook.
+- Tangani duplicate webhook secara idempotent.
+- Jadikan webhook/inquiry sebagai sumber status pembayaran.
+
+### M6 Operations
+
+- Traveler booking history.
+- Printable HTML voucher dari booking snapshot.
+- Cancellation request dan resolusi refund oleh Admin.
+- Partner check-in/completion controls.
+- Email queue dan failed-job visibility.
+
+## Quality checks
+
+Jangan menjalankan quality checks setelah setiap edit kecil. Selesaikan satu batch fitur, lalu jalankan sekali di akhir atau ketika user meminta review.
 
 ```bash
-# Setup & database
-npm install
-npx prisma migrate deploy
-npx prisma db seed
-
-# Development
-npm run dev                  # Port 3000 (atau 3001 jika 3000 sedang dipakai)
-npm run build                # Production build
-
-# Quality checks
-npm test                     # 24 unit tests (semua passing)
-npm run lint                 # ESLint (zero warnings)
-npx tsc --noEmit             # TypeScript check
-
-# Prisma utilities
-npx prisma generate          # Generate Prisma client
-npx prisma db studio         # Open Prisma Studio
-npx prisma migrate status    # Check migration status
+npm run db:generate
+npm run db:validate
+npm run db:deploy
+npm test
+npm run test:integration
+npm run lint
+npx tsc --noEmit
+npm run build
 ```
 
----
+Hasil batch 2 September 2026:
 
-## 8. Alur Booking (End-to-End)
+- Prisma client berhasil digenerate.
+- Prisma schema valid.
+- Empat migration berhasil diterapkan dan database up-to-date.
+- 25 unit tests lulus.
+- PostgreSQL last-unit concurrency test lulus.
+- ESLint bersih.
+- TypeScript bersih.
+- Production build berhasil untuk 19 route tanpa warning.
 
-Berikut flow yang harus berjalan setelah M4 selesai:
+## Catatan penting
 
-```
-[ Traveler ]
-   │
-   ▼
-1. /search ──────────► Search stays (filter tanggal/tamu)
-   │
-   ▼
-2. /stays/[slug] ────► Lihat detail + pilih tanggal
-   │                     Klik "Check availability" → memuat harga
-   │                     Klik "Reserve this stay" → form QuoteButton
-   ▼
-3. [Server Action: createQuoteAction]
-   │
-   ▼
-4. Quote dibuat (10 menit expiry, hold NULL)
-   │
-   ▼
-5. /checkout?quote=... ──► Lihat summary + form data tamu
-   │                          Traveler login kalau belum
-   │
-   ▼
-6. Submit checkout ──► [Server Action: confirmBookingAction]
-   │
-   ▼
-7. Backend: createHold() + confirmBookingOnline() atomic
-   • createHold: bikin Hold + HoldNight, tulis audit
-   • confirmBookingOnline: konsumsi Hold, bikin Booking + BookingNight
-   • Booking status: PENDING_PAYMENT
-   ▼
-8. /payment?booking=... ──► [M5: Midtrans Snap Sandbox]
-   │
-   ▼
-9. /booking/confirmation/[id] ──► Voucher (M5)
-```
-
----
-
-## 9. Catatan PENTING — Gotchas
-
-### 9.1 NESTED FORM ERROR
-JANGAN buat `<form>` di dalam `<form>`. HTML melarang ini dan akan menghasilkan **hydration error**. Contoh salah:
-
-```tsx
-// ❌ JANGAN
-<form action="/search" method="get">
-  ...
-  <QuoteButton />   {/* <-- ini render <form> sendiri! */}
-</form>
-```
-
-**Solusi yang dipakai di `/stays/[slug]`:**
-- Saat `price && nights`: tampilkan tanggal sebagai plain text (bukan form) + QuoteButton.
-- Saat belum ada price: tampilkan form filter dengan tombol "Check availability".
-
-### 9.2 Prisma 7 Select API
-Di Prisma 7, untuk `Quote`, field `hold` (bukan `holdId`) yang dipakai untuk relasi di `select`:
-```typescript
-select: {
-  hold: { select: { id: true } },   // ✓ Benar
-  // holdId: true                    // ❌ Salah di Prisma 7
-}
-```
-
-Kalau ada error `Unknown field 'hold' for select statement`:
-1. Cek `prisma/schema.prisma` model `Quote` punya `hold Hold?` ✓
-2. Jalankan `npx prisma generate`
-3. **Restart `npm run dev`** untuk bersihkan cache Next.js
-
-### 9.3 Format StayDate
-Import `formatStayDate` dari `@/lib/demo-stays` — bukan `formatStayDate` lokal. Tanpa import ini akan muncul `ReferenceError: formatStayDate is not defined`.
-
-### 9.4 Transaksi Hold
-Walaupun `HeldUnits` di `InventoryDate` ada di schema, **M4 ini belum meng-update counter** secara atomic — Hold saat ini hanya menandai `hold` di Quote + `HoldNight` records. Update inventory counter (`heldUnits`, `bookedUnits`) akan dilakukan di M5 saat payment integration (untuk konsistensi inventory race-condition test).
-
----
-
-## 10. Yang BELUM Selesai & Tugas Lanjutan
-
-### M4 — Yang Tersisa
-- [ ] **Integrasi end-to-end**: uji alur search → quote → checkout → booking benar-benar berjalan
-- [ ] **Manual booking form** (untuk Partner/Admin)
-- [ ] **Hold expiry worker**: trigger `cleanupExpiredHolds()` dari cron job (belum ada scheduler)
-- [ ] **Update inventory counter** saat hold/booking dibuat (lihat §9.4)
-
-### M5 — Payment
-- [ ] Adapter Midtrans Snap Sandbox
-- [ ] Webhook handler dengan signature verification
-- [ ] Booking history page untuk traveler
-- [ ] Printable HTML voucher
-
-### M6 — Operations
-- [ ] Admin inquiry untuk payment exception
-- [ ] Partner reservation/arrival/occupancy
-- [ ] Cancellation request + refund record
-- [ ] Audit filter dashboard
-
----
-
-## 11. Cara Lanjut Kerja (untuk Agent Baru)
-
-1. **Baca dokumen ini dulu** untuk konteks.
-2. **Jalankan** `npm install && npx prisma migrate deploy && npx prisma db seed` untuk setup database.
-3. **Jalankan** `npm run dev` dan buka `http://localhost:3000`.
-4. **Login sebagai Traveler** (`traveler@staybali.test` / `admin123`).
-5. **Cek apakah flow search → checkout** menghasilkan error.
-6. Lihat juga:
-   - `docs/PRD_MVP_Property_Booking.md` untuk requirement
-   - `docs/REQUIREMENTS_MVP_Property_Booking.md` untuk invariant
-   - `docs/ROADMAP_MVP_Property_Booking.md` untuk milestone breakdown
-
----
-
-## 12. Test Status (per 2026-09-01)
-
-- ✅ 24 unit tests pass (`npm test`)
-- ✅ ESLint zero warnings (`npm run lint`)
-- ✅ TypeScript clean (`npx tsc --noEmit`)
-- ✅ Prisma schema valid (`npx prisma db validate`)
-- ✅ Migration up to date (`npx prisma migrate status`)
-- ✅ Seeded: 10 properties, 3 active partners
+- Jangan membuat nested `<form>`; gunakan satu form atau `formAction` pada submit control.
+- Server Action adalah endpoint publik yang tidak boleh mengandalkan proteksi UI.
+- Jangan menerima actor atau ownership dari form.
+- Date operasional adalah Bali date; timestamp teknis disimpan UTC.
+- Gunakan integer IDR.
+- Jangan mengubah counter inventory di luar transaksi.
+- Jangan menaruh kredensial lokal di repository. Gunakan `.env.example`.

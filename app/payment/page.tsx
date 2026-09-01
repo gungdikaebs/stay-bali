@@ -1,12 +1,9 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { cookies } from "next/headers";
 import { Building2, Check, Clock3, CreditCard, LockKeyhole, ShieldCheck, Smartphone } from "lucide-react";
 import { StayBaliLogo } from "@/components/landing/public-header";
-import { UserRole } from "@/generated/prisma/client";
 import { formatIdr, formatStayDate } from "@/lib/demo-stays";
-import { getCurrentUser } from "@/lib/auth/authorization";
-import { getOwnedQuote } from "@/lib/quote/quotes";
+import { getOwnedBooking } from "@/lib/booking/queries";
 
 export const metadata: Metadata = {
   title: "Secure payment",
@@ -23,23 +20,19 @@ function first(value: string | string[] | undefined) {
 
 export default async function PaymentPage({ searchParams }: PaymentPageProps) {
   const rawQuery = await searchParams;
-  const user = await getCurrentUser();
-  const guestSessionId = (await cookies()).get("staybali_guest_session")?.value;
-  const quote = await getOwnedQuote(first(rawQuery.quote) ?? "", { userId: user?.id, guestSessionId });
-  if (!quote || !user || user.role !== UserRole.TRAVELER || quote.expiresAt <= new Date()) notFound();
+  const booking = await getOwnedBooking(first(rawQuery.booking) ?? "");
+  if (!booking) notFound();
 
-  const property = quote.roomType.property;
   const query = {
     values: {
-      checkin: quote.checkinDate.toISOString().slice(0, 10),
-      checkout: quote.checkoutDate.toISOString().slice(0, 10),
-      guests: quote.adultCount,
-      children: quote.childCount,
+      checkin: booking.checkinDate.toISOString().slice(0, 10),
+      checkout: booking.checkoutDate.toISOString().slice(0, 10),
+      guests: booking.adultCount,
+      children: booking.childCount,
     },
-    nights: quote.nights.length,
+    nights: booking.nights.length,
   };
-  const stay = { name: property.name };
-  const summary = { subtotal: quote.subtotal, serviceFee: quote.serviceFee, total: quote.grandTotal };
+  const summary = { subtotal: booking.subtotal, serviceFee: booking.serviceFee, total: booking.grandTotal };
 
   return (
     <main className="min-h-screen bg-background">
@@ -77,19 +70,19 @@ export default async function PaymentPage({ searchParams }: PaymentPageProps) {
           </div>
 
           <button className="mt-8 flex min-h-14 w-full cursor-not-allowed items-center justify-center rounded-xl bg-primary px-6 text-base font-bold text-white opacity-50" disabled type="button">Pay {formatIdr(summary.total)}</button>
-          <p className="mt-4 flex items-start justify-center gap-2 text-center text-xs leading-5 text-muted-foreground"><LockKeyhole className="mt-0.5 size-3.5 shrink-0" />Payment unlocks after the atomic inventory hold is implemented and verified.</p>
+          <p className="mt-4 flex items-start justify-center gap-2 text-center text-xs leading-5 text-muted-foreground"><LockKeyhole className="mt-0.5 size-3.5 shrink-0" />Payment methods will unlock when the Midtrans sandbox integration is enabled.</p>
         </section>
 
         <aside className="rounded-3xl border border-border bg-white p-6 lg:sticky lg:top-6">
           <p className="text-xs font-bold uppercase tracking-[0.1em] text-primary">Booking summary</p>
-          <h2 className="font-display mt-2 text-xl font-bold">{stay.name}</h2>
-          <p className="mt-1 text-sm leading-6 text-muted-foreground">{formatStayDate(query.values.checkin)} → {formatStayDate(query.values.checkout)}<br />{query.nights} nights · {query.values.guests} adults · {query.values.children} children</p>
+          <h2 className="font-display mt-2 text-xl font-bold">{booking.propertyName}</h2>
+          <p className="mt-1 text-sm leading-6 text-muted-foreground">{booking.roomName}<br />{formatStayDate(query.values.checkin)} → {formatStayDate(query.values.checkout)}<br />{query.nights} nights · {query.values.guests} adults · {query.values.children} children</p>
           <div className="mt-5 space-y-3 border-t border-border pt-5 text-sm">
             <div className="flex justify-between"><span className="text-muted-foreground">Stay</span><span>{formatIdr(summary.subtotal)}</span></div>
             <div className="flex justify-between"><span className="text-muted-foreground">Service fee</span><span>{formatIdr(summary.serviceFee)}</span></div>
             <div className="flex justify-between border-t border-border pt-4 text-lg font-extrabold"><span>Total</span><span>{formatIdr(summary.total)}</span></div>
           </div>
-          <p className="mt-5 flex gap-2 rounded-xl bg-warning-subtle p-3 text-xs leading-5 text-warning"><Clock3 className="mt-0.5 size-4 shrink-0" />This quote expires at {quote.expiresAt.toLocaleTimeString("en-ID", { hour: "2-digit", minute: "2-digit" })} and does not hold inventory yet.</p>
+          <p className="mt-5 flex gap-2 rounded-xl bg-warning-subtle p-3 text-xs leading-5 text-warning"><Clock3 className="mt-0.5 size-4 shrink-0" />Booking {booking.bookingCode} is secured with status {booking.status.toLowerCase().replaceAll("_", " ")} while payment integration is pending.</p>
         </aside>
       </div>
     </main>

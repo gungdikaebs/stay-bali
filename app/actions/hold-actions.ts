@@ -1,5 +1,6 @@
 "use server";
 
+import { cookies } from "next/headers";
 import { createHoldSchema } from "@/lib/hold/rules";
 import { createHold } from "@/lib/hold/hold";
 import type { HoldActionState } from "@/lib/hold/rules";
@@ -25,7 +26,8 @@ export async function createHoldAction(
   }
 
   try {
-    const holdResult = await createHold(result.data);
+    const guestSessionId = (await cookies()).get("staybali_guest_session")?.value;
+    const holdResult = await createHold(result.data, guestSessionId);
     if (!holdResult.success) {
       return { status: "error", message: holdResult.error };
     }

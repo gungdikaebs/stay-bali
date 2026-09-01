@@ -30,6 +30,40 @@ export function isBookingStatusTransitionAllowed(
   return ALLOWED_TRANSITIONS[from]?.has(to) ?? false;
 }
 
+type BookingActor =
+  | { role: "ADMIN"; userId: string }
+  | {
+      role: "PARTNER";
+      userId: string;
+      partnerProfileId: string | null;
+      partnerStatus: "PENDING" | "ACTIVE" | "SUSPENDED" | "REJECTED" | null;
+    }
+  | { role: "TRAVELER"; userId: string };
+
+export function canActorTransitionBooking(
+  actor: BookingActor,
+  booking: { userId: string | null; ownerPartnerId: string },
+  from: BookingStatus,
+  to: BookingStatus,
+) {
+  if (actor.role === "ADMIN") return true;
+
+  if (actor.role === "PARTNER") {
+    return (
+      actor.partnerStatus === "ACTIVE" &&
+      actor.partnerProfileId === booking.ownerPartnerId &&
+      ((from === "CONFIRMED" && to === "CHECKED_IN") ||
+        (from === "CHECKED_IN" && to === "COMPLETED"))
+    );
+  }
+
+  return (
+    actor.userId === booking.userId &&
+    ((from === "PENDING_PAYMENT" && to === "CANCELLED") ||
+      (from === "CONFIRMED" && to === "CANCELLATION_REQUESTED"))
+  );
+}
+
 export function generateBookingCode(now = new Date()): string {
   const year = now.getFullYear();
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // No ambiguous chars (0/O, 1/I)

@@ -16,7 +16,10 @@ export type StagedImage = {
 };
 
 function storageRoot() {
-  return path.resolve(process.cwd(), process.env.MEDIA_STORAGE_ROOT?.trim() || "storage/media");
+  return path.resolve(
+    /* turbopackIgnore: true */ process.cwd(),
+    process.env.MEDIA_STORAGE_ROOT?.trim() || "storage/media",
+  );
 }
 
 function datedKey(folder: string, id: string) {
@@ -31,7 +34,7 @@ function datedKey(folder: string, id: string) {
 
 export function resolveStorageKey(storageKey: string) {
   const root = storageRoot();
-  const resolved = path.resolve(root, storageKey);
+  const resolved = path.resolve(/* turbopackIgnore: true */ root, storageKey);
   if (!resolved.startsWith(`${root}${path.sep}`)) throw new Error("Invalid media storage key.");
   return resolved;
 }

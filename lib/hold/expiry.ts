@@ -1,54 +1,19 @@
 import "server-only";
 
 import { prisma } from "@/lib/prisma";
+import { releaseHeldInventory } from "@/lib/inventory/reservations";
 
 export async function cleanupExpiredHolds(): Promise<{ cleanedCount: number }> {
-  const now = new Date();
-
-  const expiredHolds = await prisma.hold.findMany({
-    where: {
-      expiresAt: { lt: now },
-      consumedAt: null,
-    },
-    select: { id: true },
-  });
-
-  if (expiredHolds.length === 0) {
-    return { cleanedCount: 0 };
-  }
-
-  const holdIds = expiredHolds.map((h) => h.id);
-
-  const result = await prisma.$transaction(async (tx) => {
-    // Delete hold nights first (cascade would handle this, but explicit for clarity)
-    await tx.holdNight.deleteMany({
-      where: { holdId: { in: holdIds } },
-    });
-
-    // Delete the holds
-    const deleted = await tx.hold.deleteMany({
-      where: { id: { in: holdIds } },
-    });
-
-    // Audit log for each cleaned hold
-    for (const holdId of holdIds) {
-      await tx.auditLog.create({
-        data: {
-          action: "HOLD_EXPIRED_CLEANUP",
-          entityType: "HOLD",
-          entityId: holdId,
-          metadata: { cleanedAt: now.toISOString() },
-        },
-      });
-    }
-
-    return deleted.count;
-  }, { isolationLevel: "Serializable" });
-
-  return { cleanedCount: result };
+  const result = await reconcileExpiredHolds();
+  return { cleanedCount: result.holds };
 }
 
 export async function reconcileInventoryFromExpiredHolds(): Promise<{ reconciledCount: number }> {
+  const result = await reconcileExpiredHolds();
+  return { reconciledCount: result.nights };
+}
+
+async function reconcileExpiredHolds(): Promise<{ holds: number; nights: number }> {
   const now = new Date();
 
   const expiredHolds = await prisma.hold.findMany({
@@ -68,30 +33,25 @@ export async function reconcileInventoryFromExpiredHolds(): Promise<{ reconciled
   });
 
   if (expiredHolds.length === 0) {
-    return { reconciledCount: 0 };
+    return { holds: 0, nights: 0 };
   }
 
   const result = await prisma.$transaction(async (tx) => {
-    let count = 0;
+    let holds = 0;
+    let nights = 0;
     for (const hold of expiredHolds) {
-      for (const night of hold.nights) {
-        // Decrement heldUnits for each night that was held
-        await tx.inventoryDate.updateMany({
-          where: {
-            roomTypeId: night.roomTypeId,
-            stayDate: night.stayDate,
-            heldUnits: { gt: 0 },
-          },
-          data: {
-            heldUnits: { decrement: 1 },
-          },
-        });
-        count++;
-      }
+      const current = await tx.hold.findFirst({
+        where: { id: hold.id, expiresAt: { lt: now }, consumedAt: null },
+        select: { id: true },
+      });
+      if (!current) continue;
 
-      // Delete hold nights and the hold itself
+      await releaseHeldInventory(tx, hold.nights);
+      nights += hold.nights.length;
+
       await tx.holdNight.deleteMany({ where: { holdId: hold.id } });
       await tx.hold.delete({ where: { id: hold.id } });
+      holds++;
 
       await tx.auditLog.create({
         data: {
@@ -105,8 +65,8 @@ export async function reconcileInventoryFromExpiredHolds(): Promise<{ reconciled
         },
       });
     }
-    return count;
+    return { holds, nights };
   }, { isolationLevel: "Serializable" });
 
-  return { reconciledCount: result };
+  return result;
 }

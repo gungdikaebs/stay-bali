@@ -31,6 +31,7 @@ See [Project Progress](./docs/PROGRESS.md) for the latest implementation notes a
 - Admin review and property publication workflow
 - Secure local media storage with generated image variants
 - Expiring quotes, temporary inventory holds, and booking snapshots
+- Manual reservations and scoped booking operations for Partners and Admins
 - Audit trails, status histories, idempotency, and transactional domain services
 
 ## Technology stack
@@ -123,6 +124,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 | `npm run start` | Run the production server |
 | `npm run lint` | Run ESLint |
 | `npm test` | Run domain policy and workflow tests |
+| `npm run test:integration` | Run PostgreSQL concurrency tests |
 | `npm run db:generate` | Generate the Prisma client |
 | `npm run db:validate` | Validate the Prisma schema |
 | `npm run db:migrate` | Create and apply a development migration |
@@ -156,6 +158,7 @@ Run the full local verification suite before opening a pull request:
 ```bash
 npm run lint
 npm test
+npm run test:integration
 npx tsc --noEmit
 npm run db:validate
 npm run build

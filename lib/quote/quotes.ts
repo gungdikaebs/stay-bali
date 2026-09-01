@@ -129,6 +129,7 @@ export async function getOwnedQuote(
               name: true,
               slug: true,
               area: true,
+              cancellationPolicy: true,
               media: {
                 where: { media: { status: "READY" } },
                 select: { mediaId: true },

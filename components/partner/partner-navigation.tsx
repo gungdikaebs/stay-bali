@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Building2, LayoutDashboard } from "lucide-react";
+import { Building2, CalendarCheck2, LayoutDashboard } from "lucide-react";
 
 const navigation = [
   { href: "/partner", label: "Overview", icon: LayoutDashboard },
   { href: "/partner/properties", label: "Properties", icon: Building2 },
+  { href: "/partner/bookings", label: "Reservations", icon: CalendarCheck2 },
 ];
 
 export function PartnerNavigation() {

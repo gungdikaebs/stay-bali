@@ -9,8 +9,11 @@ StayBali memakai Prisma 7 dengan PostgreSQL sebagai authoritative store. Migrati
 - `Facility`, `PropertyFacility`, `RoomFacility`
 - `MediaAsset`, `PropertyMedia`, `RoomMedia`
 - `InventoryDate`, `AuditLog`
+- `Quote`, `QuoteNight`, `Hold`, `HoldNight`
+- `Booking`, `BookingNight`, `BookingStatusHistory`
+- `IdempotencyRecord`
 
-Booking, hold, payment, cancellation, outbox, dan notification ditambahkan pada migration domain berikutnya.
+Payment, cancellation, outbox, dan notification akan ditambahkan pada migration domain berikutnya.
 
 ## Setup lokal
 
@@ -48,6 +51,9 @@ Migration foundation di repository ini membangun schema PostgreSQL baru. Migrati
 - Ownership chain dijaga foreign key dan tidak boleh berasal dari input client.
 - Property/room historis menggunakan `archived_at`, bukan hard delete.
 - Media bytes tidak disimpan di database; hanya storage key dan metadata.
-- `held_units` dan `booked_units` adalah counter transaksi yang akan dikunci saat modul hold/booking dibuat.
+- `held_units` dan `booked_units` diperbarui oleh service hold/booking di transaksi `Serializable`.
+- Hold, online booking, dan manual reservation menggunakan sumber inventory yang sama.
+- Booking menyimpan snapshot immutable untuk nama property/room, data guest, cancellation policy, dan harga per malam.
+- Idempotency memakai unique `(scope, key)` dan menyimpan hasil booking untuk duplicate submit yang identik.
 
 Seed bersifat development-only dan menghapus data pada tabel foundation sebelum membuat ulang credential Admin, Traveler, tiga Partner aktif, fasilitas, 10 property published, room, tiga media siap per property, serta 60 hari inventory.

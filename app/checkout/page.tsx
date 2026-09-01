@@ -6,19 +6,19 @@ import { cookies } from "next/headers";
 import {
   ArrowLeft,
   CalendarDays,
-  CheckCircle2,
-  CreditCard,
   Clock3,
   LockKeyhole,
   ShieldCheck,
   UserRound,
 } from "lucide-react";
 import { StayBaliLogo } from "@/components/landing/public-header";
+import { CheckoutBookingForm } from "@/components/booking/checkout-booking-form";
 import { UserRole } from "@/generated/prisma/client";
 import { formatIdr, formatStayDate } from "@/lib/demo-stays";
 import { getCurrentUser } from "@/lib/auth/authorization";
 import { getOwnedQuote } from "@/lib/quote/quotes";
 import { isHoldExpired } from "@/lib/hold/rules";
+import { generateIdempotencyKey } from "@/lib/idempotency";
 
 export const metadata: Metadata = {
   title: "Checkout",
@@ -82,7 +82,6 @@ export default async function CheckoutPage({ searchParams }: CheckoutPageProps) 
   };
   const query = { values: { checkin, checkout, guests: quote.adultCount, children: quote.childCount }, nights };
   const summary = { subtotal: quote.subtotal, serviceFee: quote.serviceFee, total: quote.grandTotal };
-  const fieldClassName = "mt-2 h-12 w-full rounded-xl border border-border bg-white px-4 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15";
   const holdExpiresAt = quote.expiresAt;
   const holdActive = quote.hold && !isHoldExpired(holdExpiresAt);
   const holdExpired = quote.hold && isHoldExpired(holdExpiresAt);
@@ -111,41 +110,13 @@ export default async function CheckoutPage({ searchParams }: CheckoutPageProps) 
             <h1 className="font-display mt-2 text-4xl font-extrabold tracking-[-0.05em]">Tell us who&apos;s staying.</h1>
             <p className="mt-3 text-muted-foreground">We&apos;ll use these details for your booking confirmation and arrival information.</p>
 
-            <form action="/payment" method="get" className="mt-8 space-y-8">
-              <input type="hidden" name="quote" value={quote.id} />
-
-              <section className="rounded-2xl border border-border bg-white p-5 sm:p-6">
-                <h2 className="flex items-center gap-3 font-display text-xl font-bold"><UserRound className="size-5 text-primary" />Guest details</h2>
-                <div className="mt-6 grid gap-5 sm:grid-cols-2">
-                  <label className="text-sm font-semibold sm:col-span-2">Full name<input className={fieldClassName} autoComplete="name" name="guestName" required type="text" placeholder="Name as shown on ID" /></label>
-                  <label className="text-sm font-semibold">Email address<input className={fieldClassName} autoComplete="email" name="guestEmail" required type="email" placeholder="you@example.com" /></label>
-                  <label className="text-sm font-semibold">Phone number<input className={fieldClassName} autoComplete="tel" name="guestPhone" required type="tel" placeholder="+62 812 3456 7890" /></label>
-                  <label className="text-sm font-semibold sm:col-span-2">Special requests <span className="font-normal text-muted-foreground">(optional)</span><textarea className="mt-2 min-h-28 w-full resize-y rounded-xl border border-border bg-white p-4 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15" maxLength={500} name="specialRequest" placeholder="Arrival time, accessibility needs, or anything the property should know" /></label>
-                </div>
-              </section>
-
-              <section className="rounded-2xl border border-border bg-white p-5 sm:p-6">
-                <h2 className="flex items-center gap-3 font-display text-xl font-bold"><CreditCard className="size-5 text-primary" />Payment method</h2>
-                <label className="mt-6 flex cursor-pointer items-start gap-4 rounded-xl border-2 border-primary bg-brand-teal-subtle p-4">
-                  <input className="mt-1 accent-primary" defaultChecked name="payment" type="radio" value="secure-payment" />
-                  <span className="flex-1"><strong className="block text-sm">Secure online payment</strong><span className="mt-1 block text-sm leading-6 text-muted-foreground">Choose bank transfer, card, or supported e-wallet on the payment page.</span></span>
-                  <CheckCircle2 className="size-5 text-primary" aria-hidden="true" />
-                </label>
-              </section>
-
-              <label className="flex items-start gap-3 text-sm leading-6 text-muted-foreground">
-                <input className="mt-1.5 accent-primary" name="agreeCancellationPolicy" required type="checkbox" value="true" />
-                <span>I agree to the property rules and cancellation policy. Free cancellation is available until 3 days before check-in.</span>
-              </label>
-
-              {holdActive ? (
-                <button className="min-h-14 w-full rounded-xl bg-primary px-6 text-base font-bold text-white transition hover:bg-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary" type="submit">Confirm & continue to payment</button>
-              ) : holdExpired ? (
-                <p className="rounded-xl bg-warning-subtle p-3 text-sm font-semibold text-warning">Your hold has expired. Please create a fresh quote.</p>
-              ) : (
-                <button className="min-h-14 w-full rounded-xl bg-primary px-6 text-base font-bold text-white transition hover:bg-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary" type="submit">Hold & continue to secure payment</button>
-              )}
-            </form>
+            <CheckoutBookingForm
+              adultCount={quote.adultCount}
+              cancellationPolicy={property.cancellationPolicy}
+              childCount={quote.childCount}
+              idempotencyKey={generateIdempotencyKey()}
+              quoteId={quote.id}
+            />
           </div>
 
           <aside className="overflow-hidden rounded-3xl border border-border bg-white shadow-card lg:sticky lg:top-6">
