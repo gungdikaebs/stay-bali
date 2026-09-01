@@ -1,0 +1,83 @@
+<svg width="1200" height="675" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675">
+  <!-- Background -->
+  <rect width="1200" height="675" fill="#F9FAFB"/>
+
+  <!-- Mock browser window -->
+  <rect x="60" y="40" width="1080" height="595" rx="20" fill="#ffffff" stroke="#E5E7EB" stroke-width="1"/>
+
+  <!-- Browser header bar -->
+  <rect x="60" y="40" width="1080" height="44" rx="20" fill="#F3F4F6"/>
+  <rect x="60" y="40" width="1080" height="1" fill="#E5E7EB"/>
+
+  <!-- Browser dots -->
+  <circle cx="95" cy="64" r="6" fill="#EF4444"/>
+  <circle cx="120" cy="64" r="6" fill="#F59E0B"/>
+  <circle cx="145" cy="64" r="6" fill="#10B981"/>
+
+  <!-- URL bar -->
+  <rect x="170" y="58" width="300" height="20" fill="#E5E7EB" rx="4"/>
+
+  <!-- StayBali logo/header -->
+  <text x="600" y="120" text-anchor="middle" font-family="Inter, sans-serif" font-size="28" font-weight="700" fill="#111827">
+    StayBali
+  </text>
+  <text x="600" y="145" text-anchor="middle" font-family="Inter, sans-serif" font-size="14" fill="#6B7280">
+    Trusted stays across Bali
+  </text>
+
+  <!-- Search panel mockup -->
+  <rect x="200" y="175" width="800" height="180" fill="#ffffff" stroke="#E5E7EB" stroke-width="1" rx="12"/>
+
+  <!-- Location input -->
+  <rect x="230" y="205" width="740" height="40" fill="#F9FAFB" stroke="#D1D5DB" rx="8"/>
+  <text x="260" y="232" font-family="Inter, sans-serif" font-size="14" fill="#6B7280">📍 Seminyak, Canggu, Ubud...</text>
+
+  <!-- Date inputs -->
+  <rect x="230" y="255" width="220" height="45" fill="#F9FAFB" stroke="#D1D5DB" rx="8"/>
+  <text x="340" y="282" font-family="Inter, sans-serif" font-size="13" fill="#6B7280" text-anchor="middle">Sep 1 – Sep 4</text>
+
+  <rect x="470" y="255" width="150" height="45" fill="#F9FAFB" stroke="#D1D5DB" rx="8"/>
+  <text x="545" y="282" font-family="Inter, sans-serif" font-size="13" fill="#6B7280" text-anchor="middle">2 Guests</text>
+
+  <!-- Search button -->
+  <rect x="630" y="255" width="120" height="45" fill="#0D9488" rx="8"/>
+  <text x="690" y="282" font-family="Inter, sans-serif" font-size="14" font-weight="600" fill="#ffffff" text-anchor="middle">Search</text>
+
+  <!-- Property cards -->
+  <rect x="200" y="375" width="240" height="250" fill="#ffffff" stroke="#E5E7EB" stroke-width="1" rx="12"/>
+  <rect x="200" y="375" width="240" height="140" fill="#D1FAE5" rx="12 0 0 0"/>
+  <text x="320" y="400" font-family="Inter, sans-serif" font-size="14" font-weight="600" fill="#065F46" text-anchor="middle">🏝️</text>
+  <text x="320" y="425" font-family="Inter, sans-serif" font-size="16" font-weight="600" fill="#111827" text-anchor="middle">Villa</text>
+  <text x="320" y="450" font-family="Inter, sans-serif" font-size="14" fill="#111827" text-anchor="middle">Batu Bolong Lofts</text>
+  <text x="320" y="485" font-family="Inter, sans-serif" font-size="12" fill="#6B7280" text-anchor="middle">Canggu, Bali</text>
+  <text x="320" y="500" font-family="Inter, sans-serif" font-size="16" font-weight="700" fill="#0D9488" text-anchor="middle">Rp2.395.000</text>
+  <text x="320" y="520" font-family="Inter, sans-serif" font-size="12" fill="#6B7280" text-anchor="middle">per night</text>
+
+  <rect x="460" y="375" width="240" height="250" fill="#ffffff" stroke="#E5E7EB" stroke-width="1" rx="12"/>
+  <rect x="460" y="375" width="240" height="140" fill="#D1E4FF" rx="12 0 0 0"/>
+  <text x="580" y="400" font-family="Inter, sans-serif" font-size="14" font-weight="600" fill="#1E40AF" text-anchor="middle">🏨</text>
+  <text x="580" y="425" font-family="Inter, sans-serif" font-size="16" font-weight="600" fill="#111827" text-anchor="middle">Hotel</text>
+  <text x="580" y="450" font-family="Inter, sans-serif" font-size="14" fill="#111827" text-anchor="middle">Ocean View Resort</text>
+  <text x="580" y="485" font-family="Inter, sans-serif" font-size="12" fill="#6B7280" text-anchor="middle">Seminyak, Bali</text>
+  <text x="580" y="500" font-family="Inter, sans-serif" font-size="16" font-weight="700" fill="#2563EB" text-anchor="middle">Rp1.850.000</text>
+  <text x="580" y="520" font-family="Inter, sans-serif" font-size="12" fill="#6B7280" text-anchor="middle">per night</text>
+
+  <rect x="720" y="375" width="240" height="250" fill="#ffffff" stroke="#E5E7EB" stroke-width="1" rx="12"/>
+  <rect x="720" y="375" width="240" height="140" fill="#FED7AA" rx="12 0 0 0"/>
+  <text x="840" y="400" font-family="Inter, sans-serif" font-size="14" font-weight="600" fill="#92400E" text-anchor="middle">🏠</text>
+  <text x="840" y="425" font-family="Inter, sans-serif" font-size="16" font-weight="600" fill="#111827" text-anchor="middle">Homestay</text>
+  <text x="840" y="450" font-family="Inter, sans-serif" font-size="14" fill="#111827" text-anchor="middle">Ubud Rice Terrace</text>
+  <text x="840" y="485" font-family="Inter, sans-serif" font-size="12" fill="#6B7280" text-anchor="middle">Ubud, Bali</text>
+  <text x="840" y="500" font-family="Inter, sans-serif" font-size="16" font-weight="700" fill="#EA580C" text-anchor="middle">Rp1.250.000</text>
+  <text x="840" y="520" font-family="Inter, sans-serif" font-size="12" fill="#6B7280" text-anchor="middle">per night</text>
+
+  <!-- Pagination dots -->
+  <circle cx="940" cy="610" r="4" fill="#CBD5E1"/>
+  <circle cx="970" cy="610" r="4" fill="#64748B"/>
+  <circle cx="1000" cy="610" r="4" fill="#CBD5E1"/>
+
+  <!-- Features section -->
+  <text x="600" y="650" text-anchor="middle" font-family="Inter, sans-serif" font-size="13" fill="#9CA3AF">
+    Trusted villas, hotels, and homestays across Bali with clear prices and real availability.
+  </text>
+</svg>

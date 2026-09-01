@@ -109,6 +109,7 @@ export async function getOwnedQuote(
     where: { id: quoteId, OR: owners },
     select: {
       id: true,
+      guestSessionId: true,
       checkinDate: true,
       checkoutDate: true,
       adultCount: true,
@@ -118,8 +119,10 @@ export async function getOwnedQuote(
       grandTotal: true,
       expiresAt: true,
       nights: { select: { stayDate: true, unitPrice: true }, orderBy: { stayDate: "asc" } },
+      hold: { select: { id: true } },
       roomType: {
         select: {
+          id: true,
           name: true,
           property: {
             select: {

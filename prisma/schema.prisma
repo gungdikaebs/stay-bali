@@ -46,22 +46,39 @@ enum MediaStatus {
   ORPHANED
 }
 
+enum BookingStatus {
+  PENDING_PAYMENT
+  CONFIRMED
+  PAYMENT_FAILED
+  EXPIRED
+  CANCELLATION_REQUESTED
+  CANCELLED
+  REFUND_PENDING
+  REFUNDED
+  CHECKED_IN
+  COMPLETED
+}
+
 model User {
-  id              String             @id @default(cuid()) @db.VarChar(30)
-  email           String             @unique @db.VarChar(254)
-  name            String             @db.VarChar(100)
-  phone           String?            @db.VarChar(20)
-  role            UserRole           @default(TRAVELER)
-  status          UserStatus         @default(ACTIVE)
-  sessionVersion  Int                @default(1) @map("session_version")
-  createdAt       DateTime           @default(now()) @map("created_at") @db.Timestamp(3)
-  updatedAt       DateTime           @updatedAt @map("updated_at") @db.Timestamp(3)
-  credential      AccountCredential?
-  partnerProfile  PartnerProfile?
-  uploadedMedia   MediaAsset[]       @relation("MediaUploader")
-  propertyReviews PropertyReview[]   @relation("PropertyReviewer")
-  auditLogs       AuditLog[]         @relation("AuditActor")
-  quotes          Quote[]
+  id                   String                 @id @default(cuid()) @db.VarChar(30)
+  email                String                 @unique @db.VarChar(254)
+  name                 String                 @db.VarChar(100)
+  phone                String?                @db.VarChar(20)
+  role                 UserRole               @default(TRAVELER)
+  status               UserStatus             @default(ACTIVE)
+  sessionVersion       Int                    @default(1) @map("session_version")
+  createdAt            DateTime               @default(now()) @map("created_at") @db.Timestamp(3)
+  updatedAt            DateTime               @updatedAt @map("updated_at") @db.Timestamp(3)
+  credential           AccountCredential?
+  partnerProfile       PartnerProfile?
+  uploadedMedia        MediaAsset[]           @relation("MediaUploader")
+  propertyReviews      PropertyReview[]       @relation("PropertyReviewer")
+  auditLogs            AuditLog[]             @relation("AuditActor")
+  quotes               Quote[]
+  holds                Hold[]
+  bookings             Booking[]
+  bookingStatusHistory BookingStatusHistory[] @relation("StatusActor")
+  idempotencyRecords   IdempotencyRecord[]    @relation("IdempotencyActor")
 
   @@index([role, status])
   @@map("users")
@@ -159,6 +176,9 @@ model RoomType {
   media         RoomMedia[]
   inventory     InventoryDate[]
   quotes        Quote[]
+  bookings      Booking[]
+  holdNights    HoldNight[]
+  bookingNights BookingNight[]
 
   @@index([propertyId, isActive])
   @@map("room_types")
@@ -283,6 +303,7 @@ model Quote {
   createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamp(3)
   roomType       RoomType     @relation(fields: [roomTypeId], references: [id], onDelete: Restrict)
   user           User?        @relation(fields: [userId], references: [id], onDelete: Restrict)
+  hold           Hold?
   nights         QuoteNight[]
 
   @@index([userId, expiresAt])
@@ -299,6 +320,107 @@ model QuoteNight {
 
   @@id([quoteId, stayDate])
   @@map("quote_nights")
+}
+
+model Hold {
+  id             String      @id @default(cuid()) @db.VarChar(30)
+  quoteId        String      @unique @map("quote_id") @db.VarChar(30)
+  userId         String?     @map("user_id") @db.VarChar(30)
+  guestSessionId String?     @map("guest_session_id") @db.VarChar(64)
+  expiresAt      DateTime    @map("expires_at") @db.Timestamp(3)
+  consumedAt     DateTime?   @map("consumed_at") @db.Timestamp(3)
+  createdAt      DateTime    @default(now()) @map("created_at") @db.Timestamp(3)
+  quote          Quote       @relation(fields: [quoteId], references: [id], onDelete: Restrict)
+  user           User?       @relation(fields: [userId], references: [id], onDelete: Restrict)
+  nights         HoldNight[]
+
+  @@index([userId, expiresAt])
+  @@index([guestSessionId, expiresAt])
+  @@map("holds")
+}
+
+model HoldNight {
+  id         String   @id @default(cuid()) @db.VarChar(30)
+  holdId     String   @map("hold_id") @db.VarChar(30)
+  roomTypeId String   @map("room_type_id") @db.VarChar(30)
+  stayDate   DateTime @map("stay_date") @db.Date
+  hold       Hold     @relation(fields: [holdId], references: [id], onDelete: Cascade)
+  roomType   RoomType @relation(fields: [roomTypeId], references: [id], onDelete: Restrict)
+
+  @@unique([holdId, stayDate])
+  @@index([roomTypeId, stayDate])
+  @@map("hold_nights")
+}
+
+model Booking {
+  id             String                 @id @default(cuid()) @db.VarChar(30)
+  bookingCode    String                 @unique @map("booking_code") @db.VarChar(20)
+  roomTypeId     String                 @map("room_type_id") @db.VarChar(30)
+  userId         String?                @map("user_id") @db.VarChar(30)
+  checkinDate    DateTime               @map("checkin_date") @db.Date
+  checkoutDate   DateTime               @map("checkout_date") @db.Date
+  adultCount     Int                    @map("adult_count") @db.SmallInt
+  childCount     Int                    @map("child_count") @db.SmallInt
+  subtotal       Int                    @db.Integer
+  serviceFee     Int                    @map("service_fee") @db.Integer
+  grandTotal     Int                    @map("grand_total") @db.Integer
+  status         BookingStatus          @default(PENDING_PAYMENT)
+  specialRequest String?                @map("special_request") @db.Text
+  createdAt      DateTime               @default(now()) @map("created_at") @db.Timestamp(3)
+  roomType       RoomType               @relation(fields: [roomTypeId], references: [id], onDelete: Restrict)
+  user           User?                  @relation(fields: [userId], references: [id], onDelete: Restrict)
+  nights         BookingNight[]
+  statusHistory  BookingStatusHistory[]
+
+  @@index([userId, status, createdAt])
+  @@index([status, createdAt])
+  @@index([roomTypeId, checkinDate, checkoutDate])
+  @@map("bookings")
+}
+
+model BookingNight {
+  id         String   @id @default(cuid()) @db.VarChar(30)
+  bookingId  String   @map("booking_id") @db.VarChar(30)
+  roomTypeId String   @map("room_type_id") @db.VarChar(30)
+  stayDate   DateTime @map("stay_date") @db.Date
+  unitPrice  Int      @map("unit_price") @db.Integer
+  booking    Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  roomType   RoomType @relation(fields: [roomTypeId], references: [id], onDelete: Restrict)
+
+  @@unique([bookingId, stayDate])
+  @@index([roomTypeId, stayDate])
+  @@map("booking_nights")
+}
+
+model BookingStatusHistory {
+  id             String        @id @default(cuid()) @db.VarChar(30)
+  bookingId      String        @map("booking_id") @db.VarChar(30)
+  previousStatus BookingStatus @map("previous_status")
+  nextStatus     BookingStatus @map("next_status")
+  actorId        String?       @map("actor_id") @db.VarChar(30)
+  note           String?       @db.Text
+  createdAt      DateTime      @default(now()) @map("created_at") @db.Timestamp(3)
+  booking        Booking       @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  actor          User?         @relation("StatusActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([bookingId, createdAt])
+  @@index([actorId, createdAt])
+  @@map("booking_status_history")
+}
+
+model IdempotencyRecord {
+  id        String   @id @default(cuid()) @db.VarChar(30)
+  scope     String   @map("scope") @db.VarChar(64)
+  key       String   @map("key") @db.VarChar(64)
+  actorId   String?  @map("actor_id") @db.VarChar(30)
+  request   String   @db.VarChar(64)
+  result    Json?
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(3)
+  actor     User?    @relation("IdempotencyActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@unique([scope, key])
+  @@index([scope, createdAt])
+  @@map("idempotency_records")
 }
 
 model AuditLog {

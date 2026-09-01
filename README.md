@@ -37,8 +37,9 @@ npm run media:cleanup # Dry-run orphan media cleanup (add -- --execute to delete
 
 Technical summaries:
 
+- `docs/PROGRESS.md` — **Status pekerjaan terbaru** (mulai dari sini untuk agent/session baru)
 - `docs/DATABASE_FOUNDATION.md`
 - `docs/AUTHENTICATION.md`
 - `docs/SUPPLY_WORKFLOW.md`
 
-Current vertical slice: authenticated supply management, secure media lifecycle, bulk room inventory, paginated availability search, and expiring server-side quotes.
+Current vertical slice: authenticated supply management, secure media lifecycle, bulk room inventory, paginated availability search, expiring server-side quotes, dan Hold & Booking domain (M4, in progress).

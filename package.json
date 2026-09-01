@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "tsx --test lib/auth/policies.test.ts lib/supply/rules.test.ts lib/media/rules.test.ts lib/inventory/rules.test.ts lib/search-query.test.ts",
+    "test": "tsx --test lib/auth/policies.test.ts lib/supply/rules.test.ts lib/media/rules.test.ts lib/inventory/rules.test.ts lib/search-query.test.ts lib/hold/rules.test.ts lib/booking/rules.test.ts",
     "media:cleanup": "tsx scripts/cleanup-orphan-media.ts",
     "db:generate": "prisma generate",
     "db:validate": "prisma validate",

@@ -8,6 +8,7 @@ import {
   CalendarDays,
   CheckCircle2,
   CreditCard,
+  Clock3,
   LockKeyhole,
   ShieldCheck,
   UserRound,
@@ -17,6 +18,7 @@ import { UserRole } from "@/generated/prisma/client";
 import { formatIdr, formatStayDate } from "@/lib/demo-stays";
 import { getCurrentUser } from "@/lib/auth/authorization";
 import { getOwnedQuote } from "@/lib/quote/quotes";
+import { isHoldExpired } from "@/lib/hold/rules";
 
 export const metadata: Metadata = {
   title: "Checkout",
@@ -81,6 +83,9 @@ export default async function CheckoutPage({ searchParams }: CheckoutPageProps) 
   const query = { values: { checkin, checkout, guests: quote.adultCount, children: quote.childCount }, nights };
   const summary = { subtotal: quote.subtotal, serviceFee: quote.serviceFee, total: quote.grandTotal };
   const fieldClassName = "mt-2 h-12 w-full rounded-xl border border-border bg-white px-4 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15";
+  const holdExpiresAt = quote.expiresAt;
+  const holdActive = quote.hold && !isHoldExpired(holdExpiresAt);
+  const holdExpired = quote.hold && isHoldExpired(holdExpiresAt);
 
   return (
     <main className="min-h-screen bg-background">
@@ -129,11 +134,17 @@ export default async function CheckoutPage({ searchParams }: CheckoutPageProps) 
               </section>
 
               <label className="flex items-start gap-3 text-sm leading-6 text-muted-foreground">
-                <input className="mt-1.5 accent-primary" required type="checkbox" />
+                <input className="mt-1.5 accent-primary" name="agreeCancellationPolicy" required type="checkbox" value="true" />
                 <span>I agree to the property rules and cancellation policy. Free cancellation is available until 3 days before check-in.</span>
               </label>
 
-              <button className="min-h-14 w-full rounded-xl bg-primary px-6 text-base font-bold text-white transition hover:bg-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary" type="submit">Continue to secure payment</button>
+              {holdActive ? (
+                <button className="min-h-14 w-full rounded-xl bg-primary px-6 text-base font-bold text-white transition hover:bg-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary" type="submit">Confirm & continue to payment</button>
+              ) : holdExpired ? (
+                <p className="rounded-xl bg-warning-subtle p-3 text-sm font-semibold text-warning">Your hold has expired. Please create a fresh quote.</p>
+              ) : (
+                <button className="min-h-14 w-full rounded-xl bg-primary px-6 text-base font-bold text-white transition hover:bg-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary" type="submit">Hold & continue to secure payment</button>
+              )}
             </form>
           </div>
 
@@ -145,6 +156,15 @@ export default async function CheckoutPage({ searchParams }: CheckoutPageProps) 
               <p className="text-xs font-bold uppercase tracking-[0.1em] text-primary">Your stay</p>
               <h2 className="font-display mt-2 text-xl font-bold">{stay.name}</h2>
               <p className="mt-1 text-sm text-muted-foreground">{stay.roomName} · {stay.area}</p>
+
+              {holdActive ? (
+                <p className="mt-4 flex items-center gap-2 rounded-xl bg-success-subtle px-3 py-2 text-sm font-semibold text-success">
+                  <Clock3 className="size-4 shrink-0" />
+                  Hold expires {holdExpiresAt.toLocaleTimeString("en-ID", { hour: "2-digit", minute: "2-digit" })}
+                </p>
+              ) : holdExpired ? (
+                <p className="mt-4 rounded-xl bg-warning-subtle px-3 py-2 text-sm font-semibold text-warning">Hold has expired.</p>
+              ) : null}
 
               <div className="mt-5 grid grid-cols-2 gap-3 rounded-xl bg-secondary p-4 text-sm">
                 <div><span className="block text-xs text-muted-foreground">Check-in</span><strong>{formatStayDate(query.values.checkin)}</strong></div>
