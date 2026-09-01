@@ -23,6 +23,7 @@ import {
 import { prisma } from "@/lib/prisma";
 import { createHash } from "crypto";
 import { PartnerStatus, UserRole, UserStatus } from "@/generated/prisma/client";
+import { getBookingPaymentExpiry } from "./payment-window";
 
 function bookingResult(value: unknown) {
   if (
@@ -93,6 +94,7 @@ export async function confirmBookingOnline(
   if (!stayDates) throw new Error("Invalid stay dates.");
 
   const bookingCode = generateBookingCode();
+  const paymentExpiresAt = getBookingPaymentExpiry();
 
   return prisma.$transaction(async (tx) => {
     const existing = await tx.idempotencyRecord.findUnique({
@@ -140,6 +142,7 @@ export async function confirmBookingOnline(
         serviceFee: quote.serviceFee,
         grandTotal: quote.grandTotal,
         status: "PENDING_PAYMENT",
+        paymentExpiresAt,
         specialRequest: validated.specialRequest,
       },
     });

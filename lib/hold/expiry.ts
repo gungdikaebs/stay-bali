@@ -3,24 +3,41 @@ import "server-only";
 import { prisma } from "@/lib/prisma";
 import { releaseHeldInventory } from "@/lib/inventory/reservations";
 
-export async function cleanupExpiredHolds(): Promise<{ cleanedCount: number }> {
-  const result = await reconcileExpiredHolds();
+type ExpiredHoldOptions = {
+  now?: Date;
+  batchSize?: number;
+};
+
+export async function cleanupExpiredHolds(
+  options: ExpiredHoldOptions = {},
+): Promise<{ cleanedCount: number }> {
+  const result = await reconcileExpiredHolds(options);
   return { cleanedCount: result.holds };
 }
 
-export async function reconcileInventoryFromExpiredHolds(): Promise<{ reconciledCount: number }> {
-  const result = await reconcileExpiredHolds();
+export async function reconcileInventoryFromExpiredHolds(
+  options: ExpiredHoldOptions = {},
+): Promise<{ reconciledCount: number }> {
+  const result = await reconcileExpiredHolds(options);
   return { reconciledCount: result.nights };
 }
 
-async function reconcileExpiredHolds(): Promise<{ holds: number; nights: number }> {
-  const now = new Date();
+async function reconcileExpiredHolds(
+  options: ExpiredHoldOptions,
+): Promise<{ holds: number; nights: number }> {
+  const now = options.now ?? new Date();
+  const batchSize = options.batchSize ?? 100;
+  if (!Number.isInteger(batchSize) || batchSize < 1 || batchSize > 500) {
+    throw new Error("Expiry batch size must be an integer between 1 and 500.");
+  }
 
   const expiredHolds = await prisma.hold.findMany({
     where: {
       expiresAt: { lt: now },
       consumedAt: null,
     },
+    orderBy: [{ expiresAt: "asc" }, { id: "asc" }],
+    take: batchSize,
     select: {
       id: true,
       nights: {
@@ -40,17 +57,13 @@ async function reconcileExpiredHolds(): Promise<{ holds: number; nights: number 
     let holds = 0;
     let nights = 0;
     for (const hold of expiredHolds) {
-      const current = await tx.hold.findFirst({
+      const claimed = await tx.hold.deleteMany({
         where: { id: hold.id, expiresAt: { lt: now }, consumedAt: null },
-        select: { id: true },
       });
-      if (!current) continue;
+      if (claimed.count !== 1) continue;
 
       await releaseHeldInventory(tx, hold.nights);
       nights += hold.nights.length;
-
-      await tx.holdNight.deleteMany({ where: { holdId: hold.id } });
-      await tx.hold.delete({ where: { id: hold.id } });
       holds++;
 
       await tx.auditLog.create({

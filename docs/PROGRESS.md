@@ -11,7 +11,7 @@ Terakhir diperbarui: 2 September 2026.
 | M1 Foundation | Selesai | Auth, RBAC, audit, partner lifecycle |
 | M2 Supply | Selesai | Property/room CRUD, approval, media |
 | M3 Discovery | Selesai | Inventory calendar, search, availability, quote |
-| M4 Booking | Hampir selesai | Hold, booking, snapshot, manual reservation, checkout wiring |
+| M4 Booking | Hampir selesai | Hold, booking, snapshot, manual reservation, checkout wiring, expiry job |
 | M5 Payment | Belum dimulai | Midtrans sandbox, webhook, payment attempts |
 | M6 Operations | Belum dimulai | History, voucher, cancellation/refund, operational dashboards |
 | M7 Release | Belum dimulai | Worker, backup/restore, observability, deployment |
@@ -39,6 +39,8 @@ Terakhir diperbarui: 2 September 2026.
 - Baris inventory yang belum ada dibuat saat diperlukan.
 - Hold menaikkan `heldUnits`; konfirmasi booking mengubahnya menjadi `bookedUnits`.
 - Hold expiry dan status terminal yang sesuai melepaskan inventory.
+- Command expiry idempotent membersihkan hold dan mengubah booking `PENDING_PAYMENT` yang melewati deadline menjadi `EXPIRED` dalam transaction `Serializable`.
+- Booking online menyimpan deadline pembayaran absolut; default 15 menit dan dapat diatur dengan `BOOKING_PAYMENT_WINDOW_MINUTES`.
 - Online dan manual booking memakai service inventory yang sama.
 - Duplicate submit memakai idempotency key dan mengembalikan hasil booking yang sudah tersimpan.
 - Booking menyimpan snapshot property, room, guest, cancellation policy, nightly price, subtotal, service fee, dan total.
@@ -60,7 +62,8 @@ prisma/migrations/
 ├── 20260830000000_database_foundation/
 ├── 20260831000000_quote_foundation/
 ├── 20260901000000_hold_and_booking_foundation/
-└── 20260902000000_booking_snapshots/
+├── 20260902000000_booking_snapshots/
+└── 20260902010000_booking_payment_expiry/
 ```
 
 Migration booking snapshot menambahkan:
@@ -142,8 +145,7 @@ Partner hanya dapat memilih dan melihat room/booking miliknya. Admin dapat menga
 
 - Jalankan review end-to-end pada browser untuk Guest quote → Traveler login → checkout → booking → payment placeholder.
 - Review UI manual reservation pada mobile dan desktop.
-- Tambahkan scheduler/worker idempotent untuk `cleanupExpiredHolds()`.
-- Tambahkan expiry job untuk booking `PENDING_PAYMENT`.
+- Hubungkan `npm run reservations:cleanup` ke scheduler deployment; command idempotent untuk hold dan booking sudah tersedia.
 
 ### M5 Payment
 
@@ -180,8 +182,8 @@ Hasil batch 2 September 2026:
 
 - Prisma client berhasil digenerate.
 - Prisma schema valid.
-- Empat migration berhasil diterapkan dan database up-to-date.
-- 25 unit tests lulus.
+- Lima migration berhasil diterapkan dan database up-to-date.
+- 27 unit tests lulus.
 - PostgreSQL last-unit concurrency test lulus.
 - ESLint bersih.
 - TypeScript bersih.

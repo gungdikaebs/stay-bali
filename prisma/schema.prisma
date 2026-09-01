@@ -371,6 +371,7 @@ model Booking {
   serviceFee         Int                    @map("service_fee") @db.Integer
   grandTotal         Int                    @map("grand_total") @db.Integer
   status             BookingStatus          @default(PENDING_PAYMENT)
+  paymentExpiresAt   DateTime?              @map("payment_expires_at") @db.Timestamp(3)
   specialRequest     String?                @map("special_request") @db.Text
   createdAt          DateTime               @default(now()) @map("created_at") @db.Timestamp(3)
   roomType           RoomType               @relation(fields: [roomTypeId], references: [id], onDelete: Restrict)
@@ -380,6 +381,7 @@ model Booking {
 
   @@index([userId, status, createdAt])
   @@index([status, createdAt])
+  @@index([status, paymentExpiresAt])
   @@index([roomTypeId, checkinDate, checkoutDate])
   @@map("bookings")
 }

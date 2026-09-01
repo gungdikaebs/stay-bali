@@ -90,7 +90,7 @@ worker/{processors,schedulers}/
 
 ## Data dan constraint
 
-Entitas utama: User, PartnerProfile, Property, PropertyReview, RoomType, MediaAsset, InventoryDate, Quote/QuoteNight, Hold/HoldNight, Booking/BookingNight/StatusHistory, PaymentAttempt/PaymentEvent, CancellationRequest, RefundRecord, IdempotencyRecord, OutboxEvent, AuditLog.
+Entitas utama: User, PartnerProfile, Property, PropertyReview, RoomType, MediaAsset, InventoryDate, Quote/QuoteNight, Hold/HoldNight, Booking/BookingNight/StatusHistory, PaymentAttempt/PaymentEvent, CancellationRequest, RefundRecord, IdempotencyRecord, OutboxEvent, AuditLog. Booking online menyimpan `payment_expires_at` absolut; reservasi manual tidak memiliki deadline pembayaran.
 
 Constraint/index minimum:
 
@@ -124,7 +124,7 @@ Availability valid jika setiap malam tidak `stop_sell` dan `available_units ≥ 
 3. Buat snapshot booking serta status history.
 4. Decrement held, increment booked, tandai hold consumed, tulis outbox, commit.
 
-**Release:** hanya bila record masih aktif dan `inventory_released_at` belum terisi. Lock selalu dalam urutan yang sama; retry deadlock terbatas. Queue yang terlambat tidak mengubah availability karena query juga memeriksa expiry absolut.
+**Release:** job mengklaim hold aktif melalui delete bersyarat atau booking `PENDING_PAYMENT` melalui update bersyarat ke `EXPIRED`, lalu melepas inventory dan menulis status history serta audit dalam transaction `Serializable` yang sama. Pemanggilan ulang menghasilkan state akhir yang sama. Lock selalu dalam urutan yang sama; retry deadlock terbatas. Queue yang terlambat tidak mengubah availability karena query juga memeriksa expiry absolut.
 
 Redis lock tidak dipakai untuk correctness inventory; Postgresql transaction adalah boundary atomiknya.
 
