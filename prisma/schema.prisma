@@ -59,6 +59,11 @@ enum BookingStatus {
   COMPLETED
 }
 
+enum PaymentAttemptStatus {
+  SUCCEEDED
+  FAILED
+}
+
 model User {
   id                   String                 @id @default(cuid()) @db.VarChar(30)
   email                String                 @unique @db.VarChar(254)
@@ -77,6 +82,7 @@ model User {
   quotes               Quote[]
   holds                Hold[]
   bookings             Booking[]
+  paymentAttempts      PaymentAttempt[]
   bookingStatusHistory BookingStatusHistory[] @relation("StatusActor")
   idempotencyRecords   IdempotencyRecord[]    @relation("IdempotencyActor")
 
@@ -378,12 +384,36 @@ model Booking {
   user               User?                  @relation(fields: [userId], references: [id], onDelete: Restrict)
   nights             BookingNight[]
   statusHistory      BookingStatusHistory[]
+  paymentAttempts    PaymentAttempt[]
 
   @@index([userId, status, createdAt])
   @@index([status, createdAt])
   @@index([status, paymentExpiresAt])
   @@index([roomTypeId, checkinDate, checkoutDate])
   @@map("bookings")
+}
+
+model PaymentAttempt {
+  id                String               @id @default(cuid()) @db.VarChar(30)
+  bookingId         String               @map("booking_id") @db.VarChar(30)
+  actorId           String               @map("actor_id") @db.VarChar(30)
+  idempotencyKey    String               @map("idempotency_key") @db.VarChar(64)
+  requestHash       String               @map("request_hash") @db.VarChar(64)
+  provider          String               @default("DEMO") @db.VarChar(30)
+  providerReference String               @unique @map("provider_reference") @db.VarChar(64)
+  amount            Int                  @db.Integer
+  currency          String               @default("IDR") @db.VarChar(3)
+  status            PaymentAttemptStatus
+  failureCode       String?              @map("failure_code") @db.VarChar(50)
+  createdAt         DateTime             @default(now()) @map("created_at") @db.Timestamp(3)
+  resolvedAt        DateTime             @map("resolved_at") @db.Timestamp(3)
+  booking           Booking              @relation(fields: [bookingId], references: [id], onDelete: Restrict)
+  actor             User                 @relation(fields: [actorId], references: [id], onDelete: Restrict)
+
+  @@unique([bookingId, idempotencyKey])
+  @@index([bookingId, createdAt])
+  @@index([status, createdAt])
+  @@map("payment_attempts")
 }
 
 model BookingNight {

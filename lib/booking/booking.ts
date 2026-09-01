@@ -177,13 +177,13 @@ export async function confirmBookingOnline(
         },
       },
     });
-    await tx.quote.update({
-      where: { id: quote.id },
-      data: { hold: { disconnect: true }, guestSessionId: null, userId: actorUser.id },
-    });
     await consumeHeldInventory(tx, quotedHoldNights);
     await tx.holdNight.deleteMany({ where: { holdId } });
     await tx.hold.delete({ where: { id: holdId } });
+    await tx.quote.update({
+      where: { id: quote.id },
+      data: { guestSessionId: null, userId: actorUser.id },
+    });
     const result = { bookingId: booking.id, bookingCode };
     await tx.idempotencyRecord.update({
       where: { scope_key: { scope: "CREATE_BOOKING", key: validated.idempotencyKey } },

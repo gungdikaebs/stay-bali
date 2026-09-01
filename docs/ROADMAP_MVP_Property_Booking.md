@@ -21,7 +21,7 @@
 | 4–5 | Property, room, approval, media, public detail | Partner → Admin review → published property tampil; upload aman |
 | 6–8 | Inventory, pricing, search, filter, quote | Search hanya menampilkan seluruh rentang tersedia; quote server-side benar |
 | 9–10 | Atomic hold, expiry, booking snapshot/state machine | Unit terakhir aman; duplicate submit satu booking; Booking Alpha |
-| 11–12 | Midtrans Sandbox, webhook, history, email, voucher | Redirect bukan authority; duplicate webhook aman; search-to-voucher E2E |
+| 11–12 | Demo payment adapter, history, email, voucher | Server menjadi authority; duplicate payment aman; search-to-voucher E2E |
 | 13–14 | Manual reservation, Partner/Admin ops, cancellation/refund, jobs/audit | Semua P0 lengkap; manual/online memakai inventory sama |
 | 15 | Security, concurrency, performance, backup/restore | Tidak ada critical/high; suites stabil; restore pernah diuji |
 | 16 | VPS deploy, seed, docs, responsive QA, portfolio demo | Production sandbox flow, health, demo account, rollback siap |
@@ -33,12 +33,12 @@ Checkpoint: minggu 5 Internal Alpha, 8 Search Alpha, 10 Booking Alpha, 12 End-to
 ```text
 Auth → role/ownership → property approval → room/media
   → inventory → availability search → quote → hold → booking
-  → payment webhook → voucher/email
+  → demo payment attempt → voucher/email
   → manual reservation + cancellation/refund + dashboards
   → hardening → release
 ```
 
-Jangan lanjut ke payment sebelum concurrency hold/booking stabil. Jangan lanjut ke public release sebelum ownership, webhook idempotency, backup, dan restore terbukti.
+Jangan lanjut ke payment sebelum concurrency hold/booking stabil. Jangan lanjut ke public release sebelum ownership, payment idempotency, backup, dan restore terbukti.
 
 ## Fokus implementasi per fase
 
@@ -68,8 +68,8 @@ Jangan lanjut ke payment sebelum concurrency hold/booking stabil. Jangan lanjut 
 
 ### Payment (M5)
 
-- Adapter, Midtrans initiation, attempt history, signature/status/amount validation.
-- Duplicate/late webhook handling dan Admin inquiry.
+- Adapter demo lokal, attempt history, reference/status/amount validation.
+- Duplicate/late attempt handling dan retry sebelum expiry.
 - Booking history, printable voucher, email queue/retry, E2E search-to-voucher.
 
 ### Operations (M6)
@@ -117,7 +117,7 @@ Scope review wajib untuk guest checkout, multi-room, promo engine, localization 
 | Query memakai owner ID dari request | Hentikan fitur; buat policy + regression test |
 | Inventory rule berubah setelah minggu 6 | Freeze invariant dan test matrix sebelum search |
 | Concurrency test flakey | Jangan lanjut payment; perbaiki transaction/lock |
-| Sandbox payment menghambat | Gunakan fake adapter, pertahankan kontrak domain |
+| Provider payment menambah kompleksitas portfolio | Gunakan adapter demo, pertahankan kontrak domain |
 | Hold/email stuck | Perbaiki idempotency, retry limit, reconciliation, failed-job view |
 | UI >3 sesi tanpa progress domain | Sederhanakan component dan lanjutkan vertical slice |
 | Buffer dipakai fitur baru | Kembalikan P1 ke backlog |
@@ -125,7 +125,7 @@ Scope review wajib untuk guest checkout, multi-room, promo engine, localization 
 ## Release checklist ringkas
 
 - Approval, search, pricing, booking online/manual, cancellation/refund bekerja.
-- Unit terakhir, duplicate command/webhook, dan expiry aman.
+- Unit terakhir, duplicate command/payment, dan expiry aman.
 - Traveler/Partner/Admin isolation serta upload security teruji.
 - Health/log/backup/restore/disk/deploy/rollback siap.
 - Mobile 360 px, desktop, seed/demo account, README, dan demo 5–10 menit siap.

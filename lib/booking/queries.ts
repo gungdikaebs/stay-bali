@@ -77,25 +77,14 @@ export async function getBookingOperationsWorkspace() {
   };
 }
 
-export async function getOwnedBooking(bookingId: string) {
+export async function getTravelerBooking(bookingId: string) {
   const actor = await getCurrentUser();
-  if (!actor) return null;
+  if (!actor || actor.role !== UserRole.TRAVELER) return null;
 
-  return prisma.booking.findFirst({
+  const booking = await prisma.booking.findFirst({
     where: {
       id: bookingId,
-      ...(actor.role === UserRole.ADMIN
-        ? {}
-        : actor.role === UserRole.TRAVELER
-          ? { userId: actor.id }
-          : actor.role === UserRole.PARTNER &&
-              actor.partnerProfile?.status === PartnerStatus.ACTIVE
-            ? {
-                roomType: {
-                  property: { ownerPartnerId: actor.partnerProfile.id },
-                },
-              }
-            : { id: "__not_authorized__" }),
+      userId: actor.id,
     },
     select: {
       id: true,
@@ -113,11 +102,32 @@ export async function getOwnedBooking(bookingId: string) {
       serviceFee: true,
       grandTotal: true,
       status: true,
+      paymentExpiresAt: true,
       cancellationPolicy: true,
+      paymentAttempts: {
+        select: {
+          providerReference: true,
+          amount: true,
+          currency: true,
+          status: true,
+          failureCode: true,
+          resolvedAt: true,
+        },
+        orderBy: { createdAt: "desc" },
+        take: 5,
+      },
       nights: {
         select: { stayDate: true, unitPrice: true },
         orderBy: { stayDate: "asc" },
       },
     },
   });
+  if (!booking) return null;
+
+  return {
+    ...booking,
+    paymentWindowOpen:
+      booking.paymentExpiresAt !== null &&
+      booking.paymentExpiresAt.getTime() > new Date().getTime(),
+  };
 }

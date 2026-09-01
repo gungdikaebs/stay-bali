@@ -1,12 +1,12 @@
 import "dotenv/config";
 
-import { cleanupExpiredPendingBookings } from "../lib/booking/expiry";
+import { cleanupExpiredPaymentBookings } from "../lib/booking/expiry";
 import { cleanupExpiredHolds } from "../lib/hold/expiry";
 import { prisma } from "../lib/prisma";
 
 try {
   const holds = await cleanupExpiredHolds();
-  const bookings = await cleanupExpiredPendingBookings();
+  const bookings = await cleanupExpiredPaymentBookings();
 
   console.info(JSON.stringify({
     job: "reservation-expiry",

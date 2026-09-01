@@ -8,7 +8,7 @@
 
 ## Produk
 
-StayBali adalah platform booking hotel, villa, dan homestay lokal di Bali. Alur utama: traveler mencari properti berdasarkan lokasi/tanggal/tamu, memilih kamar, melihat harga final, membuat booking, membayar melalui Midtrans Sandbox, lalu menerima konfirmasi dan voucher.
+StayBali adalah platform booking hotel, villa, dan homestay lokal di Bali. Alur utama: traveler mencari properti berdasarkan lokasi/tanggal/tamu, memilih kamar, melihat harga final, membuat booking, menjalankan simulasi pembayaran lokal, lalu menerima konfirmasi dan voucher.
 
 Nilai engineering MVP bukan sekadar CRUD, tetapi:
 
@@ -18,7 +18,7 @@ Nilai engineering MVP bukan sekadar CRUD, tetapi:
 - Quote dan hold sementara selama 10 menit.
 - Pencegahan double booking.
 - Booking state machine dan snapshot historis.
-- Payment webhook idempotent.
+- Payment attempt demo idempotent dan dapat memperagakan approve/decline.
 - Reservasi online dan manual memakai inventory yang sama.
 - Background jobs serta media lokal/VPS yang aman.
 
@@ -43,7 +43,7 @@ Semua authorization wajib dilakukan di server. Partner hanya boleh mengakses dat
 7. Quote server-side dengan nightly breakdown, fee 5%, total, dan expiry 10 menit.
 8. Atomic temporary hold selama 10 menit.
 9. Booking online satu unit/satu room type, snapshot, code unik, dan status history.
-10. Midtrans Snap Sandbox melalui adapter; webhook sebagai sumber status payment.
+10. Payment simulator lokal melalui adapter untuk mendemokan approve, decline, retry, dan attempt history tanpa uang nyata.
 11. Booking history, printable HTML voucher, dan email queue.
 12. Partner/Admin dashboard, reservasi manual, check-in, dan completion.
 13. Cancellation request dan refund yang dicatat manual oleh Admin.
@@ -59,7 +59,7 @@ Semua authorization wajib dilakukan di server. Partner hanya boleh mengakses dat
 - Quote tidak menjamin kamar sampai hold berhasil; quote dan hold kedaluwarsa setelah 10 menit.
 - Booking menyimpan snapshot properti, room, tamu, harga, dan cancellation policy.
 - Satu booking boleh memiliki beberapa payment attempt, tetapi hanya satu yang sukses.
-- Redirect browser bukan bukti pembayaran; hanya webhook terverifikasi/provider inquiry.
+- Redirect browser bukan bukti pembayaran; hanya service payment server-side yang mengubah status.
 - Default cancellation: full refund jika diminta minimal 3 hari sebelum check-in; refund dana tidak otomatis.
 - Property/room/booking historis diarsipkan, bukan dihapus permanen.
 
@@ -72,7 +72,7 @@ Semua authorization wajib dilakukan di server. Partner hanya boleh mengakses dat
 ## Batas MVP
 
 - Satu VPS, Postgres, Redis/BullMQ, dan disk lokal/VPS; tanpa kewajiban Docker, CDN, S3, Kubernetes, atau microservices.
-- Payment hanya sandbox; email menjadi notifikasi utama.
+- Payment hanya simulasi portfolio lokal tanpa provider eksternal; email menjadi representasi UI sampai queue diimplementasikan.
 - Seed: 10–15 properti, masing-masing 2–5 room type.
 - Public UI English-first; Bahasa Indonesia/localization adalah P1.
 
@@ -87,9 +87,9 @@ Penerbangan/aktivitas, OTA/channel-manager sync, multi-room/cart, multi-currency
 ## MVP dianggap selesai jika
 
 - Property approval hingga muncul di search bekerja end-to-end.
-- Search → quote → hold → booking → sandbox payment → voucher berjalan dari UI.
+- Search → quote → hold → booking → demo payment → voucher berjalan dari UI.
 - Dua request bersamaan tidak dapat mengambil unit terakhir yang sama.
-- Quote/hold expired, duplicate submit, dan duplicate webhook aman.
+- Quote/hold expired serta duplicate booking/payment aman.
 - Booking online dan manual memakai inventory yang sama.
 - Ownership antar-user/partner teruji.
 - Cancellation/refund manual, email queue, media lifecycle, backup, dan restore terverifikasi.

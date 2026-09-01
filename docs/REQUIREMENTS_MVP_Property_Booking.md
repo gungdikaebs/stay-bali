@@ -12,7 +12,7 @@
 | Produk | 1 booking = 1 unit dari 1 room type |
 | Harga | Integer IDR; service fee 5% |
 | Waktu | 1–30 malam; quote/hold 10 menit; `Asia/Makassar` |
-| Payment | Midtrans Snap Sandbox via adapter |
+| Payment | Adapter demo lokal; tanpa uang nyata |
 | Cancellation | Gratis ≥3 hari sebelum check-in; refund manual Admin |
 | Voucher | Printable HTML |
 | Media | Disk lokal/VPS melalui storage adapter |
@@ -40,8 +40,8 @@ UI bukan lapisan keamanan. Setiap protected read/write memeriksa session, role/s
 5. Harga final selalu dihitung ulang di server.
 6. Quote/hold terikat user/session dan tidak dapat dipakai setelah expiry.
 7. Booking menyimpan snapshot immutable.
-8. Redirect payment tidak mengubah status final.
-9. Duplicate request/webhook/job menghasilkan state akhir yang sama.
+8. Redirect client tidak mengubah status final; hanya service payment server-side yang boleh melakukannya.
+9. Duplicate request/job menghasilkan state akhir yang sama.
 10. File yang masih direferensikan tidak boleh dihapus fisik.
 
 ## Requirement per domain
@@ -87,12 +87,12 @@ available = sellable_units - active_holds - inventory_consuming_bookings
 
 ### Payment (`PAY`)
 
-- Payment attempt dibuat dari booking snapshot; provider diakses melalui adapter.
-- Webhook publik wajib diverifikasi signature, amount, currency, dan order reference.
-- Event/provider reference unik mencegah duplicate transition/email.
-- Payment sukses hanya mengubah booking `PENDING_PAYMENT → CONFIRMED` jika masih valid.
-- Payment terlambat untuk booking expired/cancelled menjadi exception untuk Admin, bukan auto-confirm.
-- Provider secret dan data pembayaran sensitif tidak boleh masuk browser, repository, atau log.
+- Payment portfolio memakai adapter demo lokal tanpa provider eksternal atau uang nyata.
+- Payment attempt dibuat dari booking snapshot; amount integer IDR, currency, booking reference, actor, dan idempotency key divalidasi server-side.
+- Provider reference demo unik mencegah duplicate attempt; key sama dengan payload berbeda ditolak.
+- Hasil approve hanya mengubah booking aktif `PENDING_PAYMENT → CONFIRMED`; hasil decline menjadi `PAYMENT_FAILED` dan dapat dicoba ulang sebelum deadline.
+- Booking expired/cancelled tidak dapat dikonfirmasi oleh payment demo.
+- Data kartu, rekening, wallet, secret provider, dan data pembayaran sensitif tidak dikumpulkan atau disimpan.
 
 ### Status, cancellation, dan voucher (`BOOK`, `CANCEL`, `VOUCHER`, `NOTIF`)
 
@@ -100,7 +100,7 @@ available = sellable_units - active_holds - inventory_consuming_bookings
 |---|---|---|
 | — | `PENDING_PAYMENT` | Booking online |
 | — | `CONFIRMED` | Reservasi manual |
-| `PENDING_PAYMENT` | `CONFIRMED`, `PAYMENT_FAILED`, `EXPIRED`, `CANCELLED` | Webhook/job/Traveler/Admin |
+| `PENDING_PAYMENT` | `CONFIRMED`, `PAYMENT_FAILED`, `EXPIRED`, `CANCELLED` | Demo payment/job/Traveler/Admin |
 | `PAYMENT_FAILED` | `PENDING_PAYMENT` | Retry sebelum expiry |
 | `CONFIRMED` | `CANCELLATION_REQUESTED`, `CANCELLED`, `CHECKED_IN` | Traveler/Admin/Partner |
 | `CANCELLATION_REQUESTED` | `CONFIRMED`, `REFUND_PENDING`, `CANCELLED` | Admin |
@@ -144,9 +144,9 @@ available = sellable_units - active_holds - inventory_consuming_bookings
 
 ## Test wajib
 
-- **Unit:** night count, price override/fallback, fee, cancellation eligibility, state machine, provider mapping, media validation.
-- **Integration:** availability range, stop sell, hold expiry, ownership, quote/hold owner, booking idempotency, webhook signature/duplicate/amount mismatch, media rollback.
-- **Concurrency (PostgreSQL nyata):** dua hold unit terakhir; hold vs manual booking; duplicate booking; dua webhook sukses—masing-masing hanya satu hasil valid.
+- **Unit:** night count, price override/fallback, fee, cancellation eligibility, state machine, demo adapter mapping, media validation.
+- **Integration:** availability range, stop sell, hold expiry, ownership, quote/hold owner, booking/payment idempotency, media rollback.
+- **Concurrency (PostgreSQL nyata):** dua hold unit terakhir; hold vs manual booking; duplicate booking/payment—masing-masing hanya satu hasil valid.
 - **E2E:** approval property; search-to-voucher; inventory update; manual reservation; cancellation/refund; akses lintas role ditolak.
 
 ## Definition of Done P0

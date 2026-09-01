@@ -12,7 +12,7 @@ Terakhir diperbarui: 2 September 2026.
 | M2 Supply | Selesai | Property/room CRUD, approval, media |
 | M3 Discovery | Selesai | Inventory calendar, search, availability, quote |
 | M4 Booking | Hampir selesai | Hold, booking, snapshot, manual reservation, checkout wiring, expiry job |
-| M5 Payment | Belum dimulai | Midtrans sandbox, webhook, payment attempts |
+| M5 Payment | Selesai | Adapter demo lokal, payment attempts, retry, confirmation |
 | M6 Operations | Belum dimulai | History, voucher, cancellation/refund, operational dashboards |
 | M7 Release | Belum dimulai | Worker, backup/restore, observability, deployment |
 
@@ -46,11 +46,13 @@ Terakhir diperbarui: 2 September 2026.
 - Booking menyimpan snapshot property, room, guest, cancellation policy, nightly price, subtotal, service fee, dan total.
 - Guest quote dapat diklaim oleh Traveler setelah login tanpa mempercayai user ID dari client.
 
-### UI booking
+### UI booking dan payment demo
 
 - Checkout memakai Server Action untuk membuat/reuse hold dan membuat booking.
 - Checkout mengarahkan booking yang berhasil ke `/payment?booking=<id>`.
-- Payment placeholder membaca booking snapshot yang owner-scoped.
+- Payment simulator membaca booking snapshot yang owner-scoped, menawarkan hasil approve/decline, dan tidak memproses uang nyata.
+- Setiap attempt menyimpan nominal IDR, reference demo, hasil, actor, dan idempotency key; approve mengonfirmasi booking dan decline dapat dicoba ulang sebelum deadline.
+- Halaman konfirmasi membaca booking serta payment attempt nyata, bukan data demo statis.
 - Partner dan Admin memiliki halaman `Reservations`.
 - Manual reservation form memvalidasi room ownership, guest capacity, date range, availability, dan server-side price.
 - Daftar 50 booking terbaru mengikuti scope Admin atau Partner.
@@ -63,7 +65,8 @@ prisma/migrations/
 ├── 20260831000000_quote_foundation/
 ├── 20260901000000_hold_and_booking_foundation/
 ├── 20260902000000_booking_snapshots/
-└── 20260902010000_booking_payment_expiry/
+├── 20260902010000_booking_payment_expiry/
+└── 20260902020000_demo_payment_attempts/
 ```
 
 Migration booking snapshot menambahkan:
@@ -124,7 +127,7 @@ lib/
   → /payment?booking=<id>
 ```
 
-Payment page masih placeholder karena Midtrans belum diimplementasikan. Booking dibuat dengan status `PENDING_PAYMENT`.
+Booking dibuat dengan status `PENDING_PAYMENT`. Payment page memakai adapter demo lokal untuk portfolio; tidak ada Midtrans, webhook publik, data kartu, atau perpindahan uang nyata.
 
 ## Alur reservasi manual
 
@@ -143,17 +146,9 @@ Partner hanya dapat memilih dan melihat room/booking miliknya. Admin dapat menga
 
 ### Penyelesaian M4
 
-- Jalankan review end-to-end pada browser untuk Guest quote → Traveler login → checkout → booking → payment placeholder.
+- Jalankan review end-to-end pada browser untuk Guest quote → Traveler login → checkout → booking → demo payment → confirmation.
 - Review UI manual reservation pada mobile dan desktop.
 - Hubungkan `npm run reservations:cleanup` ke scheduler deployment; command idempotent untuk hold dan booking sudah tersedia.
-
-### M5 Payment
-
-- Tambahkan model payment attempt/event.
-- Buat adapter Midtrans Snap Sandbox.
-- Verifikasi signature, amount, currency, dan booking reference pada webhook.
-- Tangani duplicate webhook secara idempotent.
-- Jadikan webhook/inquiry sebagai sumber status pembayaran.
 
 ### M6 Operations
 
@@ -182,8 +177,8 @@ Hasil batch 2 September 2026:
 
 - Prisma client berhasil digenerate.
 - Prisma schema valid.
-- Lima migration berhasil diterapkan dan database up-to-date.
-- 27 unit tests lulus.
+- Enam migration berhasil diterapkan dan database up-to-date.
+- 29 unit tests lulus.
 - PostgreSQL last-unit concurrency test lulus.
 - ESLint bersih.
 - TypeScript bersih.
