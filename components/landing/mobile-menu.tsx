@@ -4,21 +4,22 @@ import { AnimatePresence, m } from "framer-motion";
 import { ArrowRight, CalendarCheck2, LogIn, Menu, UserPlus, X } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 
 const browseLinks = [
   { href: "/search?location=all&guests=2", label: "All stays" },
-  { href: "#destinations", label: "Destinations" },
+  { href: "/#destinations", label: "Destinations" },
   { href: "/search?location=all&type=villa&guests=2", label: "Private villas" },
   { href: "/search?location=all&type=hotel&guests=2", label: "Hotels" },
   { href: "/search?location=all&type=homestay&guests=2", label: "Homestays" },
 ];
 
 const aboutLinks = [
-  { href: "#why-staybali", label: "Why StayBali" },
+  { href: "/#why-staybali", label: "Why StayBali" },
   { href: "/partner-application", label: "List your property" },
 ];
 
-export function MobileMenu() {
+export function MobileMenu({ inverted = true }: { inverted?: boolean }) {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -40,15 +41,19 @@ export function MobileMenu() {
       <button
         aria-expanded={open}
         aria-label="Open navigation"
-        className="inline-flex size-10 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white transition hover:bg-white/20 lg:hidden"
+        className={`inline-flex size-10 items-center justify-center rounded-full border transition lg:hidden ${
+          inverted
+            ? "border-white/20 bg-white/10 text-white hover:bg-white/20"
+            : "border-border bg-secondary text-foreground hover:border-primary/30 hover:text-primary"
+        }`}
         onClick={() => setOpen(true)}
         type="button"
       >
         <Menu className="size-5" aria-hidden="true" />
       </button>
 
-      <AnimatePresence>
-        {open ? (
+      {open ? createPortal(
+        <AnimatePresence>
           <m.div
             animate={{ opacity: 1 }}
             className="fixed inset-0 z-50 bg-[#071713]/65 backdrop-blur-sm lg:hidden"
@@ -157,8 +162,9 @@ export function MobileMenu() {
               </div>
             </m.nav>
           </m.div>
-        ) : null}
-      </AnimatePresence>
+        </AnimatePresence>,
+        document.body,
+      ) : null}
     </>
   );
 }

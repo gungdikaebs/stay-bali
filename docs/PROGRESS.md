@@ -56,6 +56,7 @@ Terakhir diperbarui: 2 September 2026.
 - Homepage publik memiliki hierarchy editorial baru: focused hero search, trust strip, published-stay discovery controls, lima-area destination mosaic, tiga langkah booking, functional Partner CTA, dan footer navigasi yang lebih lengkap tanpa fake trust atau promo.
 - Destination mosaic menerapkan span dan tinggi pada direct grid items sehingga komposisi 7/5 kolom tampil konsisten pada desktop.
 - Homepage memiliki navbar publik satu tingkat, filter tipe stay, tautan traveler/partner, CTA pencarian, dan mobile navigation drawer.
+- Navbar publik sekarang dipakai bersama oleh homepage, Search, dan detail properti: fixed transparan tanpa garis pemisah di atas hero, berubah menjadi surface putih saat scroll, serta sticky solid pada halaman katalog. Mobile drawer dirender melalui portal agar tetap memenuhi viewport di atas header sticky.
 - Checkout memakai Server Action untuk membuat/reuse hold dan membuat booking.
 - Checkout mengarahkan booking yang berhasil ke `/payment?booking=<id>`.
 - Payment simulator membaca booking snapshot yang owner-scoped, menawarkan hasil approve/decline, dan tidak memproses uang nyata.

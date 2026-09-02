@@ -1,9 +1,12 @@
+"use client";
+
 import Link from "next/link";
 import {
   ArrowRight,
   ChevronDown,
   UserRound,
 } from "lucide-react";
+import { useEffect, useState } from "react";
 import { MobileMenu } from "@/components/landing/mobile-menu";
 
 export function StayBaliLogo({ inverted = false }: { inverted?: boolean }) {
@@ -21,21 +24,53 @@ export function StayBaliLogo({ inverted = false }: { inverted?: boolean }) {
   );
 }
 
-export function PublicHeader() {
-  return (
-    <header className="absolute inset-x-0 top-0 z-40 text-white">
-      <div className="mx-auto flex h-24 max-w-[1280px] items-center justify-between gap-5 px-4 sm:px-6 lg:px-8">
-        <StayBaliLogo inverted />
+type PublicHeaderProps = {
+  variant?: "overlay" | "solid";
+};
 
-        <nav className="hidden items-center gap-8 text-sm font-semibold text-white/85 lg:flex" aria-label="Main navigation">
-          <Link className="py-2 transition hover:text-white" href="/search?location=all&guests=2">
+export function PublicHeader({ variant = "overlay" }: PublicHeaderProps) {
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    if (variant !== "overlay") return;
+
+    const updateHeader = () => setScrolled(window.scrollY > 24);
+    updateHeader();
+    window.addEventListener("scroll", updateHeader, { passive: true });
+    return () => window.removeEventListener("scroll", updateHeader);
+  }, [variant]);
+
+  const inverted = variant === "overlay" && !scrolled;
+
+  return (
+    <header
+      data-inverted={inverted}
+      data-variant={variant}
+      className={`inset-x-0 top-0 z-40 transition-[background-color,border-color,box-shadow,color] duration-300 ${
+        variant === "overlay" ? "fixed" : "sticky"
+      } ${
+        inverted
+          ? "bg-transparent text-white"
+          : "border-b border-border/80 bg-white/95 text-foreground shadow-[0_10px_30px_rgba(10,38,31,0.06)] backdrop-blur-xl"
+      }`}
+    >
+      <div className="mx-auto flex h-20 max-w-[1360px] items-center justify-between gap-5 px-4 sm:px-6 lg:h-24 lg:px-8">
+        <StayBaliLogo inverted={inverted} />
+
+        <nav
+          className={`hidden items-center gap-8 text-sm font-semibold lg:flex ${
+            inverted ? "text-white/85" : "text-muted-foreground"
+          }`}
+          aria-label="Main navigation"
+        >
+          <Link className={`py-2 transition ${inverted ? "hover:text-white" : "hover:text-primary"}`} href="/search?location=all&guests=2">
             Explore stays
           </Link>
-          <Link className="py-2 transition hover:text-white" href="#destinations">
+          <Link className={`py-2 transition ${inverted ? "hover:text-white" : "hover:text-primary"}`} href="/#destinations">
             Destinations
           </Link>
           <details className="group relative">
-            <summary className="flex cursor-pointer list-none items-center gap-1.5 py-2 transition hover:text-white [&::-webkit-details-marker]:hidden">
+            <summary className={`flex cursor-pointer list-none items-center gap-1.5 py-2 transition [&::-webkit-details-marker]:hidden ${inverted ? "hover:text-white" : "hover:text-primary"}`}>
               Stay types
               <ChevronDown className="size-4 transition group-open:rotate-180" aria-hidden="true" />
             </summary>
@@ -58,30 +93,43 @@ export function PublicHeader() {
               ))}
             </div>
           </details>
-          <Link className="py-2 transition hover:text-white" href="#why-staybali">
+          <Link className={`py-2 transition ${inverted ? "hover:text-white" : "hover:text-primary"}`} href="/#why-staybali">
             Why StayBali
           </Link>
         </nav>
 
         <div className="flex items-center gap-2 sm:gap-3">
-          <Link className="hidden px-2 py-2 text-sm font-semibold text-white/85 transition hover:text-white xl:inline-flex" href="#partners">
+          <Link
+            className={`hidden px-2 py-2 text-sm font-semibold transition xl:inline-flex ${
+              inverted ? "text-white/85 hover:text-white" : "text-muted-foreground hover:text-primary"
+            }`}
+            href="/#partners"
+          >
             For partners
           </Link>
           <Link
-            className="hidden min-h-11 items-center gap-2 rounded-xl border border-white/25 bg-black/10 px-3.5 text-sm font-semibold text-white backdrop-blur-sm transition hover:bg-white/15 sm:inline-flex"
+            className={`hidden min-h-11 items-center gap-2 rounded-xl border px-3.5 text-sm font-semibold transition sm:inline-flex ${
+              inverted
+                ? "border-white/25 bg-black/10 text-white backdrop-blur-sm hover:bg-white/15"
+                : "border-border bg-white text-foreground hover:border-primary/35 hover:text-primary"
+            }`}
             href="/sign-in"
           >
             <UserRound className="size-[18px]" aria-hidden="true" />
             <span className="hidden xl:inline">Sign in</span>
           </Link>
           <Link
-            className="hidden min-h-11 items-center justify-center gap-2 rounded-xl bg-white px-4 text-sm font-bold text-primary shadow-sm transition hover:bg-[#e8f7f4] sm:inline-flex"
+            className={`hidden min-h-11 items-center justify-center gap-2 rounded-xl px-4 text-sm font-bold shadow-sm transition sm:inline-flex ${
+              inverted
+                ? "bg-white text-primary hover:bg-[#e8f7f4]"
+                : "bg-primary text-white hover:bg-primary-hover"
+            }`}
             href="/search?location=all&guests=2"
           >
             Find a stay
             <ArrowRight className="size-4" aria-hidden="true" />
           </Link>
-          <MobileMenu />
+          <MobileMenu inverted={inverted} />
         </div>
       </div>
     </header>

@@ -3,7 +3,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
-  ArrowLeft,
   BedDouble,
   CalendarDays,
   Check,
@@ -15,7 +14,7 @@ import {
   Sparkles,
   UsersRound,
 } from "lucide-react";
-import { StayBaliLogo } from "@/components/landing/public-header";
+import { PublicHeader } from "@/components/landing/public-header";
 import { QuoteButton } from "@/components/booking/quote-button";
 import { formatIdr, formatStayDate } from "@/lib/demo-stays";
 import { getPublishedStayBySlug } from "@/lib/public/catalog";
@@ -50,18 +49,7 @@ export default async function StayPage({ params, searchParams }: StayPageProps) 
   const price = nights ? stay.pricing : null;
   return (
     <main className="min-h-screen bg-background">
-      <header className="border-b border-border bg-white">
-        <div className="mx-auto flex h-20 max-w-[1280px] items-center justify-between px-4 sm:px-6 lg:px-8">
-          <StayBaliLogo />
-          <Link
-            className="inline-flex min-h-11 items-center gap-2 rounded-xl px-3 text-sm font-bold transition hover:bg-secondary"
-            href="/search"
-          >
-            <ArrowLeft className="size-4" aria-hidden="true" />
-            Back to search
-          </Link>
-        </div>
-      </header>
+      <PublicHeader variant="solid" />
 
       <div className="mx-auto max-w-[1200px] px-4 py-8 sm:px-6 lg:px-8">
         <nav className="mb-5 flex items-center gap-2 text-sm text-muted-foreground" aria-label="Breadcrumb">

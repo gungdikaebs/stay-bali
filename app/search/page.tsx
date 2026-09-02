@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowLeft, Filter, SlidersHorizontal } from "lucide-react";
+import { Filter, SlidersHorizontal } from "lucide-react";
 import { PropertyCard } from "@/components/landing/property-card";
-import { StayBaliLogo } from "@/components/landing/public-header";
+import { PublicHeader } from "@/components/landing/public-header";
 import { SearchPanel } from "@/components/landing/search-panel";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -63,17 +63,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
 
   return (
     <main className="min-h-screen bg-background">
-      <header className="border-b border-border bg-white">
-        <div className="mx-auto flex h-20 max-w-[1360px] items-center justify-between px-4 sm:px-6 lg:px-8">
-          <StayBaliLogo />
-          <Button asChild variant="ghost">
-          <Link href="/">
-            <ArrowLeft className="size-4" aria-hidden="true" />
-            Back home
-          </Link>
-          </Button>
-        </div>
-      </header>
+      <PublicHeader variant="solid" />
 
       <section className="border-b border-border bg-brand-sand py-6 sm:py-8">
         <div className="mx-auto max-w-[1360px] px-4 sm:px-6 lg:px-8">
