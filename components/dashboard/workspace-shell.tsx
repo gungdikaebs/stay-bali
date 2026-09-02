@@ -85,7 +85,7 @@ export function WorkspaceShell({
         <header className="sticky top-0 z-30 border-b border-border/80 bg-background/90 backdrop-blur-xl">
           <div className="flex min-h-20 items-center justify-between gap-3 px-4 sm:px-7 lg:px-10 xl:px-12">
             <div className="flex min-w-0 items-center gap-3">
-              <WorkspaceMobileMenu kind={kind} label={displayName} />
+              <WorkspaceMobileMenu accountEmail={accountEmail} accountName={accountName} kind={kind} label={displayName} />
               <div className="xl:hidden"><StayBaliLogo /></div>
               <div className="hidden min-w-0 xl:block">
                 <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-muted-foreground">{meta.title}</p>

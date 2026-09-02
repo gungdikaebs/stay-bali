@@ -31,8 +31,21 @@ async function expectResponsiveWorkspace(page: Page, heading: string, screenshot
   await page.setViewportSize({ width: 390, height: 844 });
   await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
   await page.getByRole("button", { name: "Open workspace navigation" }).click();
-  await expect(page.getByRole("dialog", { name: "Workspace navigation" })).toBeVisible();
-  await page.getByRole("button", { name: "Close navigation" }).click();
+  const navigationDialog = page.getByRole("dialog", { name: "Workspace navigation" });
+  await expect(navigationDialog).toBeVisible();
+  const overlayBox = await navigationDialog.boundingBox();
+  expect(overlayBox?.width).toBeGreaterThanOrEqual(390);
+  expect(overlayBox?.height).toBeGreaterThanOrEqual(844);
+  const navigationPanel = navigationDialog.locator("aside");
+  await expect(navigationPanel).toHaveCSS("overflow-y", "auto");
+  await expect(navigationPanel).toHaveCSS("position", "absolute");
+  await expect(navigationPanel.getByText("Workspace", { exact: true })).toBeVisible();
+  await expect(navigationPanel.getByRole("navigation")).toBeVisible();
+  await expect(navigationPanel.getByText("View public website", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Close navigation" })).toBeFocused();
+  await page.screenshot({ path: `/tmp/${screenshotName}-drawer-account.png`, fullPage: false });
+  await page.keyboard.press("Escape");
+  await expect(navigationDialog).toBeHidden();
   await page.screenshot({ path: `/tmp/${screenshotName}-mobile.png`, fullPage: true });
 }
 

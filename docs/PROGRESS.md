@@ -79,6 +79,7 @@ Terakhir diperbarui: 2 September 2026.
 - Traveler account menjadi dashboard trip lengkap dengan action-needed summary, next-trip highlight, voucher/payment actions, dan riwayat booking responsif.
 - Halaman Partner properties serta Admin partners, properties, bookings, cancellations, dan notification jobs memakai hierarchy dan pola card/form yang konsisten.
 - Browser gate memeriksa semua route workspace utama hingga viewport minimum 360 px tanpa horizontal overflow; navigation drawer dapat dibuka, ditutup, dan ditutup dengan tombol Escape.
+- Mobile drawer dirender melalui React portal di luar sticky header sehingga `backdrop-filter` header tidak memotong overlay menjadi setinggi navigation bar; drawer mencakup menu, public-site link, identitas akun, dan sign-out.
 
 ### Traveler operations
 
@@ -259,7 +260,7 @@ Hasil batch dashboard experience, 2 September 2026:
 - Lima Playwright E2E tests lulus: tiga responsive workspace review untuk Admin, Partner, dan Traveler serta dua booking tests M4.
 - Screenshot desktop 1440 px dan mobile 390 px direview; seluruh workspace route tambahan juga lolos overflow gate pada 360 px.
 - Type graph build dan E2E dipisahkan melalui `tsconfig.json` dan `tsconfig.e2e.json` agar generated route types tidak saling mencemari.
-- Perbaikan sidebar lanjutan menonaktifkan Next.js development indicator yang menimpa account card, menambahkan scroll aman pada layar pendek, dan lulus tiga targeted browser tests pada desktop, tablet 1024 px, serta mobile.
+- Perbaikan sidebar lanjutan menonaktifkan Next.js development indicator yang menimpa account card, menambahkan scroll aman pada layar pendek, memperbaiki full-viewport mobile drawer, dan lulus tiga targeted browser tests pada desktop, tablet 1024 px, serta mobile termasuk focus/Escape behavior.
 
 ## Catatan penting
 
