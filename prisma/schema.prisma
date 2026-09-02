@@ -70,6 +70,19 @@ enum CancellationRequestStatus {
   REJECTED
 }
 
+enum OutboxStatus {
+  PENDING
+  DISPATCHED
+  FAILED
+}
+
+enum EmailDeliveryStatus {
+  PENDING
+  PROCESSING
+  SENT
+  FAILED
+}
+
 model User {
   id                    String                 @id @default(cuid()) @db.VarChar(30)
   email                 String                 @unique @db.VarChar(254)
@@ -527,4 +540,45 @@ model AuditLog {
   @@index([entityType, entityId, createdAt])
   @@index([action, createdAt])
   @@map("audit_logs")
+}
+
+model OutboxEvent {
+  id            String       @id @default(cuid()) @db.VarChar(30)
+  eventKey      String       @unique @map("event_key") @db.VarChar(150)
+  topic         String       @db.VarChar(100)
+  aggregateType String       @map("aggregate_type") @db.VarChar(100)
+  aggregateId   String       @map("aggregate_id") @db.VarChar(100)
+  payload       Json
+  status        OutboxStatus @default(PENDING)
+  attempts      Int          @default(0) @db.SmallInt
+  availableAt   DateTime     @default(now()) @map("available_at") @db.Timestamp(3)
+  dispatchedAt  DateTime?    @map("dispatched_at") @db.Timestamp(3)
+  lastError     String?      @map("last_error") @db.VarChar(1000)
+  createdAt     DateTime     @default(now()) @map("created_at") @db.Timestamp(3)
+  updatedAt     DateTime     @updatedAt @map("updated_at") @db.Timestamp(3)
+  emailDelivery EmailDelivery?
+
+  @@index([status, availableAt, createdAt])
+  @@index([aggregateType, aggregateId, createdAt])
+  @@map("outbox_events")
+}
+
+model EmailDelivery {
+  id                String              @id @default(cuid()) @db.VarChar(30)
+  outboxEventId     String              @unique @map("outbox_event_id") @db.VarChar(30)
+  recipient         String              @db.VarChar(254)
+  template          String              @db.VarChar(100)
+  status            EmailDeliveryStatus @default(PENDING)
+  attempts          Int                 @default(0) @db.SmallInt
+  maxAttempts       Int                 @default(5) @map("max_attempts") @db.SmallInt
+  providerMessageId String?             @map("provider_message_id") @db.VarChar(255)
+  lastError         String?             @map("last_error") @db.VarChar(1000)
+  nextAttemptAt     DateTime?           @map("next_attempt_at") @db.Timestamp(3)
+  sentAt            DateTime?           @map("sent_at") @db.Timestamp(3)
+  createdAt         DateTime            @default(now()) @map("created_at") @db.Timestamp(3)
+  updatedAt         DateTime            @updatedAt @map("updated_at") @db.Timestamp(3)
+  outboxEvent       OutboxEvent         @relation(fields: [outboxEventId], references: [id], onDelete: Restrict)
+
+  @@index([status, nextAttemptAt, createdAt])
+  @@map("email_deliveries")
 }

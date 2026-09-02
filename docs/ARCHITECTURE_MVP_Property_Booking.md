@@ -139,6 +139,8 @@ Redis lock tidak dipakai untuk correctness inventory; Postgresql transaction ada
 - Payment attempt dideduplikasi dengan booking + idempotency key dan provider reference demo.
 - Domain transaction menulis perubahan state + `OutboxEvent` bersama-sama.
 - Dispatcher mengirim ke BullMQ dengan deterministic job ID lalu menandai dispatched; semua processor idempotent.
+- Implementasi email memakai `OutboxEvent` dengan event key unik, BullMQ job ID dari outbox ID, dan `EmailDelivery` sebagai read model attempt/failure. Worker menjalankan dispatcher berkala dan processor dengan maksimal lima attempt serta exponential backoff.
+- Development memakai transport `sink` tanpa pengiriman eksternal; deployment dapat memilih adapter SMTP melalui environment server-only.
 
 ## Payment
 

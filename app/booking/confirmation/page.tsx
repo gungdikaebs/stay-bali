@@ -24,6 +24,7 @@ export default async function ConfirmationPage({ searchParams }: ConfirmationPag
   const booking = await getTravelerBooking(first(rawQuery.booking) ?? "");
   if (!booking || booking.status !== "CONFIRMED") notFound();
   const successfulAttempt = booking.paymentAttempts.find((attempt) => attempt.status === "SUCCEEDED");
+  const sendsExternalEmail = process.env.EMAIL_TRANSPORT === "smtp";
   const checkin = booking.checkinDate.toISOString().slice(0, 10);
   const checkout = booking.checkoutDate.toISOString().slice(0, 10);
 
@@ -59,7 +60,7 @@ export default async function ConfirmationPage({ searchParams }: ConfirmationPag
             <div className="rounded-2xl bg-secondary p-5">
               <div className="flex justify-between text-sm"><span className="text-muted-foreground">Total paid</span><strong className="text-lg">{formatIdr(booking.grandTotal)}</strong></div>
               {successfulAttempt ? <p className="mt-2 text-xs text-muted-foreground">Demo payment reference: {successfulAttempt.providerReference}</p> : null}
-              <p className="mt-3 flex gap-2 text-sm leading-6 text-muted-foreground"><Mail className="mt-1 size-4 shrink-0 text-primary" />Confirmation email is represented in the portfolio flow and no message is sent externally.</p>
+              <p className="mt-3 flex gap-2 text-sm leading-6 text-muted-foreground"><Mail className="mt-1 size-4 shrink-0 text-primary" />{sendsExternalEmail ? "Your confirmation email has been queued. Delivery may take a moment." : "The confirmation notification is recorded in this portfolio environment; no external email is sent."}</p>
             </div>
 
             <div className="mt-8 grid gap-3 sm:grid-cols-3">

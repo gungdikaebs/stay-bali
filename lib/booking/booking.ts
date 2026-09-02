@@ -24,6 +24,7 @@ import { prisma } from "@/lib/prisma";
 import { createHash } from "crypto";
 import { PartnerStatus, UserRole, UserStatus } from "@/generated/prisma/client";
 import { getBookingPaymentExpiry } from "./payment-window";
+import { bookingEmailTopics, enqueueBookingEmail } from "@/lib/notification/events";
 
 function bookingResult(value: unknown) {
   if (
@@ -314,6 +315,10 @@ export async function createBookingManual(
         },
       },
     });
+    await enqueueBookingEmail(tx, {
+      bookingId: booking.id,
+      topic: bookingEmailTopics.confirmed,
+    });
     const result = { bookingId: booking.id, bookingCode };
     await tx.idempotencyRecord.update({
       where: { scope_key: { scope: "CREATE_BOOKING", key: validated.idempotencyKey } },
@@ -390,6 +395,12 @@ export async function transitionBookingStatus(
         metadata: { from: fetch.status, to: newStatus, reason },
       },
     });
+    if (newStatus === "CANCELLED") {
+      await enqueueBookingEmail(tx, {
+        bookingId,
+        topic: bookingEmailTopics.cancelled,
+      });
+    }
     return { status: updated.status as BookingStatus };
   }, { isolationLevel: "Serializable" });
 }

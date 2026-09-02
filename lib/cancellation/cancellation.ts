@@ -7,6 +7,7 @@ import { isEligibleForFullRefund } from "@/lib/booking/rules";
 import { baliToday } from "@/lib/inventory/rules";
 import { releaseBookedInventory } from "@/lib/inventory/reservations";
 import { prisma } from "@/lib/prisma";
+import { bookingEmailTopics, enqueueBookingEmail } from "@/lib/notification/events";
 import {
   requestCancellationSchema,
   resolveCancellationSchema,
@@ -92,6 +93,11 @@ export async function requestBookingCancellation(input: RequestCancellationInput
         entityId: cancellation.id,
         metadata: { bookingId: booking.id, eligibleForFullRefund },
       },
+    });
+    await enqueueBookingEmail(tx, {
+      bookingId: booking.id,
+      topic: bookingEmailTopics.cancellationRequested,
+      dedupeKey: cancellation.id,
     });
     const result = { bookingId: booking.id, status: "CANCELLATION_REQUESTED" };
     await tx.idempotencyRecord.update({
@@ -216,6 +222,14 @@ export async function resolveCancellationRequest(input: ResolveCancellationInput
         metadata: { bookingId: cancellation.booking.id, decision: validated.decision, finalStatus },
       },
     });
+    if (finalStatus === "CANCELLED" || finalStatus === "REFUNDED") {
+      await enqueueBookingEmail(tx, {
+        bookingId: cancellation.booking.id,
+        topic: finalStatus === "REFUNDED"
+          ? bookingEmailTopics.refunded
+          : bookingEmailTopics.cancelled,
+      });
+    }
     const result = { bookingId: cancellation.booking.id, status: finalStatus };
     await tx.idempotencyRecord.update({
       where: { scope_key: { scope: "RESOLVE_CANCELLATION", key: validated.idempotencyKey } },

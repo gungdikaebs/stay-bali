@@ -15,9 +15,9 @@ The project is under active development. The foundation, supply management, and 
 | Foundation | Complete | Authentication, role-based access, audit logs, partner lifecycle |
 | Supply | Complete | Property and room management, approval workflow, media lifecycle |
 | Discovery | Complete | Inventory, paginated search, availability, expiring quotes |
-| Booking | In progress | Inventory holds, booking domain, checkout integration |
-| Payment | Planned | Payment gateway, webhooks, booking history, vouchers |
-| Operations | Planned | Reservations, arrivals, cancellations, refunds |
+| Booking | Nearly complete | Inventory holds, booking snapshots, checkout, expiry |
+| Payment | Complete | Local demo adapter, retry, confirmation, history, vouchers |
+| Operations | In progress | Stay controls, cancellation/refund, transactional email queue |
 
 See [Project Progress](./docs/PROGRESS.md) for the latest implementation notes and remaining work.
 
@@ -33,6 +33,7 @@ See [Project Progress](./docs/PROGRESS.md) for the latest implementation notes a
 - Expiring quotes, temporary inventory holds, and booking snapshots
 - Manual reservations and scoped booking operations for Partners and Admins
 - Audit trails, status histories, idempotency, and transactional domain services
+- Transactional email outbox, BullMQ retry worker, and Admin failure visibility
 
 ## Technology stack
 
@@ -45,6 +46,7 @@ See [Project Progress](./docs/PROGRESS.md) for the latest implementation notes a
 | Validation | Zod 4 |
 | Motion and icons | Framer Motion, Lucide React |
 | Image processing | Sharp |
+| Jobs and email | Redis, BullMQ, Nodemailer |
 | Testing | Node.js test runner via TSX |
 
 ## Getting started
@@ -54,6 +56,7 @@ See [Project Progress](./docs/PROGRESS.md) for the latest implementation notes a
 - Node.js 24 or later
 - npm
 - PostgreSQL
+- Redis (required when running the notification worker)
 
 ### 1. Install dependencies
 
@@ -88,6 +91,10 @@ node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
 | `PARTNER_SEED_PASSWORD` | Password shared by seeded Partner accounts |
 | `TRAVELER_SEED_PASSWORD` | Password for the seeded Traveler account |
 | `MEDIA_STORAGE_ROOT` | Local directory for uploaded media |
+| `REDIS_URL` | Redis connection used by BullMQ |
+| `EMAIL_TRANSPORT` | `sink` for local preview or `smtp` for external delivery |
+| `APP_URL` | Public application URL used in email links |
+| `EMAIL_FROM`, `SMTP_*` | Sender and SMTP settings when transport is `smtp` |
 
 Never commit `.env` or use the example credentials in a shared environment.
 
@@ -115,6 +122,14 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
 
+Run the email worker in a second process when Redis is available:
+
+```bash
+npm run worker:email
+```
+
+The default `sink` transport processes messages without external delivery. Set `EMAIL_TRANSPORT=smtp` and configure the documented SMTP variables only in the deployment environment to send email.
+
 ## Available commands
 
 | Command | Description |
@@ -134,6 +149,9 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 | `npm run db:studio` | Open Prisma Studio |
 | `npm run media:cleanup` | Preview orphaned media cleanup |
 | `npm run media:cleanup -- --execute` | Delete confirmed orphaned media |
+| `npm run reservations:cleanup` | Expire stale holds and payment bookings |
+| `npm run notifications:dispatch` | Dispatch a single batch of pending email events |
+| `npm run worker:email` | Run the email outbox dispatcher and BullMQ worker |
 
 ## Project structure
 
@@ -146,6 +164,7 @@ stay-bali/
 ├── prisma/       # Database schema, migrations, and development seed
 ├── public/       # Static assets
 ├── scripts/      # Operational and maintenance scripts
+├── worker/       # Long-running BullMQ processors and dispatchers
 └── types/        # Shared TypeScript declarations
 ```
 
@@ -186,7 +205,7 @@ npm run db:status
 - Keep database credentials, seed passwords, and `AUTH_SECRET` outside version control.
 - Replace all development credentials before deploying to a shared environment.
 - Uploaded media is served through controlled application routes rather than directly exposing the storage directory.
-- Payment processing is not implemented yet; do not use the current MVP for real transactions.
+- Payment uses a local portfolio demo adapter only; do not use it for real transactions.
 
 ## Contributing
 

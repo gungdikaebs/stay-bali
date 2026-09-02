@@ -13,7 +13,7 @@ Terakhir diperbarui: 2 September 2026.
 | M3 Discovery | Selesai | Inventory calendar, search, availability, quote |
 | M4 Booking | Hampir selesai | Hold, booking, snapshot, manual reservation, checkout wiring, expiry job |
 | M5 Payment | Selesai | Adapter demo lokal, payment attempts, retry, confirmation |
-| M6 Operations | Berjalan | History, voucher, cancellation/refund manual, dan partner stay controls selesai; email queue berikutnya |
+| M6 Operations | Hampir selesai | History, voucher, cancellation/refund, stay controls, dan email queue selesai; E2E review berikutnya |
 | M7 Release | Belum dimulai | Worker, backup/restore, observability, deployment |
 
 ## Implementasi yang tersedia
@@ -90,6 +90,14 @@ Terakhir diperbarui: 2 September 2026.
 - Setiap check-in dan completion berjalan dalam transaksi `Serializable` serta mencatat booking status history dan audit log.
 - Form memakai React 19 `useActionState`, mencegah submit ulang saat pending, dan menyediakan hasil aksi melalui live region aksesibel.
 
+### Notification operations
+
+- Booking confirmation, cancellation request, final cancellation, dan refund menulis `OutboxEvent` di transaction bisnis yang sama.
+- Dispatcher mengirim event ke BullMQ memakai outbox ID sebagai deterministic job ID; kegagalan dispatch tersimpan dan dicoba ulang terbatas.
+- Worker email memproses maksimal lima attempt dengan exponential backoff dan mencatat status `PENDING`, `PROCESSING`, `SENT`, atau `FAILED` di `EmailDelivery`.
+- Adapter `sink` menjadi default lokal tanpa external delivery; adapter SMTP dapat diaktifkan hanya melalui environment server-side.
+- `/admin/jobs` menampilkan pending outbox, dispatch failure, delivery failure, throughput 24 jam, dan error terbaru dengan alamat recipient dimasking.
+
 ## Migrasi database
 
 ```text
@@ -100,7 +108,8 @@ prisma/migrations/
 ├── 20260902000000_booking_snapshots/
 ├── 20260902010000_booking_payment_expiry/
 ├── 20260902020000_demo_payment_attempts/
-└── 20260902030000_cancellation_and_refunds/
+├── 20260902030000_cancellation_and_refunds/
+└── 20260902040000_notification_outbox/
 ```
 
 Migration booking snapshot menambahkan:
@@ -186,7 +195,7 @@ Partner hanya dapat memilih dan melihat room/booking miliknya. Admin dapat menga
 
 ### M6 Operations
 
-- Email queue dan failed-job visibility.
+- Jalankan E2E cancellation/refund dan notification worker dengan Redis/SMTP staging.
 
 ## Quality checks
 
@@ -213,6 +222,13 @@ Hasil batch partner stay operations, 2 September 2026:
 - ESLint bersih.
 - TypeScript bersih.
 - Production build berhasil, termasuk route voucher dinamis, tanpa warning.
+
+Hasil batch notification operations, 2 September 2026:
+
+- Prisma client berhasil digenerate dan schema dengan migration notification outbox valid.
+- 39 unit tests lulus, termasuk HTML escaping template dan bukti transport `sink` tidak membutuhkan SMTP.
+- ESLint, TypeScript, dan production build berhasil; route `/admin/jobs` terdeteksi dinamis.
+- `db:deploy` dan integration test PostgreSQL belum dapat dijalankan karena server lokal `127.0.0.1:5432` tidak aktif. Migration eksplisit sudah tersedia dan perlu diterapkan saat database aktif.
 
 ## Catatan penting
 

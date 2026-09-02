@@ -5,6 +5,7 @@ import { UserRole, UserStatus } from "@/generated/prisma/client";
 import { getCurrentUser } from "@/lib/auth/authorization";
 import { expireBookingIfPastDue } from "@/lib/booking/expiry";
 import { prisma } from "@/lib/prisma";
+import { bookingEmailTopics, enqueueBookingEmail } from "@/lib/notification/events";
 import { DemoPaymentAdapter } from "./demo-adapter";
 import { simulatePaymentSchema, type SimulatePaymentInput } from "./schemas";
 
@@ -164,6 +165,12 @@ export async function simulateBookingPayment(
         },
       },
     });
+    if (nextStatus === "CONFIRMED") {
+      await enqueueBookingEmail(tx, {
+        bookingId: booking.id,
+        topic: bookingEmailTopics.confirmed,
+      });
+    }
 
     return {
       kind: "paid" as const,
