@@ -2,6 +2,8 @@
 
 import { useActionState } from "react";
 import { createQuoteAction, type QuoteActionState } from "@/app/stays/quote-actions";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 
 const initialState: QuoteActionState = { message: "" };
 
@@ -20,10 +22,10 @@ export function QuoteButton(props: {
       <input name="checkout" type="hidden" value={props.checkout} />
       <input name="adults" type="hidden" value={props.adults} />
       <input name="children" type="hidden" value={props.childGuests} />
-      {state.message ? <p className="mb-3 rounded-xl bg-red-50 p-3 text-sm font-semibold text-red-700" role="alert">{state.message}</p> : null}
-      <button className="flex min-h-12 w-full items-center justify-center rounded-xl bg-primary px-5 font-bold text-white transition hover:bg-primary-hover disabled:cursor-wait disabled:opacity-60" disabled={pending} type="submit">
+      {state.message ? <Alert className="mb-3" variant="destructive"><AlertDescription>{state.message}</AlertDescription></Alert> : null}
+      <Button className="w-full" disabled={pending} size="lg" type="submit">
         {pending ? "Creating secure quote…" : "Reserve this stay"}
-      </button>
+      </Button>
     </form>
   );
 }

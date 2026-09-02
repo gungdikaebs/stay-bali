@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { PartnerStatus, UserRole } from "@/generated/prisma/client";
 import { SignInForm } from "@/components/auth/sign-in-form";
 import { StayBaliLogo } from "@/components/landing/public-header";
+import { Button } from "@/components/ui/button";
 import { getCurrentUser } from "@/lib/auth/authorization";
 import { getRoleHome } from "@/lib/auth/policies";
 import { safeInternalRedirect } from "@/lib/auth/redirects";
@@ -42,7 +43,7 @@ export default async function SignInPage({ searchParams }: { searchParams: Promi
       <section className="flex min-h-screen flex-col bg-white px-5 py-6 sm:px-10 lg:px-14 xl:px-20">
         <div className="flex items-center justify-between">
           <StayBaliLogo />
-          <Link className="inline-flex min-h-11 items-center gap-2 rounded-xl px-3 text-sm font-bold hover:bg-secondary" href="/"><ArrowLeft className="size-4" />Home</Link>
+          <Button asChild variant="ghost"><Link href="/"><ArrowLeft className="size-4" />Home</Link></Button>
         </div>
         <div className="my-auto mx-auto w-full max-w-md py-12">
           <span className="flex size-11 items-center justify-center rounded-xl bg-brand-teal-subtle text-primary"><ShieldCheck className="size-5" /></span>

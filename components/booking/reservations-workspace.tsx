@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { CalendarCheck2, PlusCircle, ReceiptText } from "lucide-react";
 import { ManualBookingForm } from "@/components/booking/manual-booking-form";
+import { BookingOperationForm } from "@/components/booking/booking-operation-form";
 import { formatIdr, formatStayDate } from "@/lib/demo-stays";
 import { getBookingOperationsWorkspace } from "@/lib/booking/queries";
 import { generateIdempotencyKey } from "@/lib/idempotency";
@@ -88,6 +89,11 @@ export async function ReservationsWorkspace({
                     <p><span className="block text-xs text-muted-foreground">Guests</span>{booking.adultCount} adults · {booking.childCount} children</p>
                     <p><span className="block text-xs text-muted-foreground">Total</span><strong>{formatIdr(booking.grandTotal)}</strong></p>
                   </div>
+                  {booking.status === "CONFIRMED" ? (
+                    <BookingOperationForm bookingId={booking.id} nextStatus="CHECKED_IN" />
+                  ) : booking.status === "CHECKED_IN" ? (
+                    <BookingOperationForm bookingId={booking.id} nextStatus="COMPLETED" />
+                  ) : null}
                   {workspace.canViewAllVouchers && canIssueVoucher(booking.status) ? <Link className="mt-4 inline-flex min-h-10 items-center gap-2 rounded-xl border border-border px-4 text-sm font-bold hover:bg-secondary" href={`/bookings/${encodeURIComponent(booking.id)}/voucher`}><ReceiptText className="size-4 text-primary" />View voucher</Link> : null}
                 </article>
               ))}

@@ -2,33 +2,33 @@
 
 import { useActionState } from "react";
 import { authenticate, type SignInState } from "@/app/sign-in/actions";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 const initialState: SignInState = { message: "" };
 
 export function SignInForm({ callbackUrl = "/workspace" }: { callbackUrl?: string }) {
   const [state, formAction, pending] = useActionState(authenticate, initialState);
 
-  const fieldClassName = "mt-2 h-12 w-full rounded-xl border border-border bg-white px-4 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15";
-
   return (
     <form action={formAction} className="mt-8 space-y-5">
       <input name="callbackUrl" type="hidden" value={callbackUrl} />
-      <label className="block text-sm font-semibold" htmlFor="email">
+      <Label className="block" htmlFor="email">
         Email address
-        <input className={fieldClassName} autoComplete="email" id="email" name="email" required type="email" placeholder="you@example.com" />
-      </label>
-      <label className="block text-sm font-semibold" htmlFor="password">
+        <Input className="mt-2 h-12" autoComplete="email" id="email" name="email" required type="email" placeholder="you@example.com" />
+      </Label>
+      <Label className="block" htmlFor="password">
         Password
-        <input className={fieldClassName} autoComplete="current-password" id="password" minLength={8} name="password" required type="password" placeholder="Enter your password" />
-      </label>
+        <Input className="mt-2 h-12" autoComplete="current-password" id="password" minLength={8} name="password" required type="password" placeholder="Enter your password" />
+      </Label>
       {state.message ? (
-        <p aria-live="polite" className="rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-700" role="alert">
-          {state.message}
-        </p>
+        <Alert aria-live="polite" variant="destructive"><AlertDescription>{state.message}</AlertDescription></Alert>
       ) : null}
-      <button className="min-h-12 w-full rounded-xl bg-primary px-5 font-bold text-white transition hover:bg-primary-hover disabled:cursor-wait disabled:opacity-70" disabled={pending} type="submit">
+      <Button className="w-full" disabled={pending} size="lg" type="submit">
         {pending ? "Signing in…" : "Sign in"}
-      </button>
+      </Button>
       <p className="text-center text-xs leading-5 text-muted-foreground">Secure access for travelers, active partners, and administrators.</p>
     </form>
   );

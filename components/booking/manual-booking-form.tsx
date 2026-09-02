@@ -2,6 +2,12 @@
 
 import { useActionState } from "react";
 import { createManualBookingAction } from "@/app/actions/booking-actions";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { NativeSelect } from "@/components/ui/native-select";
+import { Textarea } from "@/components/ui/textarea";
 import type { BookingActionState } from "@/lib/booking/schemas";
 import { formatIdr } from "@/lib/demo-stays";
 
@@ -15,9 +21,6 @@ type RoomOption = {
 };
 
 const initialState: BookingActionState = { status: "idle", message: "" };
-const fieldClassName = "mt-1.5 h-11 w-full rounded-xl border border-border bg-white px-3 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15 disabled:bg-secondary disabled:text-muted-foreground";
-const textAreaClassName = "mt-1.5 min-h-24 w-full resize-y rounded-xl border border-border bg-white p-3 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15 disabled:bg-secondary disabled:text-muted-foreground";
-
 function FieldError({ errors }: { errors?: string[] }) {
   return errors?.[0]
     ? <span className="mt-1 block text-xs font-medium text-red-700">{errors[0]}</span>
@@ -49,91 +52,90 @@ export function ManualBookingForm({
       <input name="idempotencyKey" type="hidden" value={idempotencyKey} />
 
       <div>
-        <label className="text-sm font-semibold">
+        <Label className="block">
           Property and room
-          <select className={fieldClassName} disabled={pending} name="roomTypeId" required>
+          <NativeSelect aria-invalid={Boolean(state.errors?.roomTypeId?.length)} className="mt-1.5" disabled={pending} name="roomTypeId" required>
             <option value="">Select a room type</option>
             {rooms.map((room) => (
               <option key={room.id} value={room.id}>
                 {room.property.name} — {room.name} · {formatIdr(room.basePrice)}/night · {room.adultCapacity} adults
               </option>
             ))}
-          </select>
+          </NativeSelect>
           <FieldError errors={state.errors?.roomTypeId} />
-        </label>
+        </Label>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <label className="text-sm font-semibold">
+        <Label className="block">
           Check-in
-          <input className={fieldClassName} disabled={pending} name="checkinDate" required type="date" />
+          <Input aria-invalid={Boolean(state.errors?.checkinDate?.length)} className="mt-1.5" disabled={pending} name="checkinDate" required type="date" />
           <FieldError errors={state.errors?.checkinDate} />
-        </label>
-        <label className="text-sm font-semibold">
+        </Label>
+        <Label className="block">
           Check-out
-          <input className={fieldClassName} disabled={pending} name="checkoutDate" required type="date" />
+          <Input aria-invalid={Boolean(state.errors?.checkoutDate?.length)} className="mt-1.5" disabled={pending} name="checkoutDate" required type="date" />
           <FieldError errors={state.errors?.checkoutDate} />
-        </label>
-        <label className="text-sm font-semibold">
+        </Label>
+        <Label className="block">
           Adults
-          <input className={fieldClassName} defaultValue={2} disabled={pending} max={10} min={1} name="adultCount" required type="number" />
+          <Input aria-invalid={Boolean(state.errors?.adultCount?.length)} className="mt-1.5" defaultValue={2} disabled={pending} max={10} min={1} name="adultCount" required type="number" />
           <FieldError errors={state.errors?.adultCount} />
-        </label>
-        <label className="text-sm font-semibold">
+        </Label>
+        <Label className="block">
           Children
-          <input className={fieldClassName} defaultValue={0} disabled={pending} max={10} min={0} name="childCount" required type="number" />
+          <Input aria-invalid={Boolean(state.errors?.childCount?.length)} className="mt-1.5" defaultValue={0} disabled={pending} max={10} min={0} name="childCount" required type="number" />
           <FieldError errors={state.errors?.childCount} />
-        </label>
+        </Label>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <label className="text-sm font-semibold sm:col-span-2">
+        <Label className="block sm:col-span-2">
           Guest name
-          <input autoComplete="name" className={fieldClassName} disabled={pending} maxLength={100} minLength={2} name="guestName" required />
+          <Input aria-invalid={Boolean(state.errors?.guestName?.length)} autoComplete="name" className="mt-1.5" disabled={pending} maxLength={100} minLength={2} name="guestName" required />
           <FieldError errors={state.errors?.guestName} />
-        </label>
-        <label className="text-sm font-semibold">
+        </Label>
+        <Label className="block">
           Guest email
-          <input autoComplete="email" className={fieldClassName} disabled={pending} maxLength={254} name="guestEmail" required type="email" />
+          <Input aria-invalid={Boolean(state.errors?.guestEmail?.length)} autoComplete="email" className="mt-1.5" disabled={pending} maxLength={254} name="guestEmail" required type="email" />
           <FieldError errors={state.errors?.guestEmail} />
-        </label>
-        <label className="text-sm font-semibold">
+        </Label>
+        <Label className="block">
           Guest phone
-          <input autoComplete="tel" className={fieldClassName} disabled={pending} maxLength={20} minLength={8} name="guestPhone" required type="tel" />
+          <Input aria-invalid={Boolean(state.errors?.guestPhone?.length)} autoComplete="tel" className="mt-1.5" disabled={pending} maxLength={20} minLength={8} name="guestPhone" required type="tel" />
           <FieldError errors={state.errors?.guestPhone} />
-        </label>
+        </Label>
       </div>
 
-      <label className="block text-sm font-semibold">
+      <Label className="block">
         Internal reason
-        <textarea className={textAreaClassName} disabled={pending} maxLength={500} minLength={10} name="reason" placeholder="Example: Walk-in guest paid at reception." required />
+        <Textarea aria-invalid={Boolean(state.errors?.reason?.length)} className="mt-1.5 resize-y" disabled={pending} maxLength={500} minLength={10} name="reason" placeholder="Example: Walk-in guest paid at reception." required />
         <FieldError errors={state.errors?.reason} />
-      </label>
+      </Label>
 
-      <label className="block text-sm font-semibold">
+      <Label className="block">
         Guest request <span className="font-normal text-muted-foreground">(optional)</span>
-        <textarea className={textAreaClassName} disabled={pending} maxLength={500} name="specialRequest" placeholder="Arrival details, accessibility needs, or room preferences." />
+        <Textarea aria-invalid={Boolean(state.errors?.specialRequest?.length)} className="mt-1.5 resize-y" disabled={pending} maxLength={500} name="specialRequest" placeholder="Arrival details, accessibility needs, or room preferences." />
         <FieldError errors={state.errors?.specialRequest} />
-      </label>
+      </Label>
 
       {state.message ? (
-        <div
-          className={`rounded-xl px-4 py-3 text-sm font-semibold ${state.status === "success" ? "bg-success-subtle text-success" : "bg-red-50 text-red-700"}`}
-          role={state.status === "error" ? "alert" : "status"}
-        >
+        <Alert variant={state.status === "success" ? "success" : "destructive"} role={state.status === "error" ? "alert" : "status"}>
+          <AlertDescription className="font-semibold">
           {state.message}
           {state.bookingCode ? <span className="mt-1 block">Booking code: {state.bookingCode}</span> : null}
           {state.status === "success" ? (
-            <button className="mt-3 block text-sm font-bold underline" onClick={() => window.location.reload()} type="button">
+            <Button className="mt-2 h-auto min-h-0 p-0" onClick={() => window.location.reload()} type="button" variant="link">
               Create another reservation
-            </button>
+            </Button>
           ) : null}
-        </div>
+          </AlertDescription>
+        </Alert>
       ) : null}
 
-      <button className="min-h-12 rounded-xl bg-primary px-6 text-sm font-bold text-white transition hover:bg-primary-hover disabled:cursor-wait disabled:opacity-60" disabled={pending || state.status === "success"} type="submit">
+      <Button disabled={pending || state.status === "success"} size="lg" type="submit">
         {pending ? "Creating reservation…" : "Create manual reservation"}
-      </button>
+      </Button>
     </form>
   );
 }

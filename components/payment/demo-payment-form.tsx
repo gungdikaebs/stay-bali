@@ -4,6 +4,8 @@ import { useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Check, CreditCard, FlaskConical, XCircle } from "lucide-react";
 import { simulatePaymentAction } from "@/app/actions/payment-actions";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import { formatIdr } from "@/lib/demo-stays";
 import type { PaymentActionState } from "@/lib/payment/schemas";
 
@@ -51,21 +53,26 @@ export function DemoPaymentForm({
         </label>
       </fieldset>
 
-      <button className="mt-8 flex min-h-14 w-full items-center justify-center rounded-xl bg-primary px-6 text-base font-bold text-white transition hover:bg-primary-hover disabled:cursor-wait disabled:opacity-60" disabled={pending || state.status === "success"} type="submit">
+      <Button className="mt-8 min-h-14 w-full" disabled={pending || state.status === "success"} size="lg" type="submit">
         {state.status === "success" ? "Confirmed. Redirecting…" : pending ? "Processing demo payment…" : `Pay ${formatIdr(total)}`}
-      </button>
+      </Button>
 
       <p className="mt-4 flex items-start justify-center gap-2 text-center text-xs leading-5 text-muted-foreground">
         <FlaskConical className="mt-0.5 size-3.5 shrink-0" />Portfolio simulation only. No card, bank, wallet, or real funds are used.
       </p>
-      <p
-        aria-live="polite"
-        className={state.message ? `mt-4 rounded-xl p-4 text-sm font-semibold ${state.status === "success" ? "bg-success-subtle text-success" : state.status === "declined" ? "bg-warning-subtle text-warning" : "bg-red-50 text-red-700"}` : "sr-only"}
-        role={state.status === "error" ? "alert" : "status"}
-      >
-        {state.message}
-        {state.attemptReference ? <span className="mt-1 block text-xs font-medium">Reference: {state.attemptReference}</span> : null}
-      </p>
+      {state.message ? (
+        <Alert
+          aria-live="polite"
+          className="mt-4"
+          role={state.status === "error" ? "alert" : "status"}
+          variant={state.status === "success" ? "success" : state.status === "declined" ? "warning" : "destructive"}
+        >
+          <AlertDescription className="font-semibold">
+            {state.message}
+            {state.attemptReference ? <span className="mt-1 block text-xs font-medium">Reference: {state.attemptReference}</span> : null}
+          </AlertDescription>
+        </Alert>
+      ) : null}
     </form>
   );
 }

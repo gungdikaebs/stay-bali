@@ -7,6 +7,7 @@ import {
   isEligibleForFullRefund,
   isBookingStatusTransitionAllowed,
 } from "./rules";
+import { operationalBookingTransitionSchema } from "./schemas";
 
 test("isEligibleForFullRefund uses the three-day Bali-date boundary", () => {
   assert.equal(isEligibleForFullRefund("2026-09-05", "2026-09-02"), true);
@@ -34,6 +35,37 @@ test("isBookingStatusTransitionAllowed validates state machine rules", () => {
   assert.equal(isBookingStatusTransitionAllowed("COMPLETED", "CONFIRMED"), false);
   assert.equal(isBookingStatusTransitionAllowed("CANCELLED", "CONFIRMED"), false);
   assert.equal(isBookingStatusTransitionAllowed("PENDING_PAYMENT", "COMPLETED"), false);
+});
+
+test("operational booking transition input only accepts check-in and completion", () => {
+  assert.equal(
+    operationalBookingTransitionSchema.safeParse({
+      bookingId: "cm1234567890",
+      nextStatus: "CHECKED_IN",
+    }).success,
+    true,
+  );
+  assert.equal(
+    operationalBookingTransitionSchema.safeParse({
+      bookingId: "cm1234567890",
+      nextStatus: "COMPLETED",
+    }).success,
+    true,
+  );
+  assert.equal(
+    operationalBookingTransitionSchema.safeParse({
+      bookingId: "cm1234567890",
+      nextStatus: "CANCELLED",
+    }).success,
+    false,
+  );
+  assert.equal(
+    operationalBookingTransitionSchema.safeParse({
+      bookingId: "",
+      nextStatus: "CHECKED_IN",
+    }).success,
+    false,
+  );
 });
 
 test("generateBookingCode generates code with correct format", () => {

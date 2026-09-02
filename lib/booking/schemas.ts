@@ -55,10 +55,24 @@ export const manualBookingSchema = z
 
 export type ManualBookingInput = z.infer<typeof manualBookingSchema>;
 
+export const operationalBookingTransitionSchema = z.object({
+  bookingId: z.string().trim().min(1).max(30),
+  nextStatus: z.enum(["CHECKED_IN", "COMPLETED"]),
+});
+
+export type OperationalBookingTransitionInput = z.infer<
+  typeof operationalBookingTransitionSchema
+>;
+
 export type BookingActionState = {
   status: "idle" | "error" | "success";
   message: string;
   bookingId?: string;
   bookingCode?: string;
   errors?: Record<string, string[] | undefined>;
+};
+
+export type OperationalBookingActionState = {
+  status: "idle" | "error" | "success";
+  message: string;
 };

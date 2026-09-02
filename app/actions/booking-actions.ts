@@ -2,11 +2,22 @@
 
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
-import { confirmBookingSchema, manualBookingSchema } from "@/lib/booking/schemas";
-import { confirmBookingOnline, createBookingManual } from "@/lib/booking/booking";
+import {
+  confirmBookingSchema,
+  manualBookingSchema,
+  operationalBookingTransitionSchema,
+} from "@/lib/booking/schemas";
+import {
+  confirmBookingOnline,
+  createBookingManual,
+  transitionBookingStatus,
+} from "@/lib/booking/booking";
 import { createHold } from "@/lib/hold/hold";
 import { generateIdempotencyKey } from "@/lib/idempotency";
-import type { BookingActionState } from "@/lib/booking/schemas";
+import type {
+  BookingActionState,
+  OperationalBookingActionState,
+} from "@/lib/booking/schemas";
 
 export async function confirmBookingAction(
   _prevState: BookingActionState,
@@ -119,6 +130,45 @@ export async function createManualBookingAction(
       message: safeMessages.includes(message)
         ? message
         : "The manual reservation could not be created.",
+    };
+  }
+}
+
+export async function transitionBookingOperationAction(
+  _previousState: OperationalBookingActionState,
+  formData: FormData,
+): Promise<OperationalBookingActionState> {
+  const parsed = operationalBookingTransitionSchema.safeParse({
+    bookingId: formData.get("bookingId"),
+    nextStatus: formData.get("nextStatus"),
+  });
+  if (!parsed.success) {
+    return { status: "error", message: "Invalid reservation operation." };
+  }
+
+  try {
+    await transitionBookingStatus(
+      parsed.data.bookingId,
+      parsed.data.nextStatus,
+      parsed.data.nextStatus === "CHECKED_IN"
+        ? "Guest arrival confirmed by an authorized operator."
+        : "Stay completion confirmed by an authorized operator.",
+    );
+    revalidatePath("/partner/bookings");
+    revalidatePath("/admin/bookings");
+    revalidatePath("/partner");
+    revalidatePath("/admin");
+    revalidatePath("/account");
+    return {
+      status: "success",
+      message: parsed.data.nextStatus === "CHECKED_IN"
+        ? "Guest checked in successfully."
+        : "Stay marked as completed.",
+    };
+  } catch {
+    return {
+      status: "error",
+      message: "This reservation is no longer eligible for that operation.",
     };
   }
 }

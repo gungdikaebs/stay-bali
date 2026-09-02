@@ -7,6 +7,11 @@ import {
   updatePropertyAction,
   updateRoomAction,
 } from "@/app/partner/properties/actions";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { NativeSelect } from "@/components/ui/native-select";
+import { Textarea } from "@/components/ui/textarea";
 import type { SupplyActionState } from "@/lib/supply/schemas";
 
 const initialState: SupplyActionState = { status: "idle", message: "" };
@@ -22,9 +27,9 @@ function FieldError({ errors }: { errors?: string[] }) {
 function FormMessage({ state }: { state: SupplyActionState }) {
   if (!state.message) return null;
   return (
-    <p className={`rounded-xl px-4 py-3 text-sm font-semibold ${state.status === "success" ? "bg-success-subtle text-success" : "bg-red-50 text-red-700"}`} role={state.status === "error" ? "alert" : "status"}>
-      {state.message}
-    </p>
+    <Alert variant={state.status === "success" ? "success" : "destructive"} role={state.status === "error" ? "alert" : "status"}>
+      <AlertDescription className="font-semibold">{state.message}</AlertDescription>
+    </Alert>
   );
 }
 
@@ -53,43 +58,43 @@ export function PropertyForm({ facilities, initial }: PropertyFormProps) {
     <form action={formAction} className="space-y-6">
       <div className="grid gap-5 sm:grid-cols-2">
         <label className="text-sm font-semibold">Property name
-          <input className={fieldClassName} defaultValue={initial?.name} disabled={pending} maxLength={150} minLength={3} name="name" required />
+          <Input aria-invalid={Boolean(state.errors?.name?.length)} className={fieldClassName} defaultValue={initial?.name} disabled={pending} maxLength={150} minLength={3} name="name" required />
           <FieldError errors={state.errors?.name} />
         </label>
         <label className="text-sm font-semibold">Property type
-          <select className={fieldClassName} defaultValue={initial?.type ?? "VILLA"} disabled={pending} name="type">
+          <NativeSelect aria-invalid={Boolean(state.errors?.type?.length)} className={fieldClassName} defaultValue={initial?.type ?? "VILLA"} disabled={pending} name="type">
             <option value="VILLA">Villa</option><option value="HOTEL">Hotel</option><option value="HOMESTAY">Homestay</option>
-          </select>
+          </NativeSelect>
           <FieldError errors={state.errors?.type} />
         </label>
       </div>
       <label className="block text-sm font-semibold">Description
-        <textarea className={textAreaClassName} defaultValue={initial?.description} disabled={pending} maxLength={5000} minLength={100} name="description" required rows={7} />
+        <Textarea aria-invalid={Boolean(state.errors?.description?.length)} className={textAreaClassName} defaultValue={initial?.description} disabled={pending} maxLength={5000} minLength={100} name="description" required rows={7} />
         <span className="mt-1 block text-xs font-normal text-muted-foreground">100–5,000 characters.</span>
         <FieldError errors={state.errors?.description} />
       </label>
       <div className="grid gap-5 sm:grid-cols-2">
         <label className="text-sm font-semibold">Area
-          <input className={fieldClassName} defaultValue={initial?.area} disabled={pending} maxLength={100} name="area" placeholder="Ubud, Gianyar" required />
+          <Input aria-invalid={Boolean(state.errors?.area?.length)} className={fieldClassName} defaultValue={initial?.area} disabled={pending} maxLength={100} name="area" placeholder="Ubud, Gianyar" required />
           <FieldError errors={state.errors?.area} />
         </label>
         <label className="text-sm font-semibold">Address
-          <input className={fieldClassName} defaultValue={initial?.address} disabled={pending} maxLength={500} name="address" required />
+          <Input aria-invalid={Boolean(state.errors?.address?.length)} className={fieldClassName} defaultValue={initial?.address} disabled={pending} maxLength={500} name="address" required />
           <FieldError errors={state.errors?.address} />
         </label>
       </div>
       <div className="grid gap-5 sm:grid-cols-2">
         <label className="text-sm font-semibold">Check-in time
-          <input className={fieldClassName} defaultValue={initial?.checkInTime ?? "15:00"} disabled={pending} name="checkInTime" required type="time" />
+          <Input aria-invalid={Boolean(state.errors?.checkInTime?.length)} className={fieldClassName} defaultValue={initial?.checkInTime ?? "15:00"} disabled={pending} name="checkInTime" required type="time" />
           <FieldError errors={state.errors?.checkInTime} />
         </label>
         <label className="text-sm font-semibold">Check-out time
-          <input className={fieldClassName} defaultValue={initial?.checkOutTime ?? "11:00"} disabled={pending} name="checkOutTime" required type="time" />
+          <Input aria-invalid={Boolean(state.errors?.checkOutTime?.length)} className={fieldClassName} defaultValue={initial?.checkOutTime ?? "11:00"} disabled={pending} name="checkOutTime" required type="time" />
           <FieldError errors={state.errors?.checkOutTime} />
         </label>
       </div>
       <label className="block text-sm font-semibold">Cancellation policy
-        <textarea className={textAreaClassName} defaultValue={initial?.cancellationPolicy ?? "Free cancellation until 3 days before check-in. After that, the booking is non-refundable."} disabled={pending} maxLength={5000} minLength={20} name="cancellationPolicy" required rows={4} />
+        <Textarea aria-invalid={Boolean(state.errors?.cancellationPolicy?.length)} className={textAreaClassName} defaultValue={initial?.cancellationPolicy ?? "Free cancellation until 3 days before check-in. After that, the booking is non-refundable."} disabled={pending} maxLength={5000} minLength={20} name="cancellationPolicy" required rows={4} />
         <FieldError errors={state.errors?.cancellationPolicy} />
       </label>
       <fieldset>
@@ -106,9 +111,9 @@ export function PropertyForm({ facilities, initial }: PropertyFormProps) {
         <FieldError errors={state.errors?.facilityIds} />
       </fieldset>
       <FormMessage state={state} />
-      <button className="min-h-11 rounded-xl bg-primary px-6 text-sm font-bold text-white transition hover:bg-primary-hover disabled:cursor-wait disabled:opacity-60" disabled={pending} type="submit">
+      <Button disabled={pending} type="submit">
         {pending ? "Saving…" : initial ? "Save property" : "Create draft property"}
-      </button>
+      </Button>
     </form>
   );
 }
@@ -140,16 +145,16 @@ export function RoomForm({ propertyId, facilities, initial }: RoomFormProps) {
   return (
     <form action={formAction} className="space-y-5">
       <div className="grid gap-4 sm:grid-cols-2">
-        <label className="text-sm font-semibold">Room name<input className={fieldClassName} defaultValue={initial?.name} disabled={pending} maxLength={150} minLength={3} name="name" required /><FieldError errors={state.errors?.name} /></label>
-        <label className="text-sm font-semibold">Bed type<input className={fieldClassName} defaultValue={initial?.bedType} disabled={pending} maxLength={100} name="bedType" placeholder="1 king bed" required /><FieldError errors={state.errors?.bedType} /></label>
+        <label className="text-sm font-semibold">Room name<Input aria-invalid={Boolean(state.errors?.name?.length)} className={fieldClassName} defaultValue={initial?.name} disabled={pending} maxLength={150} minLength={3} name="name" required /><FieldError errors={state.errors?.name} /></label>
+        <label className="text-sm font-semibold">Bed type<Input aria-invalid={Boolean(state.errors?.bedType?.length)} className={fieldClassName} defaultValue={initial?.bedType} disabled={pending} maxLength={100} name="bedType" placeholder="1 king bed" required /><FieldError errors={state.errors?.bedType} /></label>
       </div>
-      <label className="block text-sm font-semibold">Description<textarea className={textAreaClassName} defaultValue={initial?.description} disabled={pending} maxLength={5000} minLength={20} name="description" required rows={3} /><FieldError errors={state.errors?.description} /></label>
+      <label className="block text-sm font-semibold">Description<Textarea aria-invalid={Boolean(state.errors?.description?.length)} className={textAreaClassName} defaultValue={initial?.description} disabled={pending} maxLength={5000} minLength={20} name="description" required rows={3} /><FieldError errors={state.errors?.description} /></label>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-        <label className="text-sm font-semibold">Adults<input className={fieldClassName} defaultValue={initial?.adultCapacity ?? 2} disabled={pending} max={10} min={1} name="adultCapacity" required type="number" /><FieldError errors={state.errors?.adultCapacity} /></label>
-        <label className="text-sm font-semibold">Children<input className={fieldClassName} defaultValue={initial?.childCapacity ?? 0} disabled={pending} max={10} min={0} name="childCapacity" required type="number" /><FieldError errors={state.errors?.childCapacity} /></label>
-        <label className="text-sm font-semibold">Size m²<input className={fieldClassName} defaultValue={initial?.sizeSqm ?? ""} disabled={pending} min={1} name="sizeSqm" type="number" /><FieldError errors={state.errors?.sizeSqm} /></label>
-        <label className="text-sm font-semibold">Base price IDR<input className={fieldClassName} defaultValue={initial?.basePrice} disabled={pending} min={1} name="basePrice" required type="number" /><FieldError errors={state.errors?.basePrice} /></label>
-        <label className="text-sm font-semibold">Total units<input className={fieldClassName} defaultValue={initial?.totalUnits ?? 1} disabled={pending} max={100} min={1} name="totalUnits" required type="number" /><FieldError errors={state.errors?.totalUnits} /></label>
+        <label className="text-sm font-semibold">Adults<Input aria-invalid={Boolean(state.errors?.adultCapacity?.length)} className={fieldClassName} defaultValue={initial?.adultCapacity ?? 2} disabled={pending} max={10} min={1} name="adultCapacity" required type="number" /><FieldError errors={state.errors?.adultCapacity} /></label>
+        <label className="text-sm font-semibold">Children<Input aria-invalid={Boolean(state.errors?.childCapacity?.length)} className={fieldClassName} defaultValue={initial?.childCapacity ?? 0} disabled={pending} max={10} min={0} name="childCapacity" required type="number" /><FieldError errors={state.errors?.childCapacity} /></label>
+        <label className="text-sm font-semibold">Size m²<Input aria-invalid={Boolean(state.errors?.sizeSqm?.length)} className={fieldClassName} defaultValue={initial?.sizeSqm ?? ""} disabled={pending} min={1} name="sizeSqm" type="number" /><FieldError errors={state.errors?.sizeSqm} /></label>
+        <label className="text-sm font-semibold">Base price IDR<Input aria-invalid={Boolean(state.errors?.basePrice?.length)} className={fieldClassName} defaultValue={initial?.basePrice} disabled={pending} min={1} name="basePrice" required type="number" /><FieldError errors={state.errors?.basePrice} /></label>
+        <label className="text-sm font-semibold">Total units<Input aria-invalid={Boolean(state.errors?.totalUnits?.length)} className={fieldClassName} defaultValue={initial?.totalUnits ?? 1} disabled={pending} max={100} min={1} name="totalUnits" required type="number" /><FieldError errors={state.errors?.totalUnits} /></label>
       </div>
       <fieldset>
         <legend className="text-sm font-semibold">Room facilities</legend>
@@ -162,7 +167,7 @@ export function RoomForm({ propertyId, facilities, initial }: RoomFormProps) {
         </div>
       </fieldset>
       <FormMessage state={state} />
-      <button className="min-h-10 rounded-xl bg-foreground px-5 text-sm font-bold text-white transition hover:bg-primary disabled:opacity-60" disabled={pending} type="submit">{pending ? "Saving…" : initial ? "Save room" : "Add room type"}</button>
+      <Button disabled={pending} size="sm" type="submit" variant="secondary">{pending ? "Saving…" : initial ? "Save room" : "Add room type"}</Button>
     </form>
   );
 }

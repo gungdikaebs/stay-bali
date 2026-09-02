@@ -4,9 +4,12 @@ import {
   Search,
   UsersRound,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { NativeSelect } from "@/components/ui/native-select";
 
 const fieldClassName =
-  "h-12 min-w-0 w-full max-w-full bg-transparent text-[15px] font-semibold text-foreground outline-none placeholder:text-muted-foreground focus-visible:ring-0";
+  "h-12 min-w-0 w-full max-w-full border-0 bg-transparent px-0 text-[15px] font-semibold text-foreground shadow-none placeholder:text-muted-foreground focus-visible:border-transparent focus-visible:ring-0";
 
 type SearchPanelProps = {
   initialValues?: {
@@ -37,7 +40,7 @@ export function SearchPanel({
             <span className="block text-[11px] font-bold tracking-[0.1em] text-muted-foreground uppercase">
               Destination
             </span>
-            <select
+            <NativeSelect
               className={fieldClassName}
               defaultValue={initialValues?.location ?? "all"}
               name="location"
@@ -48,7 +51,7 @@ export function SearchPanel({
               <option value="seminyak">Seminyak, Bali</option>
               <option value="uluwatu">Uluwatu, Bali</option>
               <option value="sanur">Sanur, Bali</option>
-            </select>
+            </NativeSelect>
           </span>
         </label>
 
@@ -58,7 +61,7 @@ export function SearchPanel({
             <span className="block text-[11px] font-bold tracking-[0.1em] text-muted-foreground uppercase">
               Check-in
             </span>
-            <input
+            <Input
               className={fieldClassName}
               defaultValue={initialValues?.checkin}
               name="checkin"
@@ -73,7 +76,7 @@ export function SearchPanel({
             <span className="block text-[11px] font-bold tracking-[0.1em] text-muted-foreground uppercase">
               Check-out
             </span>
-            <input
+            <Input
               className={fieldClassName}
               defaultValue={initialValues?.checkout}
               name="checkout"
@@ -88,13 +91,13 @@ export function SearchPanel({
             <span className="block text-[11px] font-bold tracking-[0.1em] text-muted-foreground uppercase">
               Adults
             </span>
-            <select
+            <NativeSelect
               className={fieldClassName}
               defaultValue={initialValues?.guests ?? "2"}
               name="guests"
             >
               {Array.from({ length: 10 }, (_, index) => index + 1).map((count) => <option key={count} value={count}>{count}</option>)}
-            </select>
+            </NativeSelect>
           </span>
         </label>
 
@@ -102,21 +105,21 @@ export function SearchPanel({
           <UsersRound className="size-5 shrink-0 text-primary" aria-hidden="true" />
           <span className="min-w-0 flex-1">
             <span className="block text-[11px] font-bold tracking-[0.1em] text-muted-foreground uppercase">Children</span>
-            <select className={fieldClassName} defaultValue={initialValues?.children ?? "0"} name="children">
+            <NativeSelect className={fieldClassName} defaultValue={initialValues?.children ?? "0"} name="children">
               {Array.from({ length: 11 }, (_, count) => <option key={count} value={count}>{count}</option>)}
-            </select>
+            </NativeSelect>
           </span>
         </label>
 
-        <button
-          className={`inline-flex items-center justify-center gap-2 rounded-2xl bg-primary px-6 text-base font-bold text-primary-foreground transition hover:bg-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
+        <Button
+          className={`rounded-2xl px-6 text-base ${
             compact ? "min-h-12 lg:min-w-32" : "min-h-14 lg:min-h-0 lg:min-w-36"
           }`}
           type="submit"
         >
           <Search className="size-5" aria-hidden="true" />
           Search stays
-        </button>
+        </Button>
       </form>
       <p className="sr-only" id="search-form-note">
         Select a Bali area, dates, and adult and child guest counts. Dates are optional for catalog browsing.

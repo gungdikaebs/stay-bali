@@ -8,6 +8,8 @@ import {
   Sparkles,
   UsersRound,
 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
 
 type PropertyCardProps = {
   name: string;
@@ -34,7 +36,8 @@ export function PropertyCard({
 }: PropertyCardProps) {
   return (
     <Link className="group block" href={href} aria-label={`View ${name}`}>
-    <article className="overflow-hidden rounded-2xl border border-border bg-card transition duration-300 group-hover:-translate-y-1 group-hover:shadow-card">
+    <Card asChild className="overflow-hidden rounded-2xl shadow-none transition duration-300 group-hover:-translate-y-1 group-hover:shadow-card">
+    <article>
       <div className="relative aspect-[4/3] overflow-hidden bg-secondary">
         <Image
           fill
@@ -44,10 +47,10 @@ export function PropertyCard({
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
           src={image}
         />
-        <span className="absolute top-3 left-3 inline-flex items-center gap-1.5 rounded-full bg-white/95 px-3 py-1.5 text-xs font-bold text-foreground shadow-sm backdrop-blur-sm">
+        <Badge className="absolute top-3 left-3 bg-white/95 text-foreground shadow-sm backdrop-blur-sm" variant="outline">
           <ShieldCheck className="size-3.5 text-primary" aria-hidden="true" />
           Verified property
-        </span>
+        </Badge>
       </div>
 
       <div className="p-5">
@@ -61,9 +64,9 @@ export function PropertyCard({
               {name}
             </h3>
           </div>
-          <span className="rounded-full bg-brand-teal-subtle px-2.5 py-1 text-[11px] font-bold text-primary">
+          <Badge className="text-primary" variant="success">
             {type}
-          </span>
+          </Badge>
         </div>
 
         <div className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
@@ -97,6 +100,7 @@ export function PropertyCard({
         </div>
       </div>
     </article>
+    </Card>
     </Link>
   );
 }

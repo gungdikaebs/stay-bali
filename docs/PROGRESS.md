@@ -13,7 +13,7 @@ Terakhir diperbarui: 2 September 2026.
 | M3 Discovery | Selesai | Inventory calendar, search, availability, quote |
 | M4 Booking | Hampir selesai | Hold, booking, snapshot, manual reservation, checkout wiring, expiry job |
 | M5 Payment | Selesai | Adapter demo lokal, payment attempts, retry, confirmation |
-| M6 Operations | Berjalan | History, voucher, cancellation dan refund manual selesai; partner controls berikutnya |
+| M6 Operations | Berjalan | History, voucher, cancellation/refund manual, dan partner stay controls selesai; email queue berikutnya |
 | M7 Release | Belum dimulai | Worker, backup/restore, observability, deployment |
 
 ## Implementasi yang tersedia
@@ -48,6 +48,8 @@ Terakhir diperbarui: 2 September 2026.
 
 ### UI booking dan payment demo
 
+- Fondasi UI memakai source-owned shadcn primitives di `components/ui/` dengan token Tropical Trust; search, authentication, property card, quote, checkout, demo payment, manual reservation, dan supply forms sudah mengadopsi primitive bersama.
+- Homepage publik memiliki hierarchy editorial baru: focused hero search, trust strip, published-stay discovery controls, lima-area destination mosaic, tiga langkah booking, functional Partner CTA, dan footer navigasi yang lebih lengkap tanpa fake trust atau promo.
 - Homepage memiliki navbar publik satu tingkat, filter tipe stay, tautan traveler/partner, CTA pencarian, dan mobile navigation drawer.
 - Checkout memakai Server Action untuk membuat/reuse hold dan membuat booking.
 - Checkout mengarahkan booking yang berhasil ke `/payment?booking=<id>`.
@@ -74,6 +76,14 @@ Terakhir diperbarui: 2 September 2026.
 - Admin dapat menolak request, menyetujui cancellation tanpa refund, atau mencatat full refund manual dengan reference unik.
 - Approval melepaskan inventory tepat sekali; full refund mencatat history `REFUND_PENDING → REFUNDED` dalam transaksi yang sama.
 - Cancellation request, refund record, status history, idempotency record, dan audit tersimpan bersama mutation bisnis.
+
+### Partner stay operations
+
+- Partner aktif dapat melakukan `CONFIRMED → CHECKED_IN → COMPLETED` dari workspace Reservations untuk booking property sendiri.
+- Admin mendapat kontrol operasional yang sama dalam scope marketplace sesuai state machine.
+- Server Action hanya menerima target status operasional yang tervalidasi; actor, lifecycle Partner, ownership, dan status awal selalu dibaca ulang di server.
+- Setiap check-in dan completion berjalan dalam transaksi `Serializable` serta mencatat booking status history dan audit log.
+- Form memakai React 19 `useActionState`, mencegah submit ulang saat pending, dan menyediakan hasil aksi melalui live region aksesibel.
 
 ## Migrasi database
 
@@ -171,7 +181,6 @@ Partner hanya dapat memilih dan melihat room/booking miliknya. Admin dapat menga
 
 ### M6 Operations
 
-- Partner check-in/completion controls.
 - Email queue dan failed-job visibility.
 
 ## Quality checks
@@ -189,12 +198,12 @@ npx tsc --noEmit
 npm run build
 ```
 
-Hasil batch 2 September 2026:
+Hasil batch partner stay operations, 2 September 2026:
 
 - Prisma client berhasil digenerate.
 - Prisma schema valid.
 - Tujuh migration berhasil diterapkan dan database up-to-date.
-- 31 unit tests lulus.
+- 32 unit tests lulus, termasuk validasi boundary status operasional.
 - PostgreSQL last-unit concurrency test lulus.
 - ESLint bersih.
 - TypeScript bersih.
