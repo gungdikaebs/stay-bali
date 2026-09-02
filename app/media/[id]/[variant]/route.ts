@@ -1,4 +1,5 @@
 import { readFile } from "node:fs/promises";
+import { join } from "node:path";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { resolveStorageKey } from "@/lib/media/storage";
@@ -15,7 +16,7 @@ function fallbackImage(area: string) {
 }
 
 export async function GET(
-  request: Request,
+  _request: Request,
   context: { params: Promise<{ id: string; variant: string }> },
 ) {
   const { id, variant } = await context.params;
@@ -77,8 +78,15 @@ export async function GET(
     });
   } catch {
     const area = properties[0]?.area;
-    return area
-      ? Response.redirect(new URL(fallbackImage(area), request.url), 307)
-      : new Response(null, { status: 404 });
+    if (!area) return new Response(null, { status: 404 });
+    const fallbackPath = join(process.cwd(), "public", fallbackImage(area));
+    const body = await readFile(fallbackPath);
+    return new Response(body, {
+      headers: {
+        "Content-Type": "image/jpeg",
+        "Cache-Control": "public, max-age=3600, stale-while-revalidate=86400",
+        "X-Content-Type-Options": "nosniff",
+      },
+    });
   }
 }

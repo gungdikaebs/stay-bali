@@ -140,6 +140,7 @@ The default `sink` transport processes messages without external delivery. Set `
 | `npm run lint` | Run ESLint |
 | `npm test` | Run domain policy and workflow tests |
 | `npm run test:integration` | Run PostgreSQL concurrency tests |
+| `npm run test:e2e` | Run the M4 booking and responsive workspace review with local Chrome |
 | `npm run db:generate` | Generate the Prisma client |
 | `npm run db:validate` | Validate the Prisma schema |
 | `npm run db:migrate` | Create and apply a development migration |
@@ -199,6 +200,7 @@ npm run db:status
 - [Authentication](./docs/AUTHENTICATION.md) — sign-in flow and security rules
 - [Supply Workflow](./docs/SUPPLY_WORKFLOW.md) — property, media, inventory, and approval flows
 - [Project Progress](./docs/PROGRESS.md) — current status and handoff notes
+- [Deployment Operations](./docs/DEPLOYMENT.md) — systemd scheduler and VPS runbook
 
 ## Security notes
 

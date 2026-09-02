@@ -1,8 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { generateIdempotencyKey } from "@/lib/idempotency";
 import { simulateBookingPayment } from "@/lib/payment/payment";
+import { createCorrelationId, writeLog } from "@/lib/observability/logger";
 import {
   simulatePaymentSchema,
   type PaymentActionState,
@@ -21,28 +23,15 @@ export async function simulatePaymentAction(
     return { status: "error", message: "Invalid demo payment request." };
   }
 
+  let result;
   try {
-    const result = await simulateBookingPayment(parsed.data);
-    revalidatePath("/payment");
-    revalidatePath("/booking/confirmation");
-    revalidatePath("/account");
-
-    if (result.bookingStatus === "PAYMENT_FAILED") {
-      return {
-        status: "declined",
-        message: "Demo payment declined. You can retry before the payment window expires.",
-        bookingId: result.bookingId,
-        attemptReference: result.attemptReference,
-        nextIdempotencyKey: generateIdempotencyKey(),
-      };
-    }
-    return {
-      status: "success",
-      message: "Demo payment approved. Your booking is confirmed.",
-      bookingId: result.bookingId,
-      attemptReference: result.attemptReference,
-    };
+    result = await simulateBookingPayment(parsed.data);
   } catch (error) {
+    writeLog("error", "demo_payment_action_failed", {
+      correlationId: createCorrelationId(),
+      bookingId: parsed.data.bookingId,
+      error,
+    });
     const message = error instanceof Error ? error.message : "";
     const safeMessages = [
       "Booking not found or access denied.",
@@ -57,4 +46,17 @@ export async function simulatePaymentAction(
         : "The demo payment could not be processed.",
     };
   }
+
+  revalidatePath("/booking/confirmation");
+  revalidatePath("/account");
+  if (result.bookingStatus === "PAYMENT_FAILED") {
+    return {
+      status: "declined",
+      message: "Demo payment declined. You can retry before the payment window expires.",
+      bookingId: result.bookingId,
+      attemptReference: result.attemptReference,
+      nextIdempotencyKey: generateIdempotencyKey(),
+    };
+  }
+  redirect(`/booking/confirmation?booking=${encodeURIComponent(result.bookingId)}`);
 }

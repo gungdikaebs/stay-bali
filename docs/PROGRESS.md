@@ -11,7 +11,7 @@ Terakhir diperbarui: 2 September 2026.
 | M1 Foundation | Selesai | Auth, RBAC, audit, partner lifecycle |
 | M2 Supply | Selesai | Property/room CRUD, approval, media |
 | M3 Discovery | Selesai | Inventory calendar, search, availability, quote |
-| M4 Booking | Hampir selesai | Hold, booking, snapshot, manual reservation, checkout wiring, expiry job |
+| M4 Booking | Selesai | Hold, booking, snapshot, manual reservation, checkout/payment E2E, expiry scheduler |
 | M5 Payment | Selesai | Adapter demo lokal, payment attempts, retry, confirmation |
 | M6 Operations | Hampir selesai | History, voucher, cancellation/refund, stay controls, dan email queue selesai; E2E review berikutnya |
 | M7 Release | Belum dimulai | Worker, backup/restore, observability, deployment |
@@ -64,6 +64,10 @@ Terakhir diperbarui: 2 September 2026.
 - Partner dan Admin memiliki halaman `Reservations`.
 - Manual reservation form memvalidasi room ownership, guest capacity, date range, availability, dan server-side price.
 - Daftar 50 booking terbaru mengikuti scope Admin atau Partner.
+- Playwright memverifikasi alur Guest quote → Traveler login → checkout → booking → demo payment → confirmation dengan Chrome lokal.
+- Payment approval memakai redirect server-side setelah mutation berhasil sehingga rerender Server Action tidak meninggalkan Traveler di halaman payment.
+- Workspace manual reservation telah direview pada viewport 390 px dan 1440 px tanpa horizontal overflow.
+- Media seed yang belum memiliki bytes lokal memakai fallback JPEG langsung dari Route Handler sehingga `next/image` tetap menerima response gambar yang valid.
 
 ### Traveler operations
 
@@ -185,13 +189,12 @@ Booking dibuat dengan status `PENDING_PAYMENT`. Payment page memakai adapter dem
 
 Partner hanya dapat memilih dan melihat room/booking miliknya. Admin dapat mengakses seluruh scope.
 
+### Reservation expiry scheduler
+
+- Unit `staybali-reservations-cleanup.service` dan timer systemd menjalankan `npm run reservations:cleanup` setiap menit pada VPS.
+- Timer bersifat persistent dan memberi randomized delay pendek; panduan instalasi serta verifikasi tersedia di `docs/DEPLOYMENT.md`.
+
 ## Pekerjaan berikutnya
-
-### Penyelesaian M4
-
-- Jalankan review end-to-end pada browser untuk Guest quote → Traveler login → checkout → booking → demo payment → confirmation.
-- Review UI manual reservation pada mobile dan desktop.
-- Hubungkan `npm run reservations:cleanup` ke scheduler deployment; command idempotent untuk hold dan booking sudah tersedia.
 
 ### M6 Operations
 
@@ -210,6 +213,7 @@ npm run test:integration
 npm run lint
 npx tsc --noEmit
 npm run build
+npm run test:e2e
 ```
 
 Hasil batch partner stay operations, 2 September 2026:
@@ -228,7 +232,15 @@ Hasil batch notification operations, 2 September 2026:
 - Prisma client berhasil digenerate dan schema dengan migration notification outbox valid.
 - 39 unit tests lulus, termasuk HTML escaping template dan bukti transport `sink` tidak membutuhkan SMTP.
 - ESLint, TypeScript, dan production build berhasil; route `/admin/jobs` terdeteksi dinamis.
-- `db:deploy` dan integration test PostgreSQL belum dapat dijalankan karena server lokal `127.0.0.1:5432` tidak aktif. Migration eksplisit sudah tersedia dan perlu diterapkan saat database aktif.
+- Kendala PostgreSQL lokal pada pemeriksaan awal batch ini sudah ditutup oleh verifikasi akhir M4 di bawah.
+
+Hasil penyelesaian M4, 2 September 2026:
+
+- Delapan migration terdeteksi dan database development up-to-date.
+- Prisma generate/validate, 39 unit tests, last-unit concurrency integration test, ESLint, TypeScript, dan production build seluruhnya lulus.
+- Dua browser test Playwright lulus menggunakan Chrome lokal: happy path search-to-confirmation serta responsive manual reservation pada 390 px dan 1440 px.
+- Browser review menemukan dan memperbaiki redirect payment yang tertahan oleh rerender Server Action serta fallback media seed yang sebelumnya menghasilkan response gambar kosong.
+- Scheduler expiry systemd dan runbook deployment sudah tersedia di repository.
 
 ## Catatan penting
 
