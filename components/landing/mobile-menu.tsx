@@ -15,7 +15,7 @@ const browseLinks = [
 
 const aboutLinks = [
   { href: "#why-staybali", label: "Why StayBali" },
-  { href: "#partners", label: "List your property" },
+  { href: "/partner-application", label: "List your property" },
 ];
 
 export function MobileMenu() {

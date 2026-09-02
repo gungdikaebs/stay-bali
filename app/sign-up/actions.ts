@@ -22,7 +22,7 @@ export async function signUp(
   const forwardedFor = requestHeaders.get("x-forwarded-for")?.split(",")[0]?.trim();
   const clientKey = forwardedFor || requestHeaders.get("x-real-ip") || "unknown";
 
-  if (!consumeRegistrationAttempt(clientKey)) {
+  if (!consumeRegistrationAttempt(`traveler:${clientKey}`)) {
     return { message: "Too many sign-up attempts. Please try again in 15 minutes." };
   }
 

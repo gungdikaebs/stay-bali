@@ -23,6 +23,8 @@ Terakhir diperbarui: 2 September 2026.
 - Credentials authentication melalui Auth.js.
 - Traveler dapat membuat akun dari `/sign-up`; input divalidasi Zod, email/telepon dinormalisasi, password di-hash bcrypt, dan user + credential + audit dibuat dalam satu transaksi sebelum auto sign-in.
 - Registrasi publik selalu menetapkan role `TRAVELER` dan status `ACTIVE` di server, membatasi percobaan per client, serta menangani race email unik melalui constraint database.
+- Operator property dapat mengajukan akun dari `/partner-application`; user `PARTNER`, credential, profile `PENDING`, dan audit dibuat atomik, tanpa session Partner sebelum Admin mengaktifkannya.
+- CTA homepage, mobile navigation, dan footer mengarah ke form aplikasi Partner; hasil submit menjelaskan status review dan menyediakan sign-in terpisah untuk Partner yang sudah disetujui.
 - Role `TRAVELER`, `PARTNER`, dan `ADMIN`.
 - Session version untuk revocation.
 - Partner lifecycle dan ownership diperiksa dari database.

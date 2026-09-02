@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-const phoneSchema = z
+export const phoneSchema = z
   .string()
   .trim()
   .max(30, "Phone number is too long.")
@@ -15,26 +15,32 @@ const phoneSchema = z
   )
   .transform((value) => value || undefined);
 
+export const registrationNameSchema = z
+  .string()
+  .trim()
+  .min(2, "Name must be at least 2 characters.")
+  .max(100, "Name must be at most 100 characters.");
+
+export const registrationEmailSchema = z
+  .string()
+  .trim()
+  .toLowerCase()
+  .email("Enter a valid email address.")
+  .max(254, "Email address is too long.");
+
+export const registrationPasswordSchema = z
+  .string()
+  .min(8, "Password must be at least 8 characters.")
+  .max(128, "Password must be at most 128 characters.")
+  .regex(/[A-Za-z]/, "Password must contain at least one letter.")
+  .regex(/\d/, "Password must contain at least one number.");
+
 export const registrationSchema = z
   .object({
-    name: z
-      .string()
-      .trim()
-      .min(2, "Name must be at least 2 characters.")
-      .max(100, "Name must be at most 100 characters."),
-    email: z
-      .string()
-      .trim()
-      .toLowerCase()
-      .email("Enter a valid email address.")
-      .max(254, "Email address is too long."),
+    name: registrationNameSchema,
+    email: registrationEmailSchema,
     phone: phoneSchema,
-    password: z
-      .string()
-      .min(8, "Password must be at least 8 characters.")
-      .max(128, "Password must be at most 128 characters.")
-      .regex(/[A-Za-z]/, "Password must contain at least one letter.")
-      .regex(/\d/, "Password must contain at least one number."),
+    password: registrationPasswordSchema,
     confirmPassword: z.string(),
   })
   .refine((data) => data.password === data.confirmPassword, {

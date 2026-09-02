@@ -14,10 +14,18 @@ StayBali uses Auth.js Credentials with an encrypted JWT cookie. Password hashes 
 8. Each protected page and Server Action rechecks current role, status, session version, Partner status, and ownership in Postgres.
 9. Successful sign-in writes an `AUTH_SIGN_IN` audit entry; sign-out clears the cookie.
 
+## Partner application
+
+1. `/partner-application` collects the operator identity, required phone, business name, and credentials.
+2. The Server Action validates and normalizes input, then creates a `PARTNER` user, bcrypt credential, `PENDING` Partner profile, and `PARTNER_APPLICATION_CREATED` audit entry in one transaction.
+3. A pending Partner is not signed in and cannot access `/partner`; Auth.js accepts Partner credentials only after an Admin changes the profile to `ACTIVE`.
+4. Admin reviews the application through `/admin/partners`. Approval increments the session version and writes the existing partner status audit.
+
 ## Security rules
 
 - Never trust role or ownership supplied by the client.
 - Public registration can only create `TRAVELER` accounts, applies a best-effort per-client rate limit, and handles unique email races at the database constraint.
+- Public Partner applications always create `PENDING` profiles, use a separate per-client rate-limit bucket, and cannot select or bypass their approval status.
 - Always call `requireAdmin()` near protected admin reads and mutations.
 - Increment `users.session_version` to revoke existing sessions.
 - Partner status changes increment `session_version`, run in the same transaction as the audit entry, and require a valid state transition.

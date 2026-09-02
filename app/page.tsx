@@ -352,8 +352,8 @@ export default function Home() {
                 </p>
               </div>
               <div className="flex flex-col items-start gap-3 lg:items-end">
-                <Button asChild className="bg-white text-primary hover:bg-brand-teal-subtle" size="lg"><Link href="/sign-in?callbackUrl=/partner">Open partner workspace<ArrowRight className="size-5" aria-hidden="true" /></Link></Button>
-                <span className="text-xs text-white/60">Secure access for approved partners</span>
+                <Button asChild className="bg-white text-primary hover:bg-brand-teal-subtle" size="lg"><Link href="/partner-application">Apply as a partner<ArrowRight className="size-5" aria-hidden="true" /></Link></Button>
+                <Link className="text-xs text-white/70 underline-offset-4 hover:text-white hover:underline" href="/sign-in?callbackUrl=/partner">Already approved? Sign in</Link>
               </div>
             </div>
           </ScrollReveal>
@@ -372,7 +372,7 @@ export default function Home() {
             </div>
             <div><p className="mb-4 text-xs font-bold tracking-[0.12em] text-muted-foreground uppercase">Explore</p><div className="grid gap-3 text-sm font-semibold"><Link className="hover:text-primary" href="/search?location=all&guests=2">All stays</Link><Link className="hover:text-primary" href="#destinations">Destinations</Link><Link className="hover:text-primary" href="#stays">Published stays</Link></div></div>
             <div><p className="mb-4 text-xs font-bold tracking-[0.12em] text-muted-foreground uppercase">Stay types</p><div className="grid gap-3 text-sm font-semibold"><Link className="hover:text-primary" href="/search?location=all&type=villa&guests=2">Private villas</Link><Link className="hover:text-primary" href="/search?location=all&type=hotel&guests=2">Hotels</Link><Link className="hover:text-primary" href="/search?location=all&type=homestay&guests=2">Homestays</Link></div></div>
-            <div><p className="mb-4 text-xs font-bold tracking-[0.12em] text-muted-foreground uppercase">Account</p><div className="grid gap-3 text-sm font-semibold"><Link className="hover:text-primary" href="/account">My bookings</Link><Link className="hover:text-primary" href="/sign-up">Create account</Link><Link className="hover:text-primary" href="/sign-in">Sign in</Link><Link className="hover:text-primary" href="#partners">For partners</Link></div></div>
+            <div><p className="mb-4 text-xs font-bold tracking-[0.12em] text-muted-foreground uppercase">Account</p><div className="grid gap-3 text-sm font-semibold"><Link className="hover:text-primary" href="/account">My bookings</Link><Link className="hover:text-primary" href="/sign-up">Create account</Link><Link className="hover:text-primary" href="/sign-in">Sign in</Link><Link className="hover:text-primary" href="/partner-application">For partners</Link></div></div>
           </div>
           <div className="mt-10 flex flex-col justify-between gap-3 border-t border-border pt-6 text-xs text-muted-foreground sm:flex-row">
             <span>© 2026 StayBali. All rights reserved.</span>
