@@ -155,6 +155,7 @@ Adapter demo menerima booking reference, amount snapshot, currency `IDR`, dan ou
 ## Security dan operasi
 
 - Aksi sensitif memeriksa session, status user terbaru, role, dan ownership di server.
+- Registrasi Traveler memvalidasi input di Server Action, menetapkan role/status di server, lalu membuat user, credential bcrypt, dan audit dalam satu transaksi; unique email tetap ditegakkan database.
 - HTTPS; secure/HttpOnly/SameSite cookie; CSRF sesuai mekanisme; rate limit auth/payment/upload.
 - Escape user content, parameterized query, safe upload path, security headers, secret via environment.
 - Jangan mengumpulkan nomor kartu/CVV/OTP/rekening/wallet; sanitasi log, audit, dan guest PII.

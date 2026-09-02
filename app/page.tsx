@@ -36,41 +36,41 @@ const areas = [
     slug: "ubud",
     description: "Jungle calm, culture, and slow mornings",
     image: "/images/stay-ubud.jpg",
-    className: "lg:col-span-7 lg:row-span-2 lg:min-h-[580px]",
+    gridClassName: "lg:col-span-7 lg:row-span-2 lg:min-h-[580px]",
   },
   {
     name: "Canggu",
     slug: "canggu",
     description: "Creative energy near Bali's west coast",
     image: "/images/stay-canggu.jpg",
-    className: "lg:col-span-5 lg:min-h-[278px]",
+    gridClassName: "lg:col-span-5 lg:min-h-[278px]",
   },
   {
     name: "Uluwatu",
     slug: "uluwatu",
     description: "Cliff views and memorable sunsets",
     image: "/images/stay-uluwatu.jpg",
-    className: "lg:col-span-5 lg:min-h-[278px]",
+    gridClassName: "lg:col-span-5 lg:min-h-[278px]",
   },
   {
     name: "Seminyak",
     slug: "seminyak",
     description: "Dining, design, and an easy beach rhythm",
     image: "/images/stay-seminyak.jpg",
-    className: "lg:col-span-6 lg:min-h-[320px]",
+    gridClassName: "lg:col-span-6 lg:min-h-[320px]",
   },
   {
     name: "Sanur",
     slug: "sanur",
     description: "Calm shores and relaxed family days",
     image: "/images/stay-sanur.jpg",
-    className: "lg:col-span-6 lg:min-h-[320px]",
+    gridClassName: "lg:col-span-6 lg:min-h-[320px]",
   },
 ];
 
 function AreaCard({ area }: { area: (typeof areas)[number] }) {
   return (
-    <Link className={`group relative block min-h-72 overflow-hidden rounded-2xl bg-foreground ${area.className}`} href={`/search?location=${area.slug}&guests=2`} aria-label={`Explore stays in ${area.name}`}>
+    <Link className="group relative block h-full min-h-72 overflow-hidden rounded-2xl bg-foreground" href={`/search?location=${area.slug}&guests=2`} aria-label={`Explore stays in ${area.name}`}>
       <Image
         fill
         alt={`Accommodation inspiration for ${area.name}, Bali`}
@@ -281,7 +281,7 @@ export default function Home() {
 
           <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-12">
             {areas.map((area, index) => (
-              <ScrollReveal key={area.name} delay={index * 0.08}>
+              <ScrollReveal className={area.gridClassName} key={area.name} delay={index * 0.08}>
                 <AreaCard area={area} />
               </ScrollReveal>
             ))}
@@ -372,7 +372,7 @@ export default function Home() {
             </div>
             <div><p className="mb-4 text-xs font-bold tracking-[0.12em] text-muted-foreground uppercase">Explore</p><div className="grid gap-3 text-sm font-semibold"><Link className="hover:text-primary" href="/search?location=all&guests=2">All stays</Link><Link className="hover:text-primary" href="#destinations">Destinations</Link><Link className="hover:text-primary" href="#stays">Published stays</Link></div></div>
             <div><p className="mb-4 text-xs font-bold tracking-[0.12em] text-muted-foreground uppercase">Stay types</p><div className="grid gap-3 text-sm font-semibold"><Link className="hover:text-primary" href="/search?location=all&type=villa&guests=2">Private villas</Link><Link className="hover:text-primary" href="/search?location=all&type=hotel&guests=2">Hotels</Link><Link className="hover:text-primary" href="/search?location=all&type=homestay&guests=2">Homestays</Link></div></div>
-            <div><p className="mb-4 text-xs font-bold tracking-[0.12em] text-muted-foreground uppercase">Account</p><div className="grid gap-3 text-sm font-semibold"><Link className="hover:text-primary" href="/account">My bookings</Link><Link className="hover:text-primary" href="/sign-in">Sign in</Link><Link className="hover:text-primary" href="#partners">For partners</Link></div></div>
+            <div><p className="mb-4 text-xs font-bold tracking-[0.12em] text-muted-foreground uppercase">Account</p><div className="grid gap-3 text-sm font-semibold"><Link className="hover:text-primary" href="/account">My bookings</Link><Link className="hover:text-primary" href="/sign-up">Create account</Link><Link className="hover:text-primary" href="/sign-in">Sign in</Link><Link className="hover:text-primary" href="#partners">For partners</Link></div></div>
           </div>
           <div className="mt-10 flex flex-col justify-between gap-3 border-t border-border pt-6 text-xs text-muted-foreground sm:flex-row">
             <span>© 2026 StayBali. All rights reserved.</span>

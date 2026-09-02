@@ -50,7 +50,8 @@ export default async function SignInPage({ searchParams }: { searchParams: Promi
           <h2 className="font-display mt-5 text-4xl font-extrabold tracking-[-0.05em]">Welcome back.</h2>
           <p className="mt-3 leading-7 text-muted-foreground">Use your credentials to access the workspace assigned to your account.</p>
           <SignInForm callbackUrl={callbackUrl} />
-          <p className="mt-7 text-center text-sm text-muted-foreground">Looking for a stay? <Link className="font-bold text-primary hover:underline" href="/">Return to StayBali</Link></p>
+          <p className="mt-7 text-center text-sm text-muted-foreground">New to StayBali? <Link className="font-bold text-primary hover:underline" href={`/sign-up?callbackUrl=${encodeURIComponent(callbackUrl)}`}>Create a traveler account</Link></p>
+          <p className="mt-3 text-center text-sm text-muted-foreground">Looking for a stay? <Link className="font-bold text-primary hover:underline" href="/">Return to StayBali</Link></p>
         </div>
       </section>
     </main>

@@ -21,6 +21,8 @@ Terakhir diperbarui: 2 September 2026.
 ### Identity dan authorization
 
 - Credentials authentication melalui Auth.js.
+- Traveler dapat membuat akun dari `/sign-up`; input divalidasi Zod, email/telepon dinormalisasi, password di-hash bcrypt, dan user + credential + audit dibuat dalam satu transaksi sebelum auto sign-in.
+- Registrasi publik selalu menetapkan role `TRAVELER` dan status `ACTIVE` di server, membatasi percobaan per client, serta menangani race email unik melalui constraint database.
 - Role `TRAVELER`, `PARTNER`, dan `ADMIN`.
 - Session version untuk revocation.
 - Partner lifecycle dan ownership diperiksa dari database.
@@ -50,6 +52,7 @@ Terakhir diperbarui: 2 September 2026.
 
 - Fondasi UI memakai source-owned shadcn primitives di `components/ui/` dengan token Tropical Trust; search, authentication, property card, quote, checkout, demo payment, manual reservation, dan supply forms sudah mengadopsi primitive bersama.
 - Homepage publik memiliki hierarchy editorial baru: focused hero search, trust strip, published-stay discovery controls, lima-area destination mosaic, tiga langkah booking, functional Partner CTA, dan footer navigasi yang lebih lengkap tanpa fake trust atau promo.
+- Destination mosaic menerapkan span dan tinggi pada direct grid items sehingga komposisi 7/5 kolom tampil konsisten pada desktop.
 - Homepage memiliki navbar publik satu tingkat, filter tipe stay, tautan traveler/partner, CTA pencarian, dan mobile navigation drawer.
 - Checkout memakai Server Action untuk membuat/reuse hold dan membuat booking.
 - Checkout mengarahkan booking yang berhasil ke `/payment?booking=<id>`.

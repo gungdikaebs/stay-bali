@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "node --conditions=react-server --import tsx --test lib/auth/policies.test.ts lib/supply/rules.test.ts lib/media/rules.test.ts lib/inventory/rules.test.ts lib/search-query.test.ts lib/hold/rules.test.ts lib/booking/rules.test.ts lib/booking/payment-window.test.ts lib/payment/demo-adapter.test.ts",
+    "test": "node --conditions=react-server --import tsx --test lib/auth/policies.test.ts lib/auth/registration-schema.test.ts lib/supply/rules.test.ts lib/media/rules.test.ts lib/inventory/rules.test.ts lib/search-query.test.ts lib/hold/rules.test.ts lib/booking/rules.test.ts lib/booking/payment-window.test.ts lib/payment/demo-adapter.test.ts",
     "test:integration": "tsx --tsconfig tsconfig.integration.json --test tests/inventory-concurrency.test.ts",
     "media:cleanup": "tsx scripts/cleanup-orphan-media.ts",
     "reservations:cleanup": "node --conditions=react-server --import tsx scripts/cleanup-expired-reservations.ts",

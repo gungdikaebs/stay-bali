@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, m } from "framer-motion";
-import { ArrowRight, CalendarCheck2, LogIn, Menu, X } from "lucide-react";
+import { ArrowRight, CalendarCheck2, LogIn, Menu, UserPlus, X } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
@@ -137,6 +137,14 @@ export function MobileMenu() {
                 >
                   Find a stay
                   <ArrowRight className="size-5" aria-hidden="true" />
+                </Link>
+                <Link
+                  className="flex min-h-12 items-center justify-center gap-2 rounded-xl border border-primary bg-white px-5 font-bold text-primary transition hover:bg-brand-teal-subtle"
+                  href="/sign-up"
+                  onClick={() => setOpen(false)}
+                >
+                  <UserPlus className="size-4" aria-hidden="true" />
+                  Create account
                 </Link>
                 <Link
                   className="flex min-h-12 items-center justify-center gap-2 rounded-xl border border-border bg-white px-5 font-bold text-foreground transition hover:border-primary hover:text-primary"
