@@ -27,7 +27,7 @@ export default async function PartnerApplicationPage() {
   return (
     <main className="grid min-h-screen bg-background lg:grid-cols-[minmax(0,0.85fr)_minmax(600px,1fr)]">
       <section className="relative hidden overflow-hidden bg-foreground lg:block">
-        <Image fill priority alt="A professionally managed Bali villa" className="object-cover" sizes="48vw" src="/images/stay-seminyak.jpg" />
+        <Image fill preload alt="A professionally managed Bali villa" className="object-cover" sizes="48vw" src="/images/stay-seminyak.jpg" />
         <div className="absolute inset-0 bg-gradient-to-t from-foreground/95 via-foreground/35 to-foreground/20" />
         <div className="absolute inset-x-0 bottom-0 p-12 text-white xl:p-16">
           <p className="text-sm font-bold uppercase tracking-[0.12em] text-[#8ce0d4]">StayBali for property partners</p>

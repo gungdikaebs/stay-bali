@@ -98,7 +98,7 @@ export default async function StayPage({ params, searchParams }: StayPageProps) 
 
         <section className="relative grid h-[360px] grid-cols-1 gap-1 overflow-hidden rounded-3xl bg-secondary sm:h-[520px] md:grid-cols-[2fr_1fr]" aria-label="Property gallery">
           <div className="group relative overflow-hidden">
-            <Image fill priority alt={`${stay.name} in ${stay.area}`} className="object-cover transition duration-700 group-hover:scale-[1.02]" sizes="(max-width: 768px) 100vw, 67vw" src={stay.images[0]} />
+            <Image fill preload alt={`${stay.name} in ${stay.area}`} className="object-cover transition duration-700 group-hover:scale-[1.02]" sizes="(max-width: 768px) 100vw, 67vw" src={stay.images[0]} />
           </div>
           <div className="hidden grid-rows-2 gap-1 md:grid">
             {(stay.images.slice(1, 3).length ? stay.images.slice(1, 3) : [stay.images[0], stay.images[0]]).map((image, index) => <div className="relative overflow-hidden" key={`${image}-${index}`}><Image fill alt={`${stay.name} gallery view ${index + 2}`} className="object-cover transition duration-700 hover:scale-[1.03]" sizes="33vw" src={image} /></div>)}

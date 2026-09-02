@@ -176,7 +176,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
         {stays.length > 0 ? (
           <>
             <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
-              {stays.map((stay) => (
+              {stays.map((stay, index) => (
               <PropertyCard
                 key={stay.slug}
                 area={stay.area}
@@ -186,6 +186,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
                 image={stay.image}
                 name={stay.name}
                 price={formatIdr(stay.pricePerNight)}
+                preload={index === 0}
                 type={stay.type}
               />
               ))}

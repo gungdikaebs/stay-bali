@@ -1,28 +1,16 @@
 import Link from "next/link";
-import { CalendarCheck2, PlusCircle, ReceiptText } from "lucide-react";
+import { AlertTriangle, CalendarCheck2, DoorOpen, PlusCircle, ReceiptText } from "lucide-react";
 import { ManualBookingForm } from "@/components/booking/manual-booking-form";
 import { BookingOperationForm } from "@/components/booking/booking-operation-form";
+import { EmptyState } from "@/components/dashboard/empty-state";
+import { MetricCard } from "@/components/dashboard/metric-card";
+import { PageHeader } from "@/components/dashboard/page-header";
+import { StatusBadge } from "@/components/dashboard/status-badge";
+import { Button } from "@/components/ui/button";
 import { formatIdr, formatStayDate } from "@/lib/demo-stays";
 import { getBookingOperationsWorkspace } from "@/lib/booking/queries";
 import { generateIdempotencyKey } from "@/lib/idempotency";
 import { canIssueVoucher } from "@/lib/booking/rules";
-
-const statusStyle: Record<string, string> = {
-  PENDING_PAYMENT: "bg-warning-subtle text-warning",
-  CONFIRMED: "bg-success-subtle text-success",
-  CHECKED_IN: "bg-brand-teal-subtle text-primary",
-  COMPLETED: "bg-secondary text-foreground",
-  PAYMENT_FAILED: "bg-red-50 text-red-700",
-  EXPIRED: "bg-secondary text-muted-foreground",
-  CANCELLATION_REQUESTED: "bg-warning-subtle text-warning",
-  CANCELLED: "bg-red-50 text-red-700",
-  REFUND_PENDING: "bg-warning-subtle text-warning",
-  REFUNDED: "bg-secondary text-muted-foreground",
-};
-
-function statusLabel(value: string) {
-  return value.toLowerCase().replaceAll("_", " ").replace(/^./, (letter) => letter.toUpperCase());
-}
 
 export async function ReservationsWorkspace({
   eyebrow,
@@ -30,17 +18,21 @@ export async function ReservationsWorkspace({
   eyebrow: string;
 }) {
   const workspace = await getBookingOperationsWorkspace();
+  const activeReservations = workspace.bookings.filter((booking) => booking.status === "CONFIRMED" || booking.status === "CHECKED_IN").length;
+  const needsAttention = workspace.bookings.filter((booking) => ["PENDING_PAYMENT", "PAYMENT_FAILED", "CANCELLATION_REQUESTED"].includes(booking.status)).length;
 
   return (
-    <div className="mx-auto max-w-7xl">
-      <p className="text-sm font-bold uppercase tracking-[0.12em] text-primary">{eyebrow}</p>
-      <h1 className="font-display mt-2 text-4xl font-extrabold tracking-[-0.05em]">Reservations</h1>
-      <p className="mt-3 max-w-3xl leading-7 text-muted-foreground">
-        Create verified manual reservations and review recent booking activity. Availability and prices are always recalculated on the server.
-      </p>
+    <div className="mx-auto max-w-[1500px]">
+      <PageHeader description="Create verified manual reservations, prepare arrivals, and review booking activity. Availability and prices are recalculated on the server." eyebrow={eyebrow} title="Reservations" />
 
-      <div className="mt-8 grid gap-6 xl:grid-cols-[minmax(0,420px)_minmax(0,1fr)] xl:items-start">
-        <section className="rounded-2xl border border-border bg-white p-5 shadow-sm sm:p-6">
+      <section className="mt-8 grid gap-4 sm:grid-cols-3" aria-label="Reservation summary">
+        <MetricCard accent="neutral" helper="Latest records in your authorized scope" icon={CalendarCheck2} label="Recent reservations" value={workspace.bookings.length} />
+        <MetricCard accent="green" helper="Confirmed or currently checked in" icon={DoorOpen} label="Active stays" value={activeReservations} />
+        <MetricCard accent={needsAttention ? "amber" : "teal"} helper="Payment or cancellation follow-up" icon={AlertTriangle} label="Needs attention" value={needsAttention} />
+      </section>
+
+      <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,420px)_minmax(0,1fr)] xl:items-start">
+        <section className="rounded-2xl border border-border bg-white p-5 shadow-sm sm:p-6 xl:sticky xl:top-28">
           <div className="mb-6 flex items-start gap-3">
             <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-brand-teal-subtle text-primary">
               <PlusCircle className="size-5" aria-hidden="true" />
@@ -79,9 +71,7 @@ export async function ReservationsWorkspace({
                       <h3 className="mt-1 font-bold">{booking.guestName}</h3>
                       <p className="mt-1 text-sm text-muted-foreground">{booking.guestEmail}</p>
                     </div>
-                    <span className={`rounded-full px-3 py-1 text-xs font-bold ${statusStyle[booking.status] ?? "bg-secondary text-foreground"}`}>
-                      {statusLabel(booking.status)}
-                    </span>
+                    <StatusBadge status={booking.status} />
                   </div>
                   <div className="mt-4 grid gap-3 rounded-xl bg-secondary/70 p-4 text-sm sm:grid-cols-2">
                     <p><span className="block text-xs text-muted-foreground">Stay</span><strong>{booking.propertyName}</strong><br />{booking.roomName}</p>
@@ -94,14 +84,12 @@ export async function ReservationsWorkspace({
                   ) : booking.status === "CHECKED_IN" ? (
                     <BookingOperationForm bookingId={booking.id} nextStatus="COMPLETED" />
                   ) : null}
-                  {workspace.canViewAllVouchers && canIssueVoucher(booking.status) ? <Link className="mt-4 inline-flex min-h-10 items-center gap-2 rounded-xl border border-border px-4 text-sm font-bold hover:bg-secondary" href={`/bookings/${encodeURIComponent(booking.id)}/voucher`}><ReceiptText className="size-4 text-primary" />View voucher</Link> : null}
+                  {workspace.canViewAllVouchers && canIssueVoucher(booking.status) ? <Button asChild className="mt-4" size="sm" variant="outline"><Link href={`/bookings/${encodeURIComponent(booking.id)}/voucher`}><ReceiptText className="size-4 text-primary" aria-hidden="true" />View voucher</Link></Button> : null}
                 </article>
               ))}
             </div>
           ) : (
-            <div className="px-6 py-14 text-center text-sm text-muted-foreground">
-              No reservations have been created in this workspace yet.
-            </div>
+            <EmptyState description="Online and verified manual bookings will appear here." icon={CalendarCheck2} title="No reservations yet" />
           )}
         </section>
       </div>

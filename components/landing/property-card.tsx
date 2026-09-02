@@ -20,7 +20,7 @@ type PropertyCardProps = {
   image: string;
   highlight: string;
   href: string;
-  priority?: boolean;
+  preload?: boolean;
 };
 
 export function PropertyCard({
@@ -32,7 +32,7 @@ export function PropertyCard({
   image,
   highlight,
   href,
-  priority = false,
+  preload = false,
 }: PropertyCardProps) {
   return (
     <Link className="group block" href={href} aria-label={`View ${name}`}>
@@ -41,7 +41,7 @@ export function PropertyCard({
       <div className="relative aspect-[4/3] overflow-hidden bg-secondary">
         <Image
           fill
-          priority={priority}
+          preload={preload}
           alt={`${name} accommodation in ${area}`}
           className="object-cover transition duration-500 group-hover:scale-[1.035]"
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"

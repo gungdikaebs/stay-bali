@@ -143,7 +143,6 @@ async function PublishedStayGrid() {
         image={stay.image}
         name={stay.name}
         price={formatIdr(stay.pricePerNight)}
-        priority={index < 4}
         type={stay.type}
       />
     </ScrollReveal>
@@ -171,7 +170,7 @@ export default function Home() {
         <HeroMedia>
           <Image
             fill
-            priority
+            preload
             alt="Private Bali villa pool overlooking a tropical sunset"
             className="object-cover object-[62%_center]"
             sizes="100vw"

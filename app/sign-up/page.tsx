@@ -24,7 +24,7 @@ export default async function SignUpPage({ searchParams }: { searchParams: Promi
   return (
     <main className="grid min-h-screen bg-background lg:grid-cols-[minmax(0,1fr)_minmax(540px,0.9fr)]">
       <section className="relative hidden overflow-hidden bg-foreground lg:block">
-        <Image fill priority alt="A tropical Bali stay surrounded by greenery" className="object-cover" sizes="55vw" src="/images/stay-sanur.jpg" />
+        <Image fill preload alt="A tropical Bali stay surrounded by greenery" className="object-cover" sizes="55vw" src="/images/stay-sanur.jpg" />
         <div className="absolute inset-0 bg-gradient-to-t from-foreground/90 via-foreground/20 to-foreground/25" />
         <div className="absolute inset-x-0 bottom-0 p-12 text-white xl:p-16">
           <p className="text-sm font-bold uppercase tracking-[0.12em] text-[#8ce0d4]">Your Bali stays, in one place</p>

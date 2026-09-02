@@ -68,6 +68,17 @@ Terakhir diperbarui: 2 September 2026.
 - Payment approval memakai redirect server-side setelah mutation berhasil sehingga rerender Server Action tidak meninggalkan Traveler di halaman payment.
 - Workspace manual reservation telah direview pada viewport 390 px dan 1440 px tanpa horizontal overflow.
 - Media seed yang belum memiliki bytes lokal memakai fallback JPEG langsung dari Route Handler sehingga `next/image` tetap menerima response gambar yang valid.
+- Image kritis above-the-fold memakai API `preload` Next.js 16, menggantikan properti `priority` yang sudah deprecated.
+
+### Dashboard experience
+
+- Admin, Partner, dan Traveler memakai workspace shell yang sama: sidebar desktop mulai 1280 px, navigation drawer untuk tablet/mobile, active route, identitas akun, akses public site, dan sign-out yang konsisten.
+- Seluruh dashboard memiliki shared page header, metric card, human-readable status badge, serta loading, error, dan empty state yang aksesibel.
+- Admin overview menampilkan marketplace metrics, booked value, review queues, reservation activity, payment/notification attention, dan audit activity nyata dari database.
+- Partner overview menampilkan owned supply, active reservations, booked value, recent guest activity, supply health, dan workflow links yang seluruhnya owner-scoped.
+- Traveler account menjadi dashboard trip lengkap dengan action-needed summary, next-trip highlight, voucher/payment actions, dan riwayat booking responsif.
+- Halaman Partner properties serta Admin partners, properties, bookings, cancellations, dan notification jobs memakai hierarchy dan pola card/form yang konsisten.
+- Browser gate memeriksa semua route workspace utama hingga viewport minimum 360 px tanpa horizontal overflow; navigation drawer dapat dibuka, ditutup, dan ditutup dengan tombol Escape.
 
 ### Traveler operations
 
@@ -241,6 +252,14 @@ Hasil penyelesaian M4, 2 September 2026:
 - Dua browser test Playwright lulus menggunakan Chrome lokal: happy path search-to-confirmation serta responsive manual reservation pada 390 px dan 1440 px.
 - Browser review menemukan dan memperbaiki redirect payment yang tertahan oleh rerender Server Action serta fallback media seed yang sebelumnya menghasilkan response gambar kosong.
 - Scheduler expiry systemd dan runbook deployment sudah tersedia di repository.
+
+Hasil batch dashboard experience, 2 September 2026:
+
+- 39 unit tests, ESLint, TypeScript, dan production build berhasil.
+- Lima Playwright E2E tests lulus: tiga responsive workspace review untuk Admin, Partner, dan Traveler serta dua booking tests M4.
+- Screenshot desktop 1440 px dan mobile 390 px direview; seluruh workspace route tambahan juga lolos overflow gate pada 360 px.
+- Type graph build dan E2E dipisahkan melalui `tsconfig.json` dan `tsconfig.e2e.json` agar generated route types tidak saling mencemari.
+- Perbaikan sidebar lanjutan menonaktifkan Next.js development indicator yang menimpa account card, menambahkan scroll aman pada layar pendek, dan lulus tiga targeted browser tests pada desktop, tablet 1024 px, serta mobile.
 
 ## Catatan penting
 

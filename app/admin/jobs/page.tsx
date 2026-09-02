@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { AlertCircle, CheckCircle2, Clock3, MailWarning } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { EmptyState } from "@/components/dashboard/empty-state";
+import { MetricCard } from "@/components/dashboard/metric-card";
+import { PageHeader } from "@/components/dashboard/page-header";
+import { StatusBadge } from "@/components/dashboard/status-badge";
 import { requireAdmin } from "@/lib/auth/authorization";
 import { prisma } from "@/lib/prisma";
 
@@ -50,30 +53,18 @@ export default async function NotificationJobsPage() {
     }),
   ]);
 
-  const metrics = [
-    { label: "Pending outbox", value: pendingOutbox, icon: Clock3, accent: "bg-warning-subtle text-warning" },
-    { label: "Dispatch failures", value: failedOutbox, icon: AlertCircle, accent: "bg-destructive-subtle text-destructive" },
-    { label: "Delivery failures", value: failedDeliveries, icon: MailWarning, accent: "bg-destructive-subtle text-destructive" },
-    { label: "Processed in 24 hours", value: sentLastDay, icon: CheckCircle2, accent: "bg-success-subtle text-success" },
-  ];
-
   return (
-    <div className="mx-auto max-w-7xl">
-      <p className="text-sm font-bold uppercase tracking-[0.12em] text-primary">Operations</p>
-      <h1 className="font-display mt-2 text-4xl font-extrabold tracking-[-0.05em] sm:text-5xl">Notification jobs</h1>
-      <p className="mt-3 max-w-3xl leading-7 text-muted-foreground">Monitor transactional email dispatch and delivery. Jobs retry automatically with exponential backoff up to five attempts.</p>
+    <div className="mx-auto max-w-[1500px]">
+      <PageHeader description="Monitor transactional email dispatch and delivery. Jobs retry automatically with exponential backoff up to five attempts." eyebrow="Operations" title="Notification jobs" />
       <div className={`mt-5 rounded-xl border px-4 py-3 text-sm ${isSinkTransport ? "border-info/20 bg-info-subtle text-info" : "border-success/20 bg-success-subtle text-success"}`}>
         <strong>{isSinkTransport ? "Sink transport:" : "SMTP transport:"}</strong> {isSinkTransport ? "messages are processed without external delivery." : "messages are delivered through the configured SMTP provider."}
       </div>
 
       <section className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label="Notification metrics">
-        {metrics.map(({ label, value, icon: Icon, accent }) => (
-          <article className="rounded-2xl border border-border bg-white p-5 shadow-sm" key={label}>
-            <span className={`flex size-10 items-center justify-center rounded-xl ${accent}`}><Icon className="size-5" aria-hidden="true" /></span>
-            <p className="font-display mt-5 text-4xl font-extrabold tracking-[-0.04em]">{value}</p>
-            <p className="mt-1 text-sm font-semibold text-muted-foreground">{label}</p>
-          </article>
-        ))}
+        <MetricCard accent={pendingOutbox ? "amber" : "neutral"} helper="Waiting to enter the delivery queue" icon={Clock3} label="Pending outbox" value={pendingOutbox} />
+        <MetricCard accent={failedOutbox ? "coral" : "neutral"} helper="Could not be dispatched to Redis" icon={AlertCircle} label="Dispatch failures" value={failedOutbox} />
+        <MetricCard accent={failedDeliveries ? "coral" : "neutral"} helper="Retries may require investigation" icon={MailWarning} label="Delivery failures" value={failedDeliveries} />
+        <MetricCard accent="green" helper="Successfully handled since yesterday" icon={CheckCircle2} label="Processed in 24 hours" value={sentLastDay} />
       </section>
 
       <section className="mt-6 overflow-hidden rounded-2xl border border-border bg-white shadow-sm">
@@ -82,18 +73,14 @@ export default async function NotificationJobsPage() {
           <p className="mt-1 text-sm text-muted-foreground">Recipient addresses are masked. Inspect worker logs using the job ID for deeper diagnostics.</p>
         </div>
         {recentFailures.length === 0 ? (
-          <div className="px-5 py-12 text-center sm:px-6">
-            <CheckCircle2 className="mx-auto size-9 text-success" aria-hidden="true" />
-            <p className="mt-3 font-bold">No failed email deliveries</p>
-            <p className="mt-1 text-sm text-muted-foreground">New failures will appear here without exposing message content.</p>
-          </div>
+          <EmptyState description="New failures will appear here without exposing message content." icon={CheckCircle2} title="No failed email deliveries" />
         ) : (
           <div className="divide-y divide-border">
             {recentFailures.map((delivery) => (
               <article className="grid gap-3 px-5 py-5 sm:grid-cols-[minmax(0,1fr)_auto] sm:px-6" key={delivery.id}>
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
-                    <Badge variant="destructive">Failed</Badge>
+                    <StatusBadge status="FAILED" />
                     <p className="font-bold">{delivery.template.replaceAll("_", " ")}</p>
                   </div>
                   <p className="mt-2 text-sm text-muted-foreground">{maskEmail(delivery.recipient)} · Booking {delivery.outboxEvent.aggregateId}</p>

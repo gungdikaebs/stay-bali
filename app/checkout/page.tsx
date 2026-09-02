@@ -121,7 +121,7 @@ export default async function CheckoutPage({ searchParams }: CheckoutPageProps) 
 
           <aside className="overflow-hidden rounded-3xl border border-border bg-white shadow-card lg:sticky lg:top-6">
             <div className="relative aspect-[16/9] bg-secondary">
-              <Image fill priority alt={stay.name} className="object-cover" sizes="400px" src={stay.image} />
+              <Image fill preload alt={stay.name} className="object-cover" sizes="400px" src={stay.image} />
             </div>
             <div className="p-6">
               <p className="text-xs font-bold uppercase tracking-[0.1em] text-primary">Your stay</p>

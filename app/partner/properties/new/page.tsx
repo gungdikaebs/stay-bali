@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { PageHeader } from "@/components/dashboard/page-header";
 import { PropertyForm } from "@/components/partner/supply-forms";
 import { listSupplyFacilities } from "@/lib/supply/properties";
 
@@ -10,11 +11,9 @@ export default async function NewPropertyPage() {
   const facilities = await listSupplyFacilities();
   return (
     <div className="mx-auto max-w-5xl">
-      <Link className="inline-flex items-center gap-2 text-sm font-bold text-primary hover:underline" href="/partner/properties"><ArrowLeft className="size-4" />Back to properties</Link>
-      <p className="mt-8 text-sm font-bold uppercase tracking-[0.12em] text-primary">New supply</p>
-      <h1 className="font-display mt-2 text-4xl font-extrabold tracking-[-0.05em]">Create a draft property</h1>
-      <p className="mt-3 text-muted-foreground">Ownership is assigned from your authenticated Partner profile.</p>
-      <section className="mt-8 rounded-3xl border border-border bg-white p-5 sm:p-8"><PropertyForm facilities={facilities} /></section>
+      <Link className="inline-flex min-h-11 items-center gap-2 rounded-xl text-sm font-bold text-primary outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring" href="/partner/properties"><ArrowLeft className="size-4" aria-hidden="true" />Back to properties</Link>
+      <PageHeader className="mt-6" description="Start with accurate guest-facing information. Ownership is assigned securely from your authenticated Partner profile." eyebrow="New supply" title="Create a draft property" />
+      <section className="mt-8 rounded-3xl border border-border bg-white p-5 shadow-sm sm:p-8"><PropertyForm facilities={facilities} /></section>
     </div>
   );
 }
