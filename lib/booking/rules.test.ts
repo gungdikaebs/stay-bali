@@ -1,10 +1,27 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
+  canIssueVoucher,
   canActorTransitionBooking,
   generateBookingCode,
+  isEligibleForFullRefund,
   isBookingStatusTransitionAllowed,
 } from "./rules";
+
+test("isEligibleForFullRefund uses the three-day Bali-date boundary", () => {
+  assert.equal(isEligibleForFullRefund("2026-09-05", "2026-09-02"), true);
+  assert.equal(isEligibleForFullRefund("2026-09-04", "2026-09-02"), false);
+  assert.equal(isEligibleForFullRefund(new Date("2026-09-05T00:00:00.000Z"), "2026-09-02"), true);
+});
+
+test("canIssueVoucher limits vouchers to valid reservations", () => {
+  assert.equal(canIssueVoucher("CONFIRMED"), true);
+  assert.equal(canIssueVoucher("CANCELLATION_REQUESTED"), true);
+  assert.equal(canIssueVoucher("COMPLETED"), true);
+  assert.equal(canIssueVoucher("PENDING_PAYMENT"), false);
+  assert.equal(canIssueVoucher("CANCELLED"), false);
+  assert.equal(canIssueVoucher("REFUNDED"), false);
+});
 
 test("isBookingStatusTransitionAllowed validates state machine rules", () => {
   // Valid transitions

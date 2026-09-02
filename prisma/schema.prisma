@@ -64,27 +64,36 @@ enum PaymentAttemptStatus {
   FAILED
 }
 
+enum CancellationRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 model User {
-  id                   String                 @id @default(cuid()) @db.VarChar(30)
-  email                String                 @unique @db.VarChar(254)
-  name                 String                 @db.VarChar(100)
-  phone                String?                @db.VarChar(20)
-  role                 UserRole               @default(TRAVELER)
-  status               UserStatus             @default(ACTIVE)
-  sessionVersion       Int                    @default(1) @map("session_version")
-  createdAt            DateTime               @default(now()) @map("created_at") @db.Timestamp(3)
-  updatedAt            DateTime               @updatedAt @map("updated_at") @db.Timestamp(3)
-  credential           AccountCredential?
-  partnerProfile       PartnerProfile?
-  uploadedMedia        MediaAsset[]           @relation("MediaUploader")
-  propertyReviews      PropertyReview[]       @relation("PropertyReviewer")
-  auditLogs            AuditLog[]             @relation("AuditActor")
-  quotes               Quote[]
-  holds                Hold[]
-  bookings             Booking[]
-  paymentAttempts      PaymentAttempt[]
-  bookingStatusHistory BookingStatusHistory[] @relation("StatusActor")
-  idempotencyRecords   IdempotencyRecord[]    @relation("IdempotencyActor")
+  id                    String                 @id @default(cuid()) @db.VarChar(30)
+  email                 String                 @unique @db.VarChar(254)
+  name                  String                 @db.VarChar(100)
+  phone                 String?                @db.VarChar(20)
+  role                  UserRole               @default(TRAVELER)
+  status                UserStatus             @default(ACTIVE)
+  sessionVersion        Int                    @default(1) @map("session_version")
+  createdAt             DateTime               @default(now()) @map("created_at") @db.Timestamp(3)
+  updatedAt             DateTime               @updatedAt @map("updated_at") @db.Timestamp(3)
+  credential            AccountCredential?
+  partnerProfile        PartnerProfile?
+  uploadedMedia         MediaAsset[]           @relation("MediaUploader")
+  propertyReviews       PropertyReview[]       @relation("PropertyReviewer")
+  auditLogs             AuditLog[]             @relation("AuditActor")
+  quotes                Quote[]
+  holds                 Hold[]
+  bookings              Booking[]
+  paymentAttempts       PaymentAttempt[]
+  cancellationRequests  CancellationRequest[]  @relation("CancellationRequester")
+  resolvedCancellations CancellationRequest[]  @relation("CancellationResolver")
+  processedRefunds      RefundRecord[]         @relation("RefundProcessor")
+  bookingStatusHistory  BookingStatusHistory[] @relation("StatusActor")
+  idempotencyRecords    IdempotencyRecord[]    @relation("IdempotencyActor")
 
   @@index([role, status])
   @@map("users")
@@ -359,38 +368,81 @@ model HoldNight {
 }
 
 model Booking {
-  id                 String                 @id @default(cuid()) @db.VarChar(30)
-  bookingCode        String                 @unique @map("booking_code") @db.VarChar(20)
-  roomTypeId         String                 @map("room_type_id") @db.VarChar(30)
-  userId             String?                @map("user_id") @db.VarChar(30)
-  checkinDate        DateTime               @map("checkin_date") @db.Date
-  checkoutDate       DateTime               @map("checkout_date") @db.Date
-  adultCount         Int                    @map("adult_count") @db.SmallInt
-  childCount         Int                    @map("child_count") @db.SmallInt
-  propertyName       String                 @map("property_name") @db.VarChar(150)
-  roomName           String                 @map("room_name") @db.VarChar(150)
-  guestName          String                 @map("guest_name") @db.VarChar(100)
-  guestEmail         String                 @map("guest_email") @db.VarChar(254)
-  guestPhone         String                 @map("guest_phone") @db.VarChar(20)
-  cancellationPolicy String                 @map("cancellation_policy") @db.Text
-  subtotal           Int                    @db.Integer
-  serviceFee         Int                    @map("service_fee") @db.Integer
-  grandTotal         Int                    @map("grand_total") @db.Integer
-  status             BookingStatus          @default(PENDING_PAYMENT)
-  paymentExpiresAt   DateTime?              @map("payment_expires_at") @db.Timestamp(3)
-  specialRequest     String?                @map("special_request") @db.Text
-  createdAt          DateTime               @default(now()) @map("created_at") @db.Timestamp(3)
-  roomType           RoomType               @relation(fields: [roomTypeId], references: [id], onDelete: Restrict)
-  user               User?                  @relation(fields: [userId], references: [id], onDelete: Restrict)
-  nights             BookingNight[]
-  statusHistory      BookingStatusHistory[]
-  paymentAttempts    PaymentAttempt[]
+  id                   String                 @id @default(cuid()) @db.VarChar(30)
+  bookingCode          String                 @unique @map("booking_code") @db.VarChar(20)
+  roomTypeId           String                 @map("room_type_id") @db.VarChar(30)
+  userId               String?                @map("user_id") @db.VarChar(30)
+  checkinDate          DateTime               @map("checkin_date") @db.Date
+  checkoutDate         DateTime               @map("checkout_date") @db.Date
+  adultCount           Int                    @map("adult_count") @db.SmallInt
+  childCount           Int                    @map("child_count") @db.SmallInt
+  propertyName         String                 @map("property_name") @db.VarChar(150)
+  roomName             String                 @map("room_name") @db.VarChar(150)
+  guestName            String                 @map("guest_name") @db.VarChar(100)
+  guestEmail           String                 @map("guest_email") @db.VarChar(254)
+  guestPhone           String                 @map("guest_phone") @db.VarChar(20)
+  cancellationPolicy   String                 @map("cancellation_policy") @db.Text
+  subtotal             Int                    @db.Integer
+  serviceFee           Int                    @map("service_fee") @db.Integer
+  grandTotal           Int                    @map("grand_total") @db.Integer
+  status               BookingStatus          @default(PENDING_PAYMENT)
+  paymentExpiresAt     DateTime?              @map("payment_expires_at") @db.Timestamp(3)
+  specialRequest       String?                @map("special_request") @db.Text
+  createdAt            DateTime               @default(now()) @map("created_at") @db.Timestamp(3)
+  roomType             RoomType               @relation(fields: [roomTypeId], references: [id], onDelete: Restrict)
+  user                 User?                  @relation(fields: [userId], references: [id], onDelete: Restrict)
+  nights               BookingNight[]
+  statusHistory        BookingStatusHistory[]
+  paymentAttempts      PaymentAttempt[]
+  cancellationRequests CancellationRequest[]
+  refunds              RefundRecord[]
 
   @@index([userId, status, createdAt])
   @@index([status, createdAt])
   @@index([status, paymentExpiresAt])
   @@index([roomTypeId, checkinDate, checkoutDate])
   @@map("bookings")
+}
+
+model CancellationRequest {
+  id                    String                    @id @default(cuid()) @db.VarChar(30)
+  bookingId             String                    @map("booking_id") @db.VarChar(30)
+  requesterId           String                    @map("requester_id") @db.VarChar(30)
+  reason                String                    @db.Text
+  eligibleForFullRefund Boolean                   @map("eligible_for_full_refund")
+  requestedRefundAmount Int                       @map("requested_refund_amount") @db.Integer
+  status                CancellationRequestStatus @default(PENDING)
+  resolutionNote        String?                   @map("resolution_note") @db.Text
+  resolvedById          String?                   @map("resolved_by_id") @db.VarChar(30)
+  resolvedAt            DateTime?                 @map("resolved_at") @db.Timestamp(3)
+  createdAt             DateTime                  @default(now()) @map("created_at") @db.Timestamp(3)
+  booking               Booking                   @relation(fields: [bookingId], references: [id], onDelete: Restrict)
+  requester             User                      @relation("CancellationRequester", fields: [requesterId], references: [id], onDelete: Restrict)
+  resolvedBy            User?                     @relation("CancellationResolver", fields: [resolvedById], references: [id], onDelete: Restrict)
+  refund                RefundRecord?
+
+  @@index([bookingId, createdAt])
+  @@index([status, createdAt])
+  @@map("cancellation_requests")
+}
+
+model RefundRecord {
+  id                    String              @id @default(cuid()) @db.VarChar(30)
+  bookingId             String              @map("booking_id") @db.VarChar(30)
+  cancellationRequestId String              @unique @map("cancellation_request_id") @db.VarChar(30)
+  processedById         String              @map("processed_by_id") @db.VarChar(30)
+  amount                Int                 @db.Integer
+  currency              String              @default("IDR") @db.VarChar(3)
+  reference             String              @unique @db.VarChar(64)
+  note                  String?             @db.Text
+  createdAt             DateTime            @default(now()) @map("created_at") @db.Timestamp(3)
+  booking               Booking             @relation(fields: [bookingId], references: [id], onDelete: Restrict)
+  cancellationRequest   CancellationRequest @relation(fields: [cancellationRequestId], references: [id], onDelete: Restrict)
+  processedBy           User                @relation("RefundProcessor", fields: [processedById], references: [id], onDelete: Restrict)
+
+  @@index([bookingId, createdAt])
+  @@index([processedById, createdAt])
+  @@map("refund_records")
 }
 
 model PaymentAttempt {

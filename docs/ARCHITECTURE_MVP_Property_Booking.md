@@ -69,6 +69,10 @@ UI/routes
 | Notification | Email event/template |
 | Reporting/Audit | Read model dashboard dan immutable audit |
 
+Traveler history dan voucher membaca booking snapshot melalui owner-scoped query. Voucher dapat dibaca oleh Traveler pemilik atau Admin, tidak memanggil catalog aktif, dan menggunakan CSS print tanpa membuat file PDF di server.
+
+Cancellation request tidak melepaskan inventory. Admin resolution mengklaim request pending dan booking `CANCELLATION_REQUESTED`; approval kemudian melepas inventory serta mencatat cancellation/refund, status history, idempotency result, dan audit di transaction `Serializable` yang sama. Refund adalah pencatatan manual portfolio dengan reference unik, bukan transfer dana eksternal.
+
 Aturan dependency:
 
 - UI memakai service, bukan Prisma langsung.

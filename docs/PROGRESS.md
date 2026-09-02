@@ -13,7 +13,7 @@ Terakhir diperbarui: 2 September 2026.
 | M3 Discovery | Selesai | Inventory calendar, search, availability, quote |
 | M4 Booking | Hampir selesai | Hold, booking, snapshot, manual reservation, checkout wiring, expiry job |
 | M5 Payment | Selesai | Adapter demo lokal, payment attempts, retry, confirmation |
-| M6 Operations | Belum dimulai | History, voucher, cancellation/refund, operational dashboards |
+| M6 Operations | Berjalan | History, voucher, cancellation dan refund manual selesai; partner controls berikutnya |
 | M7 Release | Belum dimulai | Worker, backup/restore, observability, deployment |
 
 ## Implementasi yang tersedia
@@ -48,6 +48,7 @@ Terakhir diperbarui: 2 September 2026.
 
 ### UI booking dan payment demo
 
+- Homepage memiliki navbar publik satu tingkat, filter tipe stay, tautan traveler/partner, CTA pencarian, dan mobile navigation drawer.
 - Checkout memakai Server Action untuk membuat/reuse hold dan membuat booking.
 - Checkout mengarahkan booking yang berhasil ke `/payment?booking=<id>`.
 - Payment simulator membaca booking snapshot yang owner-scoped, menawarkan hasil approve/decline, dan tidak memproses uang nyata.
@@ -56,6 +57,23 @@ Terakhir diperbarui: 2 September 2026.
 - Partner dan Admin memiliki halaman `Reservations`.
 - Manual reservation form memvalidasi room ownership, guest capacity, date range, availability, dan server-side price.
 - Daftar 50 booking terbaru mengikuti scope Admin atau Partner.
+
+### Traveler operations
+
+- `/account` menampilkan 50 booking terbaru milik Traveler dengan status, snapshot stay, total, dan tindakan yang sesuai.
+- Booking yang masih berada di payment window dapat dilanjutkan dari history.
+- Voucher HTML printable tersedia untuk reservasi valid dan selalu membaca snapshot booking immutable.
+- Voucher hanya dapat dibaca oleh Traveler pemilik atau Admin; Partner tidak mendapat akses voucher.
+- Confirmation dan Admin reservations menyediakan tautan voucher sesuai authorization.
+
+### Cancellation dan refund
+
+- Traveler dapat mengajukan cancellation request dari booking `CONFIRMED`; alasan dan actor divalidasi server-side.
+- Eligibility full refund dihitung dari snapshot check-in terhadap tanggal Bali dengan batas minimal tiga hari.
+- Request mengubah booking menjadi `CANCELLATION_REQUESTED` tanpa melepas inventory.
+- Admin dapat menolak request, menyetujui cancellation tanpa refund, atau mencatat full refund manual dengan reference unik.
+- Approval melepaskan inventory tepat sekali; full refund mencatat history `REFUND_PENDING → REFUNDED` dalam transaksi yang sama.
+- Cancellation request, refund record, status history, idempotency record, dan audit tersimpan bersama mutation bisnis.
 
 ## Migrasi database
 
@@ -66,7 +84,8 @@ prisma/migrations/
 ├── 20260901000000_hold_and_booking_foundation/
 ├── 20260902000000_booking_snapshots/
 ├── 20260902010000_booking_payment_expiry/
-└── 20260902020000_demo_payment_attempts/
+├── 20260902020000_demo_payment_attempts/
+└── 20260902030000_cancellation_and_refunds/
 ```
 
 Migration booking snapshot menambahkan:
@@ -152,9 +171,6 @@ Partner hanya dapat memilih dan melihat room/booking miliknya. Admin dapat menga
 
 ### M6 Operations
 
-- Traveler booking history.
-- Printable HTML voucher dari booking snapshot.
-- Cancellation request dan resolusi refund oleh Admin.
 - Partner check-in/completion controls.
 - Email queue dan failed-job visibility.
 
@@ -177,12 +193,12 @@ Hasil batch 2 September 2026:
 
 - Prisma client berhasil digenerate.
 - Prisma schema valid.
-- Enam migration berhasil diterapkan dan database up-to-date.
-- 29 unit tests lulus.
+- Tujuh migration berhasil diterapkan dan database up-to-date.
+- 31 unit tests lulus.
 - PostgreSQL last-unit concurrency test lulus.
 - ESLint bersih.
 - TypeScript bersih.
-- Production build berhasil untuk 19 route tanpa warning.
+- Production build berhasil, termasuk route voucher dinamis, tanpa warning.
 
 ## Catatan penting
 

@@ -74,6 +74,7 @@ export async function getBookingOperationsWorkspace() {
   return {
     rooms,
     bookings,
+    canViewAllVouchers: actor.role === UserRole.ADMIN,
   };
 }
 
@@ -130,4 +131,96 @@ export async function getTravelerBooking(bookingId: string) {
       booking.paymentExpiresAt !== null &&
       booking.paymentExpiresAt.getTime() > new Date().getTime(),
   };
+}
+
+export async function getTravelerBookingHistory() {
+  const actor = await getCurrentUser();
+  if (!actor || actor.role !== UserRole.TRAVELER) return [];
+
+  const bookings = await prisma.booking.findMany({
+    where: { userId: actor.id },
+    select: {
+      id: true,
+      bookingCode: true,
+      propertyName: true,
+      roomName: true,
+      checkinDate: true,
+      checkoutDate: true,
+      adultCount: true,
+      childCount: true,
+      grandTotal: true,
+      status: true,
+      paymentExpiresAt: true,
+      createdAt: true,
+      _count: { select: { nights: true } },
+      cancellationRequests: {
+        select: {
+          status: true,
+          eligibleForFullRefund: true,
+          requestedRefundAmount: true,
+          resolutionNote: true,
+          createdAt: true,
+        },
+        orderBy: { createdAt: "desc" },
+        take: 1,
+      },
+    },
+    orderBy: { createdAt: "desc" },
+    take: 50,
+  });
+  const now = new Date().getTime();
+
+  return bookings.map((booking) => ({
+    ...booking,
+    paymentWindowOpen:
+      booking.paymentExpiresAt !== null &&
+      booking.paymentExpiresAt.getTime() > now,
+  }));
+}
+
+export async function getVoucherBooking(bookingId: string) {
+  const actor = await getCurrentUser();
+  if (!actor || (actor.role !== UserRole.TRAVELER && actor.role !== UserRole.ADMIN)) {
+    return null;
+  }
+
+  const booking = await prisma.booking.findFirst({
+    where: {
+      id: bookingId,
+      ...(actor.role === UserRole.TRAVELER ? { userId: actor.id } : {}),
+    },
+    select: {
+      id: true,
+      bookingCode: true,
+      propertyName: true,
+      roomName: true,
+      guestName: true,
+      guestEmail: true,
+      guestPhone: true,
+      checkinDate: true,
+      checkoutDate: true,
+      adultCount: true,
+      childCount: true,
+      subtotal: true,
+      serviceFee: true,
+      grandTotal: true,
+      status: true,
+      cancellationPolicy: true,
+      specialRequest: true,
+      createdAt: true,
+      nights: {
+        select: { stayDate: true, unitPrice: true },
+        orderBy: { stayDate: "asc" },
+      },
+      paymentAttempts: {
+        where: { status: "SUCCEEDED" },
+        select: { providerReference: true, resolvedAt: true },
+        orderBy: { createdAt: "desc" },
+        take: 1,
+      },
+    },
+  });
+  if (!booking) return null;
+
+  return { ...booking, viewerRole: actor.role };
 }

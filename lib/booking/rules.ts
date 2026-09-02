@@ -30,6 +30,28 @@ export function isBookingStatusTransitionAllowed(
   return ALLOWED_TRANSITIONS[from]?.has(to) ?? false;
 }
 
+export function canIssueVoucher(status: BookingStatus): boolean {
+  return new Set<BookingStatus>([
+    "CONFIRMED",
+    "CANCELLATION_REQUESTED",
+    "CHECKED_IN",
+    "COMPLETED",
+  ]).has(status);
+}
+
+export function isEligibleForFullRefund(
+  checkinDate: Date | string,
+  today: string,
+): boolean {
+  const checkin = typeof checkinDate === "string"
+    ? checkinDate.slice(0, 10)
+    : checkinDate.toISOString().slice(0, 10);
+  const threshold = new Date(`${today}T00:00:00.000Z`);
+  if (Number.isNaN(threshold.getTime())) return false;
+  threshold.setUTCDate(threshold.getUTCDate() + 3);
+  return checkin >= threshold.toISOString().slice(0, 10);
+}
+
 type BookingActor =
   | { role: "ADMIN"; userId: string }
   | {

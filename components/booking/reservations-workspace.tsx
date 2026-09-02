@@ -1,8 +1,10 @@
-import { CalendarCheck2, PlusCircle } from "lucide-react";
+import Link from "next/link";
+import { CalendarCheck2, PlusCircle, ReceiptText } from "lucide-react";
 import { ManualBookingForm } from "@/components/booking/manual-booking-form";
 import { formatIdr, formatStayDate } from "@/lib/demo-stays";
 import { getBookingOperationsWorkspace } from "@/lib/booking/queries";
 import { generateIdempotencyKey } from "@/lib/idempotency";
+import { canIssueVoucher } from "@/lib/booking/rules";
 
 const statusStyle: Record<string, string> = {
   PENDING_PAYMENT: "bg-warning-subtle text-warning",
@@ -86,6 +88,7 @@ export async function ReservationsWorkspace({
                     <p><span className="block text-xs text-muted-foreground">Guests</span>{booking.adultCount} adults · {booking.childCount} children</p>
                     <p><span className="block text-xs text-muted-foreground">Total</span><strong>{formatIdr(booking.grandTotal)}</strong></p>
                   </div>
+                  {workspace.canViewAllVouchers && canIssueVoucher(booking.status) ? <Link className="mt-4 inline-flex min-h-10 items-center gap-2 rounded-xl border border-border px-4 text-sm font-bold hover:bg-secondary" href={`/bookings/${encodeURIComponent(booking.id)}/voucher`}><ReceiptText className="size-4 text-primary" />View voucher</Link> : null}
                 </article>
               ))}
             </div>

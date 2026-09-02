@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { CalendarCheck2, CheckCircle2, Home, Mail, ShieldCheck } from "lucide-react";
+import { CalendarCheck2, CheckCircle2, Home, Mail, ReceiptText, ShieldCheck } from "lucide-react";
 import { StayBaliLogo } from "@/components/landing/public-header";
 import { getTravelerBooking } from "@/lib/booking/queries";
 import { formatIdr, formatStayDate } from "@/lib/demo-stays";
@@ -62,8 +62,9 @@ export default async function ConfirmationPage({ searchParams }: ConfirmationPag
               <p className="mt-3 flex gap-2 text-sm leading-6 text-muted-foreground"><Mail className="mt-1 size-4 shrink-0 text-primary" />Confirmation email is represented in the portfolio flow and no message is sent externally.</p>
             </div>
 
-            <div className="mt-8 grid gap-3 sm:grid-cols-2">
+            <div className="mt-8 grid gap-3 sm:grid-cols-3">
               <Link className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-primary px-5 font-bold text-white hover:bg-primary-hover" href="/"><Home className="size-4" />Back to home</Link>
+              <Link className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-primary bg-white px-5 font-bold text-primary hover:bg-brand-teal-subtle" href={`/bookings/${encodeURIComponent(booking.id)}/voucher`}><ReceiptText className="size-4" />Voucher</Link>
               <Link className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-border bg-white px-5 font-bold hover:bg-secondary" href="/search"><CalendarCheck2 className="size-4 text-primary" />Explore more stays</Link>
             </div>
           </div>

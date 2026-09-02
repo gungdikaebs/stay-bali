@@ -235,7 +235,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="bg-white py-20 sm:py-24">
+      <section className="scroll-mt-28 bg-white py-20 sm:py-24" id="destinations">
         <div className="mx-auto max-w-[1280px] px-4 sm:px-6 lg:px-8">
           <ScrollReveal className="mb-10 flex flex-col justify-between gap-5 md:flex-row md:items-end">
             <div>
