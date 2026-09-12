@@ -1,20 +1,25 @@
 import { z } from "zod";
 
-export const requestCancellationSchema = z.object({
-  bookingId: z.string().min(1).max(30),
-  reason: z.string().trim().min(10, "Please provide at least 10 characters.").max(500),
-  idempotencyKey: z.string().min(16).max(64),
-});
+const bookingId = z.string().trim().min(1).max(30);
+const idempotencyKey = z.string().trim().min(16).max(64);
+const reason = z.string().trim().min(10, "Please provide at least 10 characters.").max(500);
+
+export const standardCancellationSchema = z.object({ bookingId, idempotencyKey });
+export const requestCancellationExceptionSchema = z.object({ bookingId, reason, idempotencyKey });
+export const requestPartnerCancellationSchema = requestCancellationExceptionSchema;
+export const cancelManualBookingSchema = requestCancellationExceptionSchema;
 
 export const resolveCancellationSchema = z.object({
-  cancellationRequestId: z.string().min(1).max(30),
+  cancellationRequestId: z.string().trim().min(1).max(30),
   decision: z.enum(["APPROVE", "REJECT"]),
-  resolutionNote: z.string().trim().min(10, "Please provide at least 10 characters.").max(500),
-  refundReference: z.string().trim().max(64).optional(),
-  idempotencyKey: z.string().min(16).max(64),
+  resolutionNote: reason,
+  idempotencyKey,
 });
 
-export type RequestCancellationInput = z.infer<typeof requestCancellationSchema>;
+export type StandardCancellationInput = z.infer<typeof standardCancellationSchema>;
+export type RequestCancellationExceptionInput = z.infer<typeof requestCancellationExceptionSchema>;
+export type RequestPartnerCancellationInput = z.infer<typeof requestPartnerCancellationSchema>;
+export type CancelManualBookingInput = z.infer<typeof cancelManualBookingSchema>;
 export type ResolveCancellationInput = z.infer<typeof resolveCancellationSchema>;
 
 export type CancellationActionState = {

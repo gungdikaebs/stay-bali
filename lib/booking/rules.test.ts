@@ -4,6 +4,8 @@ import {
   canIssueVoucher,
   canActorTransitionBooking,
   generateBookingCode,
+  getCancellationPreview,
+  getFreeCancellationUntil,
   isEligibleForFullRefund,
   isBookingStatusTransitionAllowed,
 } from "./rules";
@@ -13,6 +15,22 @@ test("isEligibleForFullRefund uses the three-day Bali-date boundary", () => {
   assert.equal(isEligibleForFullRefund("2026-09-05", "2026-09-02"), true);
   assert.equal(isEligibleForFullRefund("2026-09-04", "2026-09-02"), false);
   assert.equal(isEligibleForFullRefund(new Date("2026-09-05T00:00:00.000Z"), "2026-09-02"), true);
+});
+
+test("cancellation snapshots preserve the global three-day boundary", () => {
+  assert.equal(getFreeCancellationUntil("2026-10-10"), "2026-10-07");
+  assert.deepEqual(getCancellationPreview({
+    freeCancellationUntil: new Date("2026-10-07T00:00:00.000Z"),
+    refundAmountBeforeDeadline: 1_050_000,
+    refundAmountAfterDeadline: 0,
+    today: "2026-10-07",
+  }), { deadline: "2026-10-07", eligibleForFullRefund: true, refundAmount: 1_050_000 });
+  assert.deepEqual(getCancellationPreview({
+    freeCancellationUntil: "2026-10-07",
+    refundAmountBeforeDeadline: 1_050_000,
+    refundAmountAfterDeadline: 0,
+    today: "2026-10-08",
+  }), { deadline: "2026-10-07", eligibleForFullRefund: false, refundAmount: 0 });
 });
 
 test("canIssueVoucher limits vouchers to valid reservations", () => {

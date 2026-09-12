@@ -3,7 +3,9 @@ import "server-only";
 import {
   isBookingStatusTransitionAllowed,
   canActorTransitionBooking,
+  CANCELLATION_POLICY_VERSION,
   generateBookingCode,
+  getFreeCancellationUntil,
   type BookingStatus,
 } from "./rules";
 import {
@@ -96,6 +98,7 @@ export async function confirmBookingOnline(
 
   const bookingCode = generateBookingCode();
   const paymentExpiresAt = getBookingPaymentExpiry();
+  const freeCancellationUntil = getFreeCancellationUntil(checkin);
 
   return prisma.$transaction(async (tx) => {
     const existing = await tx.idempotencyRecord.findUnique({
@@ -139,10 +142,15 @@ export async function confirmBookingOnline(
         guestEmail: validated.guestEmail,
         guestPhone: validated.guestPhone,
         cancellationPolicy: quote.roomType.property.cancellationPolicy,
+        cancellationPolicyVersion: CANCELLATION_POLICY_VERSION,
+        freeCancellationUntil: new Date(`${freeCancellationUntil}T00:00:00.000Z`),
+        refundAmountBeforeDeadline: quote.grandTotal,
+        refundAmountAfterDeadline: 0,
         subtotal: quote.subtotal,
         serviceFee: quote.serviceFee,
         grandTotal: quote.grandTotal,
         status: "PENDING_PAYMENT",
+        source: "ONLINE",
         paymentExpiresAt,
         specialRequest: validated.specialRequest,
       },
@@ -263,6 +271,7 @@ export async function createBookingManual(
     const subtotal = nightPrices.reduce((a, b) => a + b, 0);
     const serviceFee = Math.round(subtotal * 0.05);
     const grandTotal = subtotal + serviceFee;
+    const freeCancellationUntil = getFreeCancellationUntil(validated.checkinDate);
     const booking = await tx.booking.create({
       data: {
         bookingCode,
@@ -278,10 +287,15 @@ export async function createBookingManual(
         guestEmail: validated.guestEmail,
         guestPhone: validated.guestPhone,
         cancellationPolicy: room.property.cancellationPolicy,
+        cancellationPolicyVersion: CANCELLATION_POLICY_VERSION,
+        freeCancellationUntil: new Date(`${freeCancellationUntil}T00:00:00.000Z`),
+        refundAmountBeforeDeadline: grandTotal,
+        refundAmountAfterDeadline: 0,
         subtotal,
         serviceFee,
         grandTotal,
         status: "CONFIRMED",
+        source: "MANUAL",
         specialRequest: validated.specialRequest,
       },
     });

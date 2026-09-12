@@ -13,9 +13,9 @@
 | Harga | Integer IDR; service fee 5% |
 | Waktu | 1–30 malam; quote/hold 10 menit; `Asia/Makassar` |
 | Payment | Adapter demo lokal; tanpa uang nyata |
-| Cancellation | Gratis ≥3 hari sebelum check-in; refund manual Admin |
+| Cancellation | Gratis ≥3 hari sebelum check-in; policy tersimpan sebagai snapshot; refund demo otomatis |
 | Voucher | Printable HTML |
-| Media | Disk lokal/VPS melalui storage adapter |
+| Media | Vercel Blob melalui storage adapter; filesystem lokal hanya untuk development/test |
 | Bahasa | Public UI English-first; Bahasa Indonesia P1 |
 
 ## Permission
@@ -27,7 +27,9 @@
 | Kelola property/room/media/inventory | — | — | Milik sendiri | Semua |
 | Reservasi manual & status operasional | — | — | Milik sendiri | Semua |
 | Approve/suspend property/partner | — | — | — | ✓ |
-| Cancellation/refund resolution | — | Request sendiri | — | ✓ |
+| Pembatalan standar | — | Booking online sendiri | — | — |
+| Policy exception | — | Request sendiri | Resolve milik sendiri | Escalation ≥24 jam |
+| Pembatalan oleh operator | — | — | Manual milik sendiri; online via request | Resolve request online |
 
 UI bukan lapisan keamanan. Setiap protected read/write memeriksa session, role/status terbaru, dan ownership di server.
 
@@ -102,14 +104,17 @@ available = sellable_units - active_holds - inventory_consuming_bookings
 | — | `CONFIRMED` | Reservasi manual |
 | `PENDING_PAYMENT` | `CONFIRMED`, `PAYMENT_FAILED`, `EXPIRED`, `CANCELLED` | Demo payment/job/Traveler/Admin |
 | `PAYMENT_FAILED` | `PENDING_PAYMENT` | Retry sebelum expiry |
-| `CONFIRMED` | `CANCELLATION_REQUESTED`, `CANCELLED`, `CHECKED_IN` | Traveler/Admin/Partner |
-| `CANCELLATION_REQUESTED` | `CONFIRMED`, `REFUND_PENDING`, `CANCELLED` | Admin |
-| `REFUND_PENDING` | `REFUNDED` | Admin setelah refund manual |
+| `CONFIRMED` | `CANCELLATION_REQUESTED`, `CANCELLED`, `CHECKED_IN` | Traveler/system/Admin/Partner sesuai policy dan ownership |
+| `CANCELLATION_REQUESTED` | `CONFIRMED`, `REFUND_PENDING`, `CANCELLED` | System/Partner pemilik/Admin sesuai jenis request |
+| `REFUND_PENDING` | `REFUNDED` | Demo refund adapter |
 | `CHECKED_IN` | `COMPLETED` | Partner/Admin |
 
 - Transisi lain ditolak; setiap transisi menyimpan actor, waktu, before/after, dan alasan bila sensitif.
-- Partner hanya boleh `CONFIRMED → CHECKED_IN → COMPLETED` pada booking property sendiri.
-- Cancellation request belum melepaskan inventory; inventory dilepas pada keputusan final yang sesuai.
+- Partner hanya boleh menjalankan stay operation `CONFIRMED → CHECKED_IN → COMPLETED` pada booking property sendiri.
+- Booking menyimpan versi cancellation policy, deadline, nominal refund, dan source sebagai snapshot immutable.
+- Pembatalan standar Traveler diputus otomatis dari snapshot policy. Policy exception ditangani Partner pemilik, lalu dapat dieskalasi ke Admin setelah pending 24 jam.
+- Partner dapat membatalkan reservasi manual miliknya langsung; booking online yang dibatalkan oleh Partner memerlukan keputusan Admin.
+- Cancellation request yang masih pending belum melepaskan inventory; inventory dilepas tepat sekali pada keputusan final.
 - Voucher hanya untuk owner/Admin dan selalu menggunakan snapshot.
 - Email confirmation/cancellation/refund melalui queue; kegagalan email tidak membatalkan transaksi.
 
@@ -136,10 +141,10 @@ available = sellable_units - active_holds - inventory_consuming_bookings
 ## Non-functional
 
 - Secure session cookie, server validation, CSRF sesuai mekanisme, rate limit login/register/payment/upload, output escaping, dan parameterized query.
-- Postgresql transaction untuk hold/booking; Redis bukan source of truth inventory.
+- PostgreSQL transaction untuk hold/booking; scheduler/queue bukan source of truth inventory.
 - Target seed: catalog p95 <800 ms dan search 30 malam p95 <1.500 ms; hindari N+1 dan unbounded query.
 - Responsive mulai 360 px; keyboard/focus/label/error; status tidak hanya warna; WCAG 2.2 AA untuk alur utama.
-- Structured log + correlation ID, health/readiness, backup database/media harian retensi ≥7 hari, restore rehearsal, disk alert 80%.
+- Structured log + correlation ID, health/readiness, managed Postgres/Blob backup policy, retensi ≥7 hari untuk backup yang dikendalikan aplikasi, serta restore rehearsal.
 - Modular monolith; rule domain tidak tinggal di UI; payment/media/email/queue memakai adapter yang jelas.
 
 ## Test wajib
@@ -155,4 +160,4 @@ available = sellable_units - active_holds - inventory_consuming_bookings
 - Authorization dan validation server-side; migration, seed, dan automated tests lulus.
 - Tidak ada issue critical/high atau kebocoran secret/PII pada log.
 - Flow dapat didemokan dari UI pada mobile dan desktop.
-- Backup/restore, deployment, worker, dan dokumentasi setup telah diuji.
+- Backup/restore, Vercel deployment, cron processing, dan dokumentasi setup telah diuji.

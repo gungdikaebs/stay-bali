@@ -1,19 +1,94 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { generateIdempotencyKey } from "@/lib/idempotency";
-import { requestBookingCancellation, resolveCancellationRequest } from "@/lib/cancellation/cancellation";
 import {
-  requestCancellationSchema,
+  cancelManualBooking,
+  confirmStandardCancellation,
+  requestCancellationException,
+  requestPartnerCancellation,
+  resolveCancellationRequest,
+} from "@/lib/cancellation/cancellation";
+import {
+  cancelManualBookingSchema,
+  requestCancellationExceptionSchema,
+  requestPartnerCancellationSchema,
   resolveCancellationSchema,
+  standardCancellationSchema,
   type CancellationActionState,
 } from "@/lib/cancellation/schemas";
+import { generateIdempotencyKey } from "@/lib/idempotency";
 
-export async function requestCancellationAction(
+function refreshCancellationViews() {
+  revalidatePath("/account");
+  revalidatePath("/partner");
+  revalidatePath("/partner/bookings");
+  revalidatePath("/admin");
+  revalidatePath("/admin/bookings");
+}
+
+function safeError(error: unknown) {
+  const message = error instanceof Error ? error.message : "";
+  const safe = [
+    "Booking not found or access denied.",
+    "Only a confirmed booking can be cancelled.",
+    "This booking can be cancelled automatically with a full refund.",
+    "Cancellation key already used with a different request.",
+    "Cancellation request is no longer pending.",
+    "Booking is no longer awaiting a cancellation decision.",
+    "Cancellation request not found or access denied.",
+  ];
+  return safe.includes(message) ? message : "The cancellation action could not be completed.";
+}
+
+export async function confirmStandardCancellationAction(
   _previousState: CancellationActionState,
   formData: FormData,
 ): Promise<CancellationActionState> {
-  const parsed = requestCancellationSchema.safeParse({
+  const parsed = standardCancellationSchema.safeParse({
+    bookingId: formData.get("bookingId"),
+    idempotencyKey: formData.get("idempotencyKey") || generateIdempotencyKey(),
+  });
+  if (!parsed.success) return { status: "error", message: "Invalid cancellation request." };
+  try {
+    const result = await confirmStandardCancellation(parsed.data);
+    refreshCancellationViews();
+    return {
+      status: "success",
+      message: result.status === "REFUNDED"
+        ? "Booking cancelled and the demo refund was completed."
+        : "Booking cancelled under the displayed no-refund terms.",
+    };
+  } catch (error) {
+    return { status: "error", message: safeError(error) };
+  }
+}
+
+export async function requestCancellationExceptionAction(
+  _previousState: CancellationActionState,
+  formData: FormData,
+): Promise<CancellationActionState> {
+  const parsed = requestCancellationExceptionSchema.safeParse({
+    bookingId: formData.get("bookingId"),
+    reason: formData.get("reason"),
+    idempotencyKey: formData.get("idempotencyKey") || generateIdempotencyKey(),
+  });
+  if (!parsed.success) {
+    return { status: "error", message: "Review the exception reason.", errors: parsed.error.flatten().fieldErrors };
+  }
+  try {
+    await requestCancellationException(parsed.data);
+    refreshCancellationViews();
+    return { status: "success", message: "Exception request sent to the property Partner." };
+  } catch (error) {
+    return { status: "error", message: safeError(error) };
+  }
+}
+
+export async function requestPartnerCancellationAction(
+  _previousState: CancellationActionState,
+  formData: FormData,
+): Promise<CancellationActionState> {
+  const parsed = requestPartnerCancellationSchema.safeParse({
     bookingId: formData.get("bookingId"),
     reason: formData.get("reason"),
     idempotencyKey: formData.get("idempotencyKey") || generateIdempotencyKey(),
@@ -22,14 +97,32 @@ export async function requestCancellationAction(
     return { status: "error", message: "Review the cancellation reason.", errors: parsed.error.flatten().fieldErrors };
   }
   try {
-    await requestBookingCancellation(parsed.data);
-    revalidatePath("/account");
-    revalidatePath("/admin/bookings");
-    return { status: "success", message: "Cancellation request sent for Admin review." };
+    await requestPartnerCancellation(parsed.data);
+    refreshCancellationViews();
+    return { status: "success", message: "Cancellation request escalated to StayBali operations." };
   } catch (error) {
-    const message = error instanceof Error ? error.message : "";
-    const safe = ["Booking not found or access denied.", "Only a confirmed booking can be cancelled.", "Cancellation key already used with a different request."];
-    return { status: "error", message: safe.includes(message) ? message : "Cancellation request could not be submitted." };
+    return { status: "error", message: safeError(error) };
+  }
+}
+
+export async function cancelManualBookingAction(
+  _previousState: CancellationActionState,
+  formData: FormData,
+): Promise<CancellationActionState> {
+  const parsed = cancelManualBookingSchema.safeParse({
+    bookingId: formData.get("bookingId"),
+    reason: formData.get("reason"),
+    idempotencyKey: formData.get("idempotencyKey") || generateIdempotencyKey(),
+  });
+  if (!parsed.success) {
+    return { status: "error", message: "Review the cancellation reason.", errors: parsed.error.flatten().fieldErrors };
+  }
+  try {
+    await cancelManualBooking(parsed.data);
+    refreshCancellationViews();
+    return { status: "success", message: "Manual reservation cancelled and inventory released." };
+  } catch (error) {
+    return { status: "error", message: safeError(error) };
   }
 }
 
@@ -41,7 +134,6 @@ export async function resolveCancellationAction(
     cancellationRequestId: formData.get("cancellationRequestId"),
     decision: formData.get("decision"),
     resolutionNote: formData.get("resolutionNote"),
-    refundReference: formData.get("refundReference") || undefined,
     idempotencyKey: formData.get("idempotencyKey") || generateIdempotencyKey(),
   });
   if (!parsed.success) {
@@ -49,18 +141,9 @@ export async function resolveCancellationAction(
   }
   try {
     const result = await resolveCancellationRequest(parsed.data);
-    revalidatePath("/admin/bookings");
-    revalidatePath("/account");
-    revalidatePath("/bookings");
+    refreshCancellationViews();
     return { status: "success", message: `Cancellation resolved. Booking is now ${result.status.toLowerCase().replaceAll("_", " ")}.` };
   } catch (error) {
-    const message = error instanceof Error ? error.message : "";
-    const safe = [
-      "Cancellation request is no longer pending.",
-      "Booking is no longer awaiting a cancellation decision.",
-      "A manual refund reference is required for a full refund.",
-      "Resolution key already used with a different request.",
-    ];
-    return { status: "error", message: safe.includes(message) ? message : "Cancellation resolution could not be saved." };
+    return { status: "error", message: safeError(error) };
   }
 }

@@ -64,6 +64,7 @@ export async function getBookingOperationsWorkspace() {
         childCount: true,
         grandTotal: true,
         status: true,
+        source: true,
         createdAt: true,
       },
       orderBy: { createdAt: "desc" },
@@ -104,6 +105,10 @@ export async function getTravelerBooking(bookingId: string) {
       grandTotal: true,
       status: true,
       paymentExpiresAt: true,
+      source: true,
+      freeCancellationUntil: true,
+      refundAmountBeforeDeadline: true,
+      refundAmountAfterDeadline: true,
       cancellationPolicy: true,
       paymentAttempts: {
         select: {
@@ -151,6 +156,10 @@ export async function getTravelerBookingHistory() {
       grandTotal: true,
       status: true,
       paymentExpiresAt: true,
+      source: true,
+      freeCancellationUntil: true,
+      refundAmountBeforeDeadline: true,
+      refundAmountAfterDeadline: true,
       createdAt: true,
       _count: { select: { nights: true } },
       cancellationRequests: {

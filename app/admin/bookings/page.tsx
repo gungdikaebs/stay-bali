@@ -7,5 +7,5 @@ export const metadata: Metadata = {
 };
 
 export default function AdminBookingsPage() {
-  return <><ReservationsWorkspace eyebrow="Marketplace operations" /><CancellationWorkspace /></>;
+  return <><ReservationsWorkspace eyebrow="Marketplace operations" /><CancellationWorkspace audience="ADMIN" /></>;
 }

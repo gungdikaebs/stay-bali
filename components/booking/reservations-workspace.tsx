@@ -2,6 +2,7 @@ import Link from "next/link";
 import { AlertTriangle, CalendarCheck2, DoorOpen, PlusCircle, ReceiptText } from "lucide-react";
 import { ManualBookingForm } from "@/components/booking/manual-booking-form";
 import { BookingOperationForm } from "@/components/booking/booking-operation-form";
+import { OperatorCancellationForm } from "@/components/booking/operator-cancellation-form";
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { MetricCard } from "@/components/dashboard/metric-card";
 import { PageHeader } from "@/components/dashboard/page-header";
@@ -80,7 +81,10 @@ export async function ReservationsWorkspace({
                     <p><span className="block text-xs text-muted-foreground">Total</span><strong>{formatIdr(booking.grandTotal)}</strong></p>
                   </div>
                   {booking.status === "CONFIRMED" ? (
-                    <BookingOperationForm bookingId={booking.id} nextStatus="CHECKED_IN" />
+                    <>
+                      <BookingOperationForm bookingId={booking.id} nextStatus="CHECKED_IN" />
+                      {booking.source === "MANUAL" || !workspace.canViewAllVouchers ? <OperatorCancellationForm bookingId={booking.id} idempotencyKey={generateIdempotencyKey()} source={booking.source} /> : null}
+                    </>
                   ) : booking.status === "CHECKED_IN" ? (
                     <BookingOperationForm bookingId={booking.id} nextStatus="COMPLETED" />
                   ) : null}

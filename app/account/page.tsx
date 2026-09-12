@@ -10,6 +10,8 @@ import { Button } from "@/components/ui/button";
 import { requireTraveler } from "@/lib/auth/authorization";
 import { getTravelerBookingHistory } from "@/lib/booking/queries";
 import { canIssueVoucher } from "@/lib/booking/rules";
+import { getCancellationPreview } from "@/lib/booking/rules";
+import { baliToday } from "@/lib/inventory/rules";
 import { formatIdr, formatStayDate } from "@/lib/demo-stays";
 import { generateIdempotencyKey } from "@/lib/idempotency";
 
@@ -92,6 +94,12 @@ export default async function AccountPage() {
               const checkout = booking.checkoutDate.toISOString().slice(0, 10);
               const canPay = (booking.status === "PENDING_PAYMENT" || booking.status === "PAYMENT_FAILED") && booking.paymentWindowOpen;
               const voucherAvailable = canIssueVoucher(booking.status);
+              const cancellationPreview = getCancellationPreview({
+                freeCancellationUntil: booking.freeCancellationUntil,
+                refundAmountBeforeDeadline: booking.refundAmountBeforeDeadline,
+                refundAmountAfterDeadline: booking.refundAmountAfterDeadline,
+                today: baliToday(),
+              });
 
               return (
                 <article className="p-5 sm:p-6" key={booking.id}>
@@ -114,7 +122,7 @@ export default async function AccountPage() {
                     {voucherAvailable ? <Button asChild size="sm" variant="outline"><Link href={`/bookings/${encodeURIComponent(booking.id)}/voucher`}><ReceiptText className="size-4 text-primary" aria-hidden="true" />View voucher</Link></Button> : null}
                     {!canPay && (booking.status === "PENDING_PAYMENT" || booking.status === "PAYMENT_FAILED") ? <span className="text-sm font-semibold text-warning">Payment window has ended.</span> : null}
                   </div>
-                  {booking.status === "CONFIRMED" ? <CancellationRequestForm bookingId={booking.id} idempotencyKey={generateIdempotencyKey()} /> : null}
+                  {booking.status === "CONFIRMED" && booking.source === "ONLINE" ? <CancellationRequestForm bookingId={booking.id} deadline={cancellationPreview.deadline} eligibleForFullRefund={cancellationPreview.eligibleForFullRefund} exceptionIdempotencyKey={generateIdempotencyKey()} refundAmount={cancellationPreview.refundAmount} standardIdempotencyKey={generateIdempotencyKey()} /> : null}
                   {booking.cancellationRequests[0] ? <p className="mt-4 rounded-xl bg-secondary px-4 py-3 text-xs leading-5 text-muted-foreground">Latest cancellation request: <strong className="text-foreground">{booking.cancellationRequests[0].status.toLowerCase()}</strong>{booking.cancellationRequests[0].eligibleForFullRefund ? ` · ${formatIdr(booking.cancellationRequests[0].requestedRefundAmount)} full refund eligible` : " · no automatic full refund"}</p> : null}
                 </article>
               );

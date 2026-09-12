@@ -97,6 +97,15 @@ Baseline shadcn:
 - Gunakan skeleton dengan ratio final untuk mencegah layout shift.
 - Gunakan Lucide konsisten: 16 px metadata, 20 px action/navigation, 24 px card. Icon-only wajib accessible label/tooltip.
 
+### Video dan motion editorial
+
+- Video AI boleh dipakai sebagai media brand dekoratif, bukan sebagai foto listing, bukti inspeksi, atau representasi properti yang dapat dipesan.
+- Homepage memakai poster sebagai first paint dan fallback; video harus muted, inline, tanpa audio track, dan tidak menjadi satu-satunya penyampai informasi.
+- Hero motion bersifat restrained: transform/opacity kecil yang mengikuti progres lokal hero, tanpa scroll trapping atau perubahan layout per frame.
+- `prefers-reduced-motion` dan Data Saver menerima poster statis. Search, navigation, focus, dan anchor tetap memakai perilaku browser native.
+- Pinned scroll storytelling tidak ditempatkan sebelum search. Jika dipakai, letakkan setelah hero, sediakan fallback non-sticky, dan lolos performance gate tersendiri.
+- Spesifikasi asset, motion range, lifecycle, dan QA berada di `docs/HOMEPAGE_CINEMATIC_MOTION.md`.
+
 ## Komponen P0
 
 **Primitive:** Button, Input, Textarea, Label, Select/Combobox, Calendar, Popover, Dialog/AlertDialog, Sheet, DropdownMenu, Tabs, Card, Badge, Table, Pagination, Alert, Skeleton, Tooltip, Separator, Breadcrumb, Toast.
@@ -107,7 +116,7 @@ Tambahkan component saat milestone membutuhkannya; jangan install seluruh librar
 
 ## Pola halaman utama
 
-**Homepage:** header → hero/value proposition → search panel → trust strip → featured areas/stays → partner CTA → compact footer.
+**Homepage:** header → full-viewport cinematic hero/value proposition + search panel → featured areas/stays → optional scroll story → partner CTA → compact footer.
 
 **Search:** editable search summary → result count/sort → filter + results → pagination.
 
@@ -160,4 +169,5 @@ Tambahkan component saat milestone membutuhkannya; jangan install seluruh librar
 - Mobile search, filter, room selection, checkout, dan dashboard action usable.
 - Total/fee/policy berasal dari server; scarcity hanya dari live availability.
 - Contrast AA, keyboard/focus, error association, reduced motion, dan print voucher lolos.
+- Homepage video gagal dengan aman ke poster; motion tidak menghambat search, keyboard scroll, anchor, atau Data Saver.
 - Tidak ada fake trust pattern, dead footer link, atau authorization yang hanya berupa hidden button.

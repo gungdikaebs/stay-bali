@@ -52,6 +52,36 @@ export function isEligibleForFullRefund(
   return checkin >= threshold.toISOString().slice(0, 10);
 }
 
+export const CANCELLATION_POLICY_VERSION = "GLOBAL_3_DAY_V1";
+
+export function getFreeCancellationUntil(checkinDate: Date | string): string {
+  const checkin = typeof checkinDate === "string"
+    ? checkinDate.slice(0, 10)
+    : checkinDate.toISOString().slice(0, 10);
+  const deadline = new Date(`${checkin}T00:00:00.000Z`);
+  deadline.setUTCDate(deadline.getUTCDate() - 3);
+  return deadline.toISOString().slice(0, 10);
+}
+
+export function getCancellationPreview(input: {
+  freeCancellationUntil: Date | string;
+  refundAmountBeforeDeadline: number;
+  refundAmountAfterDeadline: number;
+  today: string;
+}) {
+  const deadline = typeof input.freeCancellationUntil === "string"
+    ? input.freeCancellationUntil.slice(0, 10)
+    : input.freeCancellationUntil.toISOString().slice(0, 10);
+  const eligibleForFullRefund = input.today <= deadline;
+  return {
+    deadline,
+    eligibleForFullRefund,
+    refundAmount: eligibleForFullRefund
+      ? input.refundAmountBeforeDeadline
+      : input.refundAmountAfterDeadline,
+  };
+}
+
 type BookingActor =
   | { role: "ADMIN"; userId: string }
   | {

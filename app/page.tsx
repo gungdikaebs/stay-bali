@@ -14,8 +14,8 @@ import {
 } from "lucide-react";
 import { PropertyCard } from "@/components/landing/property-card";
 import {
-  HeroMedia,
   HeroReveal,
+  HeroVideo,
   HomeMotion,
   ScrollReveal,
 } from "@/components/landing/home-motion";
@@ -166,23 +166,20 @@ export default function Home() {
   return (
     <HomeMotion>
     <main className="overflow-hidden">
-      <section className="relative min-h-[760px] bg-foreground lg:min-h-[720px]">
-        <HeroMedia>
-          <Image
-            fill
-            preload
-            alt="Private Bali villa pool overlooking a tropical sunset"
-            className="object-cover object-[62%_center]"
-            sizes="100vw"
-            src="/images/hero-bali-villa.jpg"
-          />
-        </HeroMedia>
+      <link
+        rel="preload"
+        as="image"
+        href="/videos/homepage/hero-construction-poster.webp"
+        fetchPriority="high"
+      />
+      <section className="relative min-h-svh overflow-hidden bg-foreground">
+        <HeroVideo />
         <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(10,28,24,0.92)_0%,rgba(10,28,24,0.72)_43%,rgba(10,28,24,0.18)_78%,rgba(10,28,24,0.3)_100%)]" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-black/30" />
 
         <PublicHeader />
 
-        <div className="relative z-10 mx-auto flex min-h-[760px] w-full min-w-0 max-w-[1280px] flex-col justify-center px-4 pt-28 pb-16 sm:px-6 lg:min-h-[720px] lg:px-8 lg:pt-24 lg:pb-20">
+        <div className="relative z-10 mx-auto flex min-h-svh w-full min-w-0 max-w-[1280px] flex-col justify-center px-4 pt-28 pb-16 sm:px-6 lg:px-8 lg:pt-24 lg:pb-20">
           <div className="max-w-[760px]">
             <HeroReveal delay={0.12}>
               <span className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-semibold text-white backdrop-blur-sm">
@@ -211,25 +208,6 @@ export default function Home() {
             </p>
           </HeroReveal>
 
-        </div>
-      </section>
-
-      <section className="relative z-20 -mt-8 px-4 sm:px-6 lg:-mt-10 lg:px-8" aria-label="Booking assurances">
-        <div className="mx-auto grid max-w-[1180px] overflow-hidden rounded-2xl border border-border bg-white shadow-card sm:grid-cols-3">
-          {[
-            { icon: ShieldCheck, title: "Reviewed before publishing", description: "Only approved properties enter the public catalog." },
-            { icon: WalletCards, title: "Clear IDR pricing", description: "Nightly rate, fee, and total stay close together." },
-            { icon: CalendarCheck2, title: "Availability by night", description: "Every date in your stay is checked before booking." },
-          ].map(({ icon: Icon, title, description }, index) => (
-            <div className="flex gap-4 px-5 py-5 sm:px-6 sm:py-6 sm:not-last:border-r sm:not-last:border-border" key={title}>
-              <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-brand-teal-subtle text-primary"><Icon className="size-5" aria-hidden="true" /></span>
-              <span>
-                <strong className="font-display block text-sm font-extrabold text-foreground">{title}</strong>
-                <span className="mt-1 block text-xs leading-5 text-muted-foreground">{description}</span>
-              </span>
-              <span className="sr-only">Assurance {index + 1} of 3</span>
-            </div>
-          ))}
         </div>
       </section>
 
@@ -381,7 +359,7 @@ export default function Home() {
               rel="noreferrer"
               target="_blank"
             >
-              Photography by Pexels contributors
+              Supporting photography by Pexels contributors
             </a>
           </div>
         </div>

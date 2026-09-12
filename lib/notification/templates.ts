@@ -56,7 +56,7 @@ const messages: Record<BookingEmailTemplate, { subject: string; heading: string;
   CANCELLATION_REQUESTED: {
     subject: "We received your StayBali cancellation request",
     heading: "Cancellation request received",
-    intro: "Our operations team will review your request. Your reservation remains allocated until a final decision is recorded.",
+    intro: "The authorized review team will assess your exception. Your reservation remains allocated until a final decision is recorded.",
   },
   BOOKING_CANCELLED: {
     subject: "Your StayBali booking was cancelled",
@@ -66,7 +66,7 @@ const messages: Record<BookingEmailTemplate, { subject: string; heading: string;
   BOOKING_REFUNDED: {
     subject: "Your StayBali refund was recorded",
     heading: "Refund recorded",
-    intro: "Your cancellation was approved and the full manual refund has been recorded by StayBali operations.",
+    intro: "Your cancellation was approved and the portfolio demo refund has been recorded automatically.",
   },
 };
 

@@ -29,3 +29,17 @@ test("demo payment adapter can produce a declined portfolio scenario", async () 
   assert.equal(result.status, "FAILED");
   assert.equal(result.failureCode, "DEMO_DECLINED");
 });
+
+test("demo refund adapter preserves the trusted booking values", async () => {
+  const result = await new DemoPaymentAdapter().refund({
+    bookingReference: "SB-2026-REF123",
+    amount: 875_000,
+    currency: "IDR",
+  });
+
+  assert.equal(result.bookingReference, "SB-2026-REF123");
+  assert.equal(result.amount, 875_000);
+  assert.equal(result.currency, "IDR");
+  assert.equal(result.status, "SUCCEEDED");
+  assert.match(result.providerReference, /^DEMO-REFUND-/);
+});

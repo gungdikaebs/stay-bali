@@ -1,6 +1,6 @@
 # PRD — StayBali MVP
 
-**Status:** Ringkas v2.0
+**Status:** Ringkas v2.1
 
 **Target:** Responsive web, solo developer, 12–16 minggu part-time
 
@@ -20,15 +20,15 @@ Nilai engineering MVP bukan sekadar CRUD, tetapi:
 - Booking state machine dan snapshot historis.
 - Payment attempt demo idempotent dan dapat memperagakan approve/decline.
 - Reservasi online dan manual memakai inventory yang sama.
-- Background jobs serta media lokal/VPS yang aman.
+- Background jobs terjadwal serta media object storage yang aman pada deployment Vercel.
 
 ## Pengguna dan akses
 
 | Aktor | Kebutuhan utama |
 |---|---|
-| Guest/Traveler | Search, lihat detail, quote, booking, payment, riwayat, cancellation request, voucher |
-| Partner aktif | Kelola properti milik sendiri, room, media, inventory, booking, dan reservasi manual |
-| Admin | Kelola partner, approval/suspension properti, seluruh booking, payment exception, cancellation/refund manual |
+| Guest/Traveler | Search, lihat detail, quote, booking, payment, riwayat, cancellation, voucher |
+| Partner aktif | Kelola properti milik sendiri, room, media, inventory, booking, reservasi manual, dan policy exception |
+| Admin | Kelola partner, approval/suspension properti, seluruh booking, payment exception, dan cancellation escalation |
 
 Semua authorization wajib dilakukan di server. Partner hanya boleh mengakses data dalam ownership-nya; Traveler hanya booking miliknya.
 
@@ -46,7 +46,7 @@ Semua authorization wajib dilakukan di server. Partner hanya boleh mengakses dat
 10. Payment simulator lokal melalui adapter untuk mendemokan approve, decline, retry, dan attempt history tanpa uang nyata.
 11. Booking history, printable HTML voucher, dan email queue.
 12. Partner/Admin dashboard, reservasi manual, check-in, dan completion.
-13. Cancellation request dan refund yang dicatat manual oleh Admin.
+13. Policy-driven cancellation, Partner exception review, Admin escalation, dan pencatatan refund demo otomatis.
 14. Audit trail, expiry jobs, failed-job visibility, backup, health check, dan logging.
 
 ## Aturan bisnis inti
@@ -60,7 +60,7 @@ Semua authorization wajib dilakukan di server. Partner hanya boleh mengakses dat
 - Booking menyimpan snapshot properti, room, tamu, harga, dan cancellation policy.
 - Satu booking boleh memiliki beberapa payment attempt, tetapi hanya satu yang sukses.
 - Redirect browser bukan bukti pembayaran; hanya service payment server-side yang mengubah status.
-- Default cancellation: full refund jika diminta minimal 3 hari sebelum check-in; refund dana tidak otomatis.
+- Default cancellation: full refund sampai minimal 3 hari sebelum check-in, lalu tanpa refund; hasil mengikuti snapshot policy pada booking.
 - Property/room/booking historis diarsipkan, bukan dihapus permanen.
 
 ## Status utama
@@ -71,7 +71,7 @@ Semua authorization wajib dilakukan di server. Partner hanya boleh mengakses dat
 
 ## Batas MVP
 
-- Satu VPS, Postgres, Redis/BullMQ, dan disk lokal/VPS; tanpa kewajiban Docker, CDN, S3, Kubernetes, atau microservices.
+- Satu project Vercel untuk web/functions/cron, managed Postgres melalui integrasi Vercel Marketplace, dan Vercel Blob untuk media; tanpa VPS, Docker, Kubernetes, atau long-running worker.
 - Payment hanya simulasi portfolio lokal tanpa provider eksternal; email menjadi representasi UI sampai queue diimplementasikan.
 - Seed: 10–15 properti, masing-masing 2–5 room type.
 - Public UI English-first; Bahasa Indonesia/localization adalah P1.
@@ -92,7 +92,7 @@ Penerbangan/aktivitas, OTA/channel-manager sync, multi-room/cart, multi-currency
 - Quote/hold expired serta duplicate booking/payment aman.
 - Booking online dan manual memakai inventory yang sama.
 - Ownership antar-user/partner teruji.
-- Cancellation/refund manual, email queue, media lifecycle, backup, dan restore terverifikasi.
+- Cancellation/refund sesuai policy, exception/escalation, email queue, media lifecycle, backup, dan restore terverifikasi.
 - Alur utama usable pada mobile 360 px dan desktop tanpa bug critical/high.
 
 Detail perilaku yang dapat diuji berada di `REQUIREMENTS_MVP_Property_Booking.md`.

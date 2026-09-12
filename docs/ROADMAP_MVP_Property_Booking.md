@@ -24,7 +24,7 @@
 | 11–12 | Demo payment adapter, history, email, voucher | Server menjadi authority; duplicate payment aman; search-to-voucher E2E |
 | 13–14 | Manual reservation, Partner/Admin ops, cancellation/refund, jobs/audit | Semua P0 lengkap; manual/online memakai inventory sama |
 | 15 | Security, concurrency, performance, backup/restore | Tidak ada critical/high; suites stabil; restore pernah diuji |
-| 16 | VPS deploy, seed, docs, responsive QA, portfolio demo | Production sandbox flow, health, demo account, rollback siap |
+| 16 | Vercel deploy, seed, docs, responsive QA, portfolio demo | Production sandbox flow, health, cron, demo account, rollback siap |
 
 Checkpoint: minggu 5 Internal Alpha, 8 Search Alpha, 10 Booking Alpha, 12 End-to-End Beta, 14 Feature Complete, 16 Portfolio Release.
 
@@ -76,15 +76,16 @@ Jangan lanjut ke payment sebelum concurrency hold/booking stabil. Jangan lanjut 
 
 - Manual reservation dan price override reason.
 - Partner reservation/arrival/occupancy, check-in, completion.
-- Traveler cancellation request; Admin approve/reject/refund record.
+- Policy-driven Traveler cancellation; Partner exception review; Admin escalation; refund demo otomatis.
 - Inventory release, audit filter, payment exception, failed jobs.
 
 ### Release (M7)
 
 - Full security/authorization/concurrency regression; query/image/performance review.
-- Simulasi worker/email/provider failure; backup database/media dan restore rehearsal.
-- VPS/HTTPS/systemd/worker/scheduler/media, smoke test, rollback checklist.
+- Simulasi cron/email/provider failure; backup database/media dan restore rehearsal.
+- Vercel Functions/Cron/Blob/managed Postgres, environment separation, smoke test, dan rollback checklist.
 - Seed 10–15 property, demo accounts, README, screenshots/video, dan case study.
+- P1 setelah M6 E2E stabil: cinematic homepage hero + restrained native-scroll parallax sesuai `docs/HOMEPAGE_CINEMATIC_MOTION.md`; sticky video scrub tetap optional dan hanya masuk setelah accessibility/performance gate.
 
 ## Definition of Ready / Done
 
@@ -127,5 +128,6 @@ Scope review wajib untuk guest checkout, multi-room, promo engine, localization 
 - Approval, search, pricing, booking online/manual, cancellation/refund bekerja.
 - Unit terakhir, duplicate command/payment, dan expiry aman.
 - Traveler/Partner/Admin isolation serta upload security teruji.
-- Health/log/backup/restore/disk/deploy/rollback siap.
+- Health/log/backup/restore/Blob/deploy/cron/rollback siap.
 - Mobile 360 px, desktop, seed/demo account, README, dan demo 5–10 menit siap.
+- Homepage poster/video fallback, Reduced Motion, Data Saver, autoplay rejection, dan search responsiveness sudah direview bila cinematic motion diaktifkan.

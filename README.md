@@ -33,7 +33,7 @@ See [Project Progress](./docs/PROGRESS.md) for the latest implementation notes a
 - Expiring quotes, temporary inventory holds, and booking snapshots
 - Manual reservations and scoped booking operations for Partners and Admins
 - Audit trails, status histories, idempotency, and transactional domain services
-- Transactional email outbox, BullMQ retry worker, and Admin failure visibility
+- Transactional email outbox, retry processing, and Admin failure visibility
 
 ## Technology stack
 
@@ -46,7 +46,7 @@ See [Project Progress](./docs/PROGRESS.md) for the latest implementation notes a
 | Validation | Zod 4 |
 | Motion and icons | Framer Motion, Lucide React |
 | Image processing | Sharp |
-| Jobs and email | Redis, BullMQ, Nodemailer |
+| Jobs and email | Transactional outbox, Vercel Cron target, Nodemailer |
 | Testing | Node.js test runner via TSX |
 
 ## Getting started
@@ -56,7 +56,7 @@ See [Project Progress](./docs/PROGRESS.md) for the latest implementation notes a
 - Node.js 24 or later
 - npm
 - PostgreSQL
-- Redis (required when running the notification worker)
+- Redis (temporary local requirement until the documented Vercel Cron migration is implemented)
 
 ### 1. Install dependencies
 
@@ -90,8 +90,8 @@ node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
 | `ADMIN_SEED_PASSWORD` | Password for the seeded Admin account |
 | `PARTNER_SEED_PASSWORD` | Password shared by seeded Partner accounts |
 | `TRAVELER_SEED_PASSWORD` | Password for the seeded Traveler account |
-| `MEDIA_STORAGE_ROOT` | Local directory for uploaded media |
-| `REDIS_URL` | Redis connection used by BullMQ |
+| `MEDIA_STORAGE_ROOT` | Temporary local media directory; not used by the Vercel target |
+| `REDIS_URL` | Temporary local BullMQ connection until the Vercel Cron migration |
 | `EMAIL_TRANSPORT` | `sink` for local preview or `smtp` for external delivery |
 | `APP_URL` | Public application URL used in email links |
 | `EMAIL_FROM`, `SMTP_*` | Sender and SMTP settings when transport is `smtp` |
@@ -122,13 +122,13 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-Run the email worker in a second process when Redis is available:
+The current branch still runs the email worker in a second process when Redis is available:
 
 ```bash
 npm run worker:email
 ```
 
-The default `sink` transport processes messages without external delivery. Set `EMAIL_TRANSPORT=smtp` and configure the documented SMTP variables only in the deployment environment to send email.
+This worker path is local/legacy and must be replaced by the bounded Vercel Cron handler before production deployment. The default `sink` transport processes messages without external delivery. Set `EMAIL_TRANSPORT=smtp` and configure the documented SMTP variables only in the deployment environment to send email.
 
 ## Available commands
 
@@ -165,7 +165,7 @@ stay-bali/
 ├── prisma/       # Database schema, migrations, and development seed
 ├── public/       # Static assets
 ├── scripts/      # Operational and maintenance scripts
-├── worker/       # Long-running BullMQ processors and dispatchers
+├── worker/       # Current local BullMQ implementation; scheduled for Vercel Cron migration
 └── types/        # Shared TypeScript declarations
 ```
 
@@ -195,12 +195,13 @@ npm run db:status
 - [Product Requirements](./docs/PRD_MVP_Property_Booking.md) — product scope and MVP boundaries
 - [Functional Requirements](./docs/REQUIREMENTS_MVP_Property_Booking.md) — workflows and business invariants
 - [Architecture](./docs/ARCHITECTURE_MVP_Property_Booking.md) — technical boundaries and design decisions
+- [Homepage Cinematic Motion](./docs/HOMEPAGE_CINEMATIC_MOTION.md) — video asset contract, parallax behavior, accessibility, and performance gates
 - [MVP Roadmap](./docs/ROADMAP_MVP_Property_Booking.md) — milestone breakdown
 - [Database Foundation](./docs/DATABASE_FOUNDATION.md) — data model and database constraints
 - [Authentication](./docs/AUTHENTICATION.md) — sign-in flow and security rules
 - [Supply Workflow](./docs/SUPPLY_WORKFLOW.md) — property, media, inventory, and approval flows
 - [Project Progress](./docs/PROGRESS.md) — current status and handoff notes
-- [Deployment Operations](./docs/DEPLOYMENT.md) — systemd scheduler and VPS runbook
+- [Deployment Operations](./docs/DEPLOYMENT.md) — Vercel Functions, Cron, Blob, database, and release runbook
 
 ## Security notes
 

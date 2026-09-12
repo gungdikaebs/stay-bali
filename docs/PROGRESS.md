@@ -2,7 +2,7 @@
 
 Dokumen ini adalah sumber kebenaran untuk status implementasi dan handoff antar-sesi. Jangan menaruh password, connection string, secret, atau data pribadi di sini.
 
-Terakhir diperbarui: 2 September 2026.
+Terakhir diperbarui: 10 September 2026.
 
 ## Ringkasan milestone
 
@@ -14,7 +14,7 @@ Terakhir diperbarui: 2 September 2026.
 | M4 Booking | Selesai | Hold, booking, snapshot, manual reservation, checkout/payment E2E, expiry scheduler |
 | M5 Payment | Selesai | Adapter demo lokal, payment attempts, retry, confirmation |
 | M6 Operations | Hampir selesai | History, voucher, cancellation/refund, stay controls, dan email queue selesai; E2E review berikutnya |
-| M7 Release | Belum dimulai | Worker, backup/restore, observability, deployment |
+| M7 Release | Belum dimulai | Migrasi Vercel, Blob, Cron, backup/restore, observability, deployment |
 
 ## Implementasi yang tersedia
 
@@ -92,12 +92,13 @@ Terakhir diperbarui: 2 September 2026.
 
 ### Cancellation dan refund
 
-- Traveler dapat mengajukan cancellation request dari booking `CONFIRMED`; alasan dan actor divalidasi server-side.
-- Eligibility full refund dihitung dari snapshot check-in terhadap tanggal Bali dengan batas minimal tiga hari.
-- Request mengubah booking menjadi `CANCELLATION_REQUESTED` tanpa melepas inventory.
-- Admin dapat menolak request, menyetujui cancellation tanpa refund, atau mencatat full refund manual dengan reference unik.
-- Approval melepaskan inventory tepat sekali; full refund mencatat history `REFUND_PENDING → REFUNDED` dalam transaksi yang sama.
-- Cancellation request, refund record, status history, idempotency record, dan audit tersimpan bersama mutation bisnis.
+- Booking menyimpan snapshot versi policy, batas free cancellation, nominal refund sebelum/sesudah deadline, dan sumber `ONLINE`/`MANUAL`.
+- Traveler dapat langsung membatalkan booking online `CONFIRMED`; sistem menerapkan snapshot policy secara otomatis: full refund sampai tiga hari sebelum check-in, lalu tanpa refund.
+- Traveler di luar free-cancellation window dapat meminta policy exception. Partner aktif pemilik properti dapat approve/reject; request yang pending lebih dari 24 jam juga masuk antrean Admin.
+- Partner dapat langsung membatalkan reservasi manual miliknya tanpa refund. Pembatalan booking online yang dimulai Partner wajib diajukan ke Admin.
+- Request yang menunggu keputusan tetap memakai `CANCELLATION_REQUESTED` dan belum melepas inventory. Keputusan final melepaskan inventory tepat sekali.
+- Refund portfolio dicatat otomatis dengan reference demo unik dan history `REFUND_PENDING → REFUNDED`; tidak ada transfer dana eksternal.
+- Cancellation request, refund record, status history, idempotency record, outbox email, dan audit tersimpan bersama mutation bisnis dalam transaction `Serializable`.
 
 ### Partner stay operations
 
@@ -126,7 +127,8 @@ prisma/migrations/
 ├── 20260902010000_booking_payment_expiry/
 ├── 20260902020000_demo_payment_attempts/
 ├── 20260902030000_cancellation_and_refunds/
-└── 20260902040000_notification_outbox/
+├── 20260902040000_notification_outbox/
+└── 20260912000000_policy_driven_cancellation/
 ```
 
 Migration booking snapshot menambahkan:
@@ -202,16 +204,36 @@ Booking dibuat dengan status `PENDING_PAYMENT`. Payment page memakai adapter dem
 
 Partner hanya dapat memilih dan melihat room/booking miliknya. Admin dapat mengakses seluruh scope.
 
-### Reservation expiry scheduler
+### Reservation expiry scheduler (legacy VPS implementation)
 
-- Unit `staybali-reservations-cleanup.service` dan timer systemd menjalankan `npm run reservations:cleanup` setiap menit pada VPS.
-- Timer bersifat persistent dan memberi randomized delay pendek; panduan instalasi serta verifikasi tersedia di `docs/DEPLOYMENT.md`.
+- Unit `staybali-reservations-cleanup.service` dan timer systemd tersedia untuk menjalankan `npm run reservations:cleanup` setiap menit pada VPS, tetapi bukan lagi target production.
+- Perilaku idempotent command tetap dipertahankan; pemicunya harus dipindahkan ke secured Vercel Cron Route Handler sebelum release.
 
 ## Pekerjaan berikutnya
 
 ### M6 Operations
 
-- Jalankan E2E cancellation/refund dan notification worker dengan Redis/SMTP staging.
+- Spec E2E cancellation/refund lintas Traveler, Partner, dan Admin tersedia dengan marker run unik, assertion pelepasan inventory, serta cleanup database terarah tanpa reseed.
+- Lima skenario M6 dan full Playwright suite 12 skenario lulus terhadap database development. Verifikasi notification production dilakukan setelah migrasi Cron menggantikan worker Redis/BullMQ.
+
+### Vercel deployment migration
+
+- Target deployment telah diubah dari single VPS menjadi satu project Vercel. Dokumen target tidak lagi mengandalkan Nginx, `systemd`, writable persistent disk, atau proses BullMQ permanen.
+- Implementasi saat ini masih memakai filesystem media, Redis/BullMQ email worker, dan unit `systemd`; seluruhnya adalah migration gap dan belum production-ready untuk Vercel.
+- Pindahkan property media ke private/public Vercel Blob flow, lalu ubah expiry, outbox/email, dan orphan cleanup menjadi bounded idempotent Route Handler yang dipanggil Vercel Cron.
+- Production membutuhkan plan Vercel yang mengizinkan cron per menit; Vercel Hobby tidak memenuhi kebutuhan expiry booking saat ini.
+- Hubungkan managed Postgres melalui Vercel Marketplace, tempatkan Function dekat region database, tambahkan `CRON_SECRET`, dan verifikasi backup/restore provider sebelum release.
+
+### P1 homepage cinematic motion
+
+- Pass pertama telah diterapkan sesuai `docs/HOMEPAGE_CINEMATIC_MOTION.md`.
+- Asset web 18 detik berada di `public/videos/homepage/` sebagai poster WebP serta variant AV1, VP9, dan H.264.
+- Homepage sekarang memakai video dekoratif sebagai background hero, mempertahankan search above the fold, dan menambahkan hero-exit parallax ringan melalui Framer Motion/native scroll.
+- Hero dan media sekarang memenuhi minimal satu safe viewport (`100svh`); assurance strip yang sebelumnya overlap di bawah hero telah dihapus agar hierarchy lebih tenang.
+- Framing video diperketat dan digeser ke kanan agar bangunan menjadi fokus serta bagian ombak yang kurang stabil tidak mendominasi frame.
+- Hero memotong overscan media dengan `overflow-hidden`, sehingga tidak ada strip video tanpa overlay yang bocor ke section berikutnya.
+- Video tidak melakukan loop; playback berhenti pada frame akhir, pause saat offscreen/tab tersembunyi, dan gagal dengan aman ke poster untuk Reduced Motion, Data Saver, atau autoplay rejection.
+- Sticky scroll-scrub ala referensi adalah enhancement optional setelah M6 E2E serta browser accessibility/performance gate lulus; fitur ini memerlukan encode video khusus yang seek-friendly.
 
 ## Quality checks
 
@@ -253,7 +275,7 @@ Hasil penyelesaian M4, 2 September 2026:
 - Prisma generate/validate, 39 unit tests, last-unit concurrency integration test, ESLint, TypeScript, dan production build seluruhnya lulus.
 - Dua browser test Playwright lulus menggunakan Chrome lokal: happy path search-to-confirmation serta responsive manual reservation pada 390 px dan 1440 px.
 - Browser review menemukan dan memperbaiki redirect payment yang tertahan oleh rerender Server Action serta fallback media seed yang sebelumnya menghasilkan response gambar kosong.
-- Scheduler expiry systemd dan runbook deployment sudah tersedia di repository.
+- Scheduler expiry `systemd` pernah diverifikasi untuk target VPS lama; target Vercel sekarang memerlukan Cron replacement seperti yang dicatat pada migration gap.
 
 Hasil batch dashboard experience, 2 September 2026:
 
@@ -262,6 +284,19 @@ Hasil batch dashboard experience, 2 September 2026:
 - Screenshot desktop 1440 px dan mobile 390 px direview; seluruh workspace route tambahan juga lolos overflow gate pada 360 px.
 - Type graph build dan E2E dipisahkan melalui `tsconfig.json` dan `tsconfig.e2e.json` agar generated route types tidak saling mencemari.
 - Perbaikan sidebar lanjutan menonaktifkan Next.js development indicator yang menimpa account card, menambahkan scroll aman pada layar pendek, memperbaiki full-viewport mobile drawer, dan lulus tiga targeted browser tests pada desktop, tablet 1024 px, serta mobile termasuk focus/Escape behavior.
+
+Hasil batch homepage cinematic motion, 10 September 2026:
+
+- ESLint, TypeScript, dan production build berhasil.
+- Browser review pada homepage desktop memastikan video AV1 termuat dan berjalan sebagai background tanpa mengubah hierarchy, aksesibilitas teks, atau interaksi search.
+- Tidak ada runtime error pada development log; fallback poster dan seluruh variant video tersedia dari static asset path.
+
+Hasil verifikasi cancellation M6, 12 September 2026:
+
+- Lima skenario Playwright mencakup standard full refund, exception approve/reject, Partner inability escalation ke Admin, dan pembatalan reservasi manual.
+- Test memilih property owned Partner secara deterministik, memeriksa perubahan counter inventory, dan membersihkan hanya booking graph yang memiliki marker run test.
+- Database development memiliki sembilan migration dan berstatus up-to-date. Lima targeted M6 test serta full Playwright suite 12 test lulus dengan satu worker.
+- Prisma schema validation, 42 unit tests, ESLint, TypeScript, dan production build webpack lulus.
 
 ## Catatan penting
 

@@ -1,7 +1,13 @@
 import "server-only";
 
 import { randomUUID } from "node:crypto";
-import type { DemoPaymentRequest, DemoPaymentResult, PaymentAdapter } from "./adapter";
+import type {
+  DemoPaymentRequest,
+  DemoPaymentResult,
+  DemoRefundRequest,
+  DemoRefundResult,
+  PaymentAdapter,
+} from "./adapter";
 
 export class DemoPaymentAdapter implements PaymentAdapter {
   async charge(request: DemoPaymentRequest): Promise<DemoPaymentResult> {
@@ -14,6 +20,17 @@ export class DemoPaymentAdapter implements PaymentAdapter {
       currency: request.currency,
       status: succeeded ? "SUCCEEDED" : "FAILED",
       failureCode: succeeded ? null : "DEMO_DECLINED",
+      resolvedAt: new Date(),
+    };
+  }
+
+  async refund(request: DemoRefundRequest): Promise<DemoRefundResult> {
+    return {
+      bookingReference: request.bookingReference,
+      providerReference: `DEMO-REFUND-${randomUUID()}`,
+      amount: request.amount,
+      currency: request.currency,
+      status: "SUCCEEDED",
       resolvedAt: new Date(),
     };
   }
