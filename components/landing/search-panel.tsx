@@ -1,11 +1,6 @@
-import {
-  CalendarDays,
-  MapPin,
-  Search,
-  UsersRound,
-} from "lucide-react";
+import { MapPin, Search, UsersRound } from "lucide-react";
+import { DateRangePicker } from "@/components/landing/date-range-picker";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { NativeSelect } from "@/components/ui/native-select";
 
 const fieldClassName =
@@ -55,35 +50,10 @@ export function SearchPanel({
           </span>
         </label>
 
-        <label className="group flex min-w-0 items-center gap-3 rounded-2xl px-4 py-2 transition hover:bg-secondary focus-within:bg-secondary lg:border-l lg:border-border">
-          <CalendarDays className="size-5 shrink-0 text-primary" aria-hidden="true" />
-          <span className="min-w-0 flex-1">
-            <span className="block text-[11px] font-bold tracking-[0.1em] text-muted-foreground uppercase">
-              Check-in
-            </span>
-            <Input
-              className={fieldClassName}
-              defaultValue={initialValues?.checkin}
-              name="checkin"
-              type="date"
-            />
-          </span>
-        </label>
-
-        <label className="group flex min-w-0 items-center gap-3 rounded-2xl px-4 py-2 transition hover:bg-secondary focus-within:bg-secondary lg:border-l lg:border-border">
-          <CalendarDays className="size-5 shrink-0 text-primary" aria-hidden="true" />
-          <span className="min-w-0 flex-1">
-            <span className="block text-[11px] font-bold tracking-[0.1em] text-muted-foreground uppercase">
-              Check-out
-            </span>
-            <Input
-              className={fieldClassName}
-              defaultValue={initialValues?.checkout}
-              name="checkout"
-              type="date"
-            />
-          </span>
-        </label>
+        <DateRangePicker
+          initialCheckin={initialValues?.checkin}
+          initialCheckout={initialValues?.checkout}
+        />
 
         <label className="group flex min-w-0 items-center gap-3 rounded-2xl px-4 py-2 transition hover:bg-secondary focus-within:bg-secondary lg:border-l lg:border-border">
           <UsersRound className="size-5 shrink-0 text-primary" aria-hidden="true" />

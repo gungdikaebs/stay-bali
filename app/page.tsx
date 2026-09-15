@@ -103,7 +103,7 @@ function TrustFeature({
   description: string;
 }) {
   return (
-    <div className="flex gap-4 rounded-2xl border border-white/10 bg-white/[0.08] p-5 backdrop-blur-sm">
+    <div className="flex h-full gap-4 rounded-2xl border border-white/10 bg-white/[0.08] p-8 backdrop-blur-sm align-center">
       <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-white text-primary">
         {icon}
       </span>
@@ -169,7 +169,7 @@ export default function Home() {
       <link
         rel="preload"
         as="image"
-        href="/videos/homepage/hero-construction-poster.webp"
+        href="/videos/homepage/hero-villa-poster.jpg"
         fetchPriority="high"
       />
       <section className="relative min-h-svh overflow-hidden bg-foreground">

@@ -1,0 +1,13 @@
+.git
+.agents
+.next
+.next-e2e
+node_modules
+storage
+coverage
+playwright-report
+test-results
+.env*
+!.env.example
+*.tsbuildinfo
+skills-lock.json

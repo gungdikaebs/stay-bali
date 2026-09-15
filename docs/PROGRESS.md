@@ -2,7 +2,7 @@
 
 Dokumen ini adalah sumber kebenaran untuk status implementasi dan handoff antar-sesi. Jangan menaruh password, connection string, secret, atau data pribadi di sini.
 
-Terakhir diperbarui: 10 September 2026.
+Terakhir diperbarui: 15 September 2026.
 
 ## Ringkasan milestone
 
@@ -54,6 +54,8 @@ Terakhir diperbarui: 10 September 2026.
 
 - Fondasi UI memakai source-owned shadcn primitives di `components/ui/` dengan token Tropical Trust; search, authentication, property card, quote, checkout, demo payment, manual reservation, dan supply forms sudah mengadopsi primitive bersama.
 - Homepage publik memiliki hierarchy editorial baru: focused hero search, trust strip, published-stay discovery controls, lima-area destination mosaic, tiga langkah booking, functional Partner CTA, dan footer navigasi yang lebih lengkap tanpa fake trust atau promo.
+- Search panel publik memakai date-range picker khusus: dua bulan pada desktop dan satu bulan pada mobile, pemilihan rentang maksimum 30 malam, batas check-in 365 hari, clear controls, serta posisi popover adaptif agar tidak terpotong viewport.
+- Identitas visual StayBali memakai logo vila, matahari, dan gelombang pada header, mobile navigation, footer, authentication, booking, dan workspace; app icon, Apple touch icon, favicon, Open Graph, serta Twitter card memakai aset brand yang sama.
 - Destination mosaic menerapkan span dan tinggi pada direct grid items sehingga komposisi 7/5 kolom tampil konsisten pada desktop.
 - Homepage memiliki navbar publik satu tingkat, filter tipe stay, tautan traveler/partner, CTA pencarian, dan mobile navigation drawer.
 - Navbar publik sekarang dipakai bersama oleh homepage, Search, dan detail properti: fixed transparan tanpa garis pemisah di atas hero, berubah menjadi surface putih saat scroll, serta sticky solid pada halaman katalog. Mobile drawer dirender melalui portal agar tetap memenuhi viewport di atas header sticky.
@@ -218,6 +220,10 @@ Partner hanya dapat memilih dan melihat room/booking miliknya. Admin dapat menga
 
 ### Vercel deployment migration
 
+- Deployment portfolio aktif di Vercel Hobby pada `https://stay-bali.vercel.app`, dengan schema dan katalog demo tersimpan di Neon Serverless Postgres free tier.
+- Environment Production memiliki `DATABASE_URL`, `AUTH_SECRET`, `APP_URL`, dan transport email `sink`; build Vercel menjalankan `prisma generate` melalui `postinstall` dan memakai Webpack agar konsisten dengan quality gate lokal.
+- Konfigurasi `.vercelignore` mengecualikan dependency, cache Next.js/Playwright, storage lokal, environment file, dan artefak agent dari source upload.
+- Mode Hobby ini ditujukan untuk demo portfolio. Media upload partner masih memakai filesystem ephemeral dan maintenance expiry/outbox belum dijadwalkan; keduanya bukan jaminan production sampai Blob serta bounded Cron Route Handler diterapkan.
 - Target deployment telah diubah dari single VPS menjadi satu project Vercel. Dokumen target tidak lagi mengandalkan Nginx, `systemd`, writable persistent disk, atau proses BullMQ permanen.
 - Implementasi saat ini masih memakai filesystem media, Redis/BullMQ email worker, dan unit `systemd`; seluruhnya adalah migration gap dan belum production-ready untuk Vercel.
 - Pindahkan property media ke private/public Vercel Blob flow, lalu ubah expiry, outbox/email, dan orphan cleanup menjadi bounded idempotent Route Handler yang dipanggil Vercel Cron.
@@ -227,12 +233,12 @@ Partner hanya dapat memilih dan melihat room/booking miliknya. Admin dapat menga
 ### P1 homepage cinematic motion
 
 - Pass pertama telah diterapkan sesuai `docs/HOMEPAGE_CINEMATIC_MOTION.md`.
-- Asset web 18 detik berada di `public/videos/homepage/` sebagai poster WebP serta variant AV1, VP9, dan H.264.
+- Hero memakai video vila yang disediakan untuk portfolio beserta poster fallback di `public/videos/homepage/`.
 - Homepage sekarang memakai video dekoratif sebagai background hero, mempertahankan search above the fold, dan menambahkan hero-exit parallax ringan melalui Framer Motion/native scroll.
 - Hero dan media sekarang memenuhi minimal satu safe viewport (`100svh`); assurance strip yang sebelumnya overlap di bawah hero telah dihapus agar hierarchy lebih tenang.
 - Framing video diperketat dan digeser ke kanan agar bangunan menjadi fokus serta bagian ombak yang kurang stabil tidak mendominasi frame.
 - Hero memotong overscan media dengan `overflow-hidden`, sehingga tidak ada strip video tanpa overlay yang bocor ke section berikutnya.
-- Video tidak melakukan loop; playback berhenti pada frame akhir, pause saat offscreen/tab tersembunyi, dan gagal dengan aman ke poster untuk Reduced Motion, Data Saver, atau autoplay rejection.
+- Video melakukan loop, pause saat offscreen/tab tersembunyi, dan gagal dengan aman ke poster untuk Reduced Motion, Data Saver, atau autoplay rejection.
 - Sticky scroll-scrub ala referensi adalah enhancement optional setelah M6 E2E serta browser accessibility/performance gate lulus; fitur ini memerlukan encode video khusus yang seek-friendly.
 
 ## Quality checks
@@ -297,6 +303,13 @@ Hasil verifikasi cancellation M6, 12 September 2026:
 - Test memilih property owned Partner secara deterministik, memeriksa perubahan counter inventory, dan membersihkan hanya booking graph yang memiliki marker run test.
 - Database development memiliki sembilan migration dan berstatus up-to-date. Lima targeted M6 test serta full Playwright suite 12 test lulus dengan satu worker.
 - Prisma schema validation, 42 unit tests, ESLint, TypeScript, dan production build webpack lulus.
+
+Hasil deployment portfolio, 15 September 2026:
+
+- Sembilan migration berhasil diterapkan ke Neon dan seed menghasilkan 10 properti demo beserta inventori.
+- Vercel Production build berstatus Ready dan domain kanonis aktif pada `https://stay-bali.vercel.app`.
+- Smoke test mendapatkan HTTP 200 untuk homepage, readiness database, dan pencarian; social image tersedia, sedangkan hero video melayani byte-range dengan HTTP 206.
+- Unit test 42/42, ESLint, TypeScript, dan production build Webpack lulus sebelum deployment.
 
 ## Catatan penting
 

@@ -5,6 +5,7 @@ import { ArrowRight, CalendarCheck2, LogIn, Menu, UserPlus, X } from "lucide-rea
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import { StayBaliLogo } from "@/components/landing/staybali-logo";
 
 const browseLinks = [
   { href: "/search?location=all&guests=2", label: "All stays" },
@@ -73,9 +74,7 @@ export function MobileMenu({ inverted = true }: { inverted?: boolean }) {
               transition={{ duration: 0.22 }}
             >
               <div className="mb-7 flex items-center justify-between border-b border-border pb-5">
-                <span className="font-display text-2xl font-extrabold tracking-[-0.04em]">
-                  Stay<span className="text-primary">Bali</span><span className="text-brand-coral">.</span>
-                </span>
+                <StayBaliLogo />
                 <button
                   aria-label="Close navigation"
                   className="inline-flex size-11 items-center justify-center rounded-full bg-secondary text-foreground"

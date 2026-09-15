@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build --webpack",
+    "postinstall": "prisma generate",
     "start": "next start",
     "lint": "eslint",
     "test": "node --conditions=react-server --import tsx --test lib/auth/policies.test.ts lib/auth/registration-schema.test.ts lib/auth/partner-application-schema.test.ts lib/supply/rules.test.ts lib/media/rules.test.ts lib/inventory/rules.test.ts lib/search-query.test.ts lib/hold/rules.test.ts lib/booking/rules.test.ts lib/booking/payment-window.test.ts lib/cancellation/rules.test.ts lib/payment/demo-adapter.test.ts lib/notification/templates.test.ts lib/notification/email-adapter.test.ts",
@@ -26,6 +27,7 @@
     "@prisma/adapter-pg": "^7.10.0",
     "@prisma/client": "^7.10.0",
     "@radix-ui/react-slot": "^1.3.3",
+    "@vercel/blob": "^2.8.0",
     "bcryptjs": "^3.0.3",
     "bullmq": "^6.3.4",
     "class-variance-authority": "^0.7.1",

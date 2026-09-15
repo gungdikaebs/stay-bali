@@ -2,7 +2,7 @@
 
 **Target:** One Vercel project for the Next.js application, Vercel Functions, CDN, and Cron Jobs.
 
-**Status:** Target runbook. The current repository still contains VPS-oriented filesystem, BullMQ, and `systemd` implementations that must be migrated before production.
+**Status:** A Vercel Hobby + Neon deployment is active for portfolio demonstration. The repository still contains VPS-oriented filesystem, BullMQ, and `systemd` implementations that must be migrated before production-grade operation.
 
 No production step may depend on Nginx, a writable release filesystem, a continuously running Node.js process, or `systemd`.
 

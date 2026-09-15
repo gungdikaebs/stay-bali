@@ -99,25 +99,15 @@ export function HeroVideo() {
       <video
         ref={videoRef}
         aria-hidden="true"
-        className="size-full translate-x-[8%] scale-[1.2] object-cover object-center md:translate-x-[12%] md:scale-[1.34] xl:translate-x-[16%] xl:scale-[1.48]"
+        className="size-full object-cover object-center"
         disablePictureInPicture
+        loop
         muted
         playsInline
-        poster="/videos/homepage/hero-construction-poster.webp"
+        poster="/videos/homepage/hero-villa-poster.jpg"
         preload="none"
       >
-        <source
-          src="/videos/homepage/hero-construction.av1.mp4"
-          type='video/mp4; codecs="av01.0.05M.08"'
-        />
-        <source
-          src="/videos/homepage/hero-construction.webm"
-          type='video/webm; codecs="vp9"'
-        />
-        <source
-          src="/videos/homepage/hero-construction.mp4"
-          type="video/mp4"
-        />
+        <source src="/videos/homepage/hero-villa.mp4" type="video/mp4" />
       </video>
     </m.div>
   );

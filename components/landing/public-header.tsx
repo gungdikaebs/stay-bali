@@ -8,21 +8,9 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { MobileMenu } from "@/components/landing/mobile-menu";
+import { StayBaliLogo } from "@/components/landing/staybali-logo";
 
-export function StayBaliLogo({ inverted = false }: { inverted?: boolean }) {
-  return (
-    <Link
-      href="/"
-      className={`font-display text-2xl font-extrabold tracking-[-0.04em] ${
-        inverted ? "text-white" : "text-foreground"
-      }`}
-      aria-label="StayBali home"
-    >
-      Stay<span className={inverted ? "text-[#8ce0d4]" : "text-primary"}>Bali</span>
-      <span className={inverted ? "text-[#ffb7a8]" : "text-brand-coral"}>.</span>
-    </Link>
-  );
-}
+export { StayBaliLogo } from "@/components/landing/staybali-logo";
 
 type PublicHeaderProps = {
   variant?: "overlay" | "solid";
