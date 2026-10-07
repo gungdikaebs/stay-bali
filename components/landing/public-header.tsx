@@ -64,9 +64,9 @@ export function PublicHeader({ variant = "overlay" }: PublicHeaderProps) {
             </summary>
             <div className="absolute top-[calc(100%+0.75rem)] left-0 w-64 rounded-2xl border border-black/5 bg-white p-2 text-foreground shadow-[0_20px_60px_rgba(5,24,19,0.22)]">
               {[
-                ["Private villas", "villa", "Space, privacy, and poolside days"],
-                ["Hotels", "hotel", "Full-service stays across Bali"],
-                ["Homestays", "homestay", "Smaller stays with local character"],
+                ["Private villas", "villa", "Private pools, generous spaces, and peaceful seclusion"],
+                ["Hotels", "hotel", "Full-service hospitality and premium amenities"],
+                ["Homestays", "homestay", "Authentic character and warm Balinese hospitality"],
               ].map(([label, type, description]) => (
                 <Link
                   className="block rounded-xl px-3 py-3 transition hover:bg-secondary"

@@ -85,7 +85,7 @@ export function MobileMenu({ inverted = true }: { inverted?: boolean }) {
                 </button>
               </div>
               <p className="mb-2 px-3 text-xs font-bold tracking-[0.14em] text-muted-foreground uppercase">
-                Browse Bali
+                Explore Bali
               </p>
               <div className="space-y-1">
                 {browseLinks.map((link) => (
@@ -103,7 +103,7 @@ export function MobileMenu({ inverted = true }: { inverted?: boolean }) {
 
               <div className="my-5 border-t border-border" />
               <p className="mb-2 px-3 text-xs font-bold tracking-[0.14em] text-muted-foreground uppercase">
-                StayBali
+                About StayBali
               </p>
               <div className="space-y-1">
                 {aboutLinks.map((link) => (

@@ -9,7 +9,6 @@ import {
   HeartHandshake,
   MapPinned,
   ShieldCheck,
-  Sparkles,
   WalletCards,
 } from "lucide-react";
 import { PropertyCard } from "@/components/landing/property-card";
@@ -19,13 +18,13 @@ import {
   HomeMotion,
   ScrollReveal,
 } from "@/components/landing/home-motion";
+import { PageLoader } from "@/components/landing/page-loader";
 import {
   PublicHeader,
   StayBaliLogo,
 } from "@/components/landing/public-header";
 import { SearchPanel } from "@/components/landing/search-panel";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatIdr } from "@/lib/demo-stays";
 import { listFeaturedPublishedStays } from "@/lib/public/catalog";
@@ -34,35 +33,35 @@ const areas = [
   {
     name: "Ubud",
     slug: "ubud",
-    description: "Jungle calm, culture, and slow mornings",
+    description: "Lush jungles, cultural heritage, and peaceful mornings",
     image: "/images/stay-ubud.jpg",
     gridClassName: "lg:col-span-7 lg:row-span-2 lg:min-h-[580px]",
   },
   {
     name: "Canggu",
     slug: "canggu",
-    description: "Creative energy near Bali's west coast",
+    description: "Surf breaks, vibrant cafes, and coastal sunsets",
     image: "/images/stay-canggu.jpg",
     gridClassName: "lg:col-span-5 lg:min-h-[278px]",
   },
   {
     name: "Uluwatu",
     slug: "uluwatu",
-    description: "Cliff views and memorable sunsets",
+    description: "Dramatic ocean cliffs, world-class surf, and sunset views",
     image: "/images/stay-uluwatu.jpg",
     gridClassName: "lg:col-span-5 lg:min-h-[278px]",
   },
   {
     name: "Seminyak",
     slug: "seminyak",
-    description: "Dining, design, and an easy beach rhythm",
+    description: "Boutique shopping, fine dining, and lively beach clubs",
     image: "/images/stay-seminyak.jpg",
     gridClassName: "lg:col-span-6 lg:min-h-[320px]",
   },
   {
     name: "Sanur",
     slug: "sanur",
-    description: "Calm shores and relaxed family days",
+    description: "Calm waters, sunrise coastal walks, and relaxed stays",
     image: "/images/stay-sanur.jpg",
     gridClassName: "lg:col-span-6 lg:min-h-[320px]",
   },
@@ -87,7 +86,7 @@ function AreaCard({ area }: { area: (typeof areas)[number] }) {
         <p className="max-w-xs text-sm leading-6 text-white/80">
           {area.description}
         </p>
-        <span className="mt-4 inline-flex items-center gap-1.5 text-sm font-bold text-white">View stays<ArrowRight className="size-4 transition group-hover:translate-x-1" aria-hidden="true" /></span>
+        <span className="mt-4 inline-flex items-center gap-1.5 text-sm font-bold text-white">Explore stays<ArrowRight className="size-4 transition group-hover:translate-x-1" aria-hidden="true" /></span>
       </div>
     </Link>
   );
@@ -103,15 +102,15 @@ function TrustFeature({
   description: string;
 }) {
   return (
-    <div className="flex h-full gap-4 rounded-2xl border border-white/10 bg-white/[0.08] p-8 backdrop-blur-sm align-center">
-      <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-white text-primary">
+    <div className="flex h-full gap-4 rounded-2xl border border-border/80 bg-white p-6 shadow-xs transition duration-300 hover:border-primary/30 hover:shadow-card sm:p-7">
+      <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-brand-teal-subtle text-primary">
         {icon}
       </span>
       <span>
-        <strong className="font-display mb-1 block text-base text-white">
+        <strong className="font-display mb-1 block text-base font-bold text-foreground">
           {title}
         </strong>
-        <span className="block text-sm leading-6 text-white/70">
+        <span className="block text-sm leading-6 text-muted-foreground">
           {description}
         </span>
       </span>
@@ -125,9 +124,9 @@ async function PublishedStayGrid() {
   if (!stays.length) {
     return (
       <div className="rounded-3xl border border-dashed border-border bg-white px-6 py-14 text-center sm:col-span-2 xl:col-span-4">
-        <h3 className="font-display text-xl font-bold">Published stays are being prepared</h3>
+        <h3 className="font-display text-xl font-bold">No stays available right now</h3>
         <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-muted-foreground">
-          Approved Partner properties will appear here automatically.
+          We are currently vetting properties across Bali. Check back soon or explore our featured destinations below.
         </p>
       </div>
     );
@@ -165,7 +164,8 @@ function StayGridFallback() {
 export default function Home() {
   return (
     <HomeMotion>
-    <main className="overflow-hidden">
+      <PageLoader />
+      <main className="overflow-hidden">
       <link
         rel="preload"
         as="image"
@@ -181,21 +181,14 @@ export default function Home() {
 
         <div className="relative z-10 mx-auto flex min-h-svh w-full min-w-0 max-w-[1280px] flex-col justify-center px-4 pt-28 pb-16 sm:px-6 lg:px-8 lg:pt-24 lg:pb-20">
           <div className="max-w-[760px]">
-            <HeroReveal delay={0.12}>
-              <span className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-semibold text-white backdrop-blur-sm">
-                <Sparkles className="size-4 text-[#ffb7a8]" aria-hidden="true" />
-                Thoughtful stays across Bali
-              </span>
-            </HeroReveal>
-            <HeroReveal delay={0.22}>
+            <HeroReveal delay={0.16}>
               <h1 className="font-display max-w-3xl text-[40px] leading-[1.06] font-extrabold tracking-[-0.055em] text-balance text-white sm:text-6xl lg:text-[68px]">
                 A more thoughtful way to stay in Bali.
               </h1>
             </HeroReveal>
-            <HeroReveal delay={0.34}>
+            <HeroReveal delay={0.28}>
               <p className="mt-6 max-w-2xl text-lg leading-8 text-pretty text-white/[0.82] sm:text-xl">
-                Discover reviewed villas, hotels, and homestays with transparent
-                IDR prices and availability checked for every night.
+                Discover places to stay across Bali, from private villas to boutique hotels and local homestays, all in one simple booking experience.
               </p>
             </HeroReveal>
           </div>
@@ -204,7 +197,7 @@ export default function Home() {
             <SearchPanel />
             <p className="mt-3 flex items-center gap-2 text-sm text-white/[0.72]">
               <Clock3 className="size-4" aria-hidden="true" />
-              Browse all Bali now, or add dates when you are ready.
+              Flexible dates? Browse all stays across Bali, or add travel dates to check live rates.
             </p>
           </HeroReveal>
 
@@ -217,12 +210,12 @@ export default function Home() {
             <div>
               <span className="mb-3 inline-flex items-center gap-2 text-sm font-bold tracking-[0.14em] text-primary uppercase">
                 <CheckCircle2 className="size-4" aria-hidden="true" />
-                Published stays
+                Featured stays
               </span>
               <h2 className="font-display max-w-3xl text-3xl font-extrabold tracking-[-0.045em] text-balance text-foreground sm:text-4xl">
-                Stays selected for a clearer booking experience.
+                Handpicked stays with verified availability.
               </h2>
-              <p className="mt-3 max-w-2xl leading-7 text-muted-foreground">Browse published properties with real room options, clear capacity, and server-calculated prices.</p>
+              <p className="mt-3 max-w-2xl leading-7 text-muted-foreground">Browse verified properties with transparent IDR rates, confirmed guest capacities, and instant booking confirmation.</p>
             </div>
             <Button asChild variant="outline"><Link href="/search?location=all&guests=2">View all stays<ArrowRight className="size-4" /></Link></Button>
           </ScrollReveal>
@@ -252,7 +245,7 @@ export default function Home() {
               </h2>
             </div>
             <p className="max-w-md text-base leading-7 text-muted-foreground">
-              From quiet mornings in Ubud to sunset stays in Uluwatu, every area offers a distinct way to experience the island.
+              From tranquil mornings in Ubud to clifftop sunsets in Uluwatu, explore the distinct character of each Bali destination.
             </p>
           </ScrollReveal>
 
@@ -266,41 +259,55 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="bg-foreground py-20 text-white sm:py-24" id="why-staybali">
+      <section className="border-y border-border/60 bg-secondary/50 py-20 sm:py-24" id="why-staybali">
         <div className="mx-auto grid max-w-[1280px] gap-12 px-4 sm:px-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-center lg:px-8">
           <ScrollReveal>
-            <p className="mb-4 text-sm font-bold tracking-[0.14em] text-[#8ce0d4] uppercase">
+            <p className="mb-3 text-xs font-bold tracking-[0.16em] text-primary uppercase">
               Clarity over pressure
             </p>
-            <h2 className="font-display text-4xl leading-tight font-extrabold tracking-[-0.05em] text-balance sm:text-5xl">
-              Designed to make booking feel straightforward.
+            <h2 className="font-display text-3xl font-extrabold tracking-[-0.045em] text-balance text-foreground sm:text-4xl lg:text-[44px] lg:leading-[1.12]">
+              Booking designed for clarity, not urgency.
             </h2>
-            <p className="mt-6 max-w-xl text-lg leading-8 text-white/70">
-              StayBali avoids fake urgency. Prices, cancellation terms, and booking
-              status stay close to the decision you are making.
+            <p className="mt-4 max-w-xl text-base leading-7 text-muted-foreground sm:text-lg">
+              No false countdowns, artificial scarcity, or surprise markups. We provide
+              upfront IDR pricing, clear cancellation terms, and verified room details
+              from search to checkout.
             </p>
-            <ol className="mt-8 max-w-xl border-y border-white/15 py-2">
+            <div className="mt-8 grid max-w-xl gap-3">
               {[
-                ["01", "Search", "Choose an area, dates, and guests."],
-                ["02", "Review", "Compare real room details and the full price."],
-                ["03", "Book", "Reserve securely and keep your booking record."],
-              ].map(([number, title, description], index) => (
-                <li className="grid grid-cols-[36px_88px_1fr] items-center gap-3 py-3 text-sm" key={number}>
-                  <span className="font-display text-xs font-extrabold text-[#8ce0d4]">{number}</span>
-                  <strong className="font-display text-white">{title}</strong>
-                  <span className="leading-5 text-white/60">{description}</span>
-                  {index < 2 ? <Separator className="col-span-3 bg-white/10" /> : null}
-                </li>
+                ["01", "Search", "Select your destination, travel dates, and guest count."],
+                ["02", "Review", "Compare verified room photos, inclusions, and total pricing."],
+                ["03", "Confirm", "Lock in your dates securely with instant booking confirmation."],
+              ].map(([number, title, description]) => (
+                <div
+                  className="flex items-start gap-3.5 rounded-2xl border border-border/70 bg-white/80 p-4 shadow-2xs backdrop-blur-xs transition duration-200 hover:bg-white sm:items-center sm:py-3.5"
+                  key={number}
+                >
+                  <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-brand-teal-subtle text-xs font-bold text-primary">
+                    {number}
+                  </span>
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2">
+                    <strong className="text-sm font-bold text-foreground">
+                      {title}
+                    </strong>
+                    <span className="hidden text-muted-foreground/40 sm:inline" aria-hidden="true">
+                      ·
+                    </span>
+                    <span className="text-xs leading-5 text-muted-foreground sm:text-sm">
+                      {description}
+                    </span>
+                  </div>
+                </div>
               ))}
-            </ol>
+            </div>
           </ScrollReveal>
 
           <div className="grid gap-4 sm:grid-cols-2">
             {[
-              { icon: <WalletCards className="size-5" aria-hidden="true" />, title: "Clear price breakdown", description: "Nightly rates, service fee, and total are shown together before payment." },
-              { icon: <CalendarCheck2 className="size-5" aria-hidden="true" />, title: "Availability by date", description: "Every night in the selected range will be checked before checkout." },
-              { icon: <ShieldCheck className="size-5" aria-hidden="true" />, title: "Reviewed properties", description: "Only properties approved by an administrator appear publicly." },
-              { icon: <HeartHandshake className="size-5" aria-hidden="true" />, title: "Local partner workflow", description: "Local operators manage rooms and reservations from one clear workspace." },
+              { icon: <WalletCards className="size-5" aria-hidden="true" />, title: "Clear price breakdown", description: "See nightly rates, service fees, and total costs upfront before payment." },
+              { icon: <CalendarCheck2 className="size-5" aria-hidden="true" />, title: "Availability by date", description: "Every night is verified directly against inventory to prevent double-booking." },
+              { icon: <ShieldCheck className="size-5" aria-hidden="true" />, title: "Reviewed properties", description: "Only properties individually vetted and approved by our team appear publicly." },
+              { icon: <HeartHandshake className="size-5" aria-hidden="true" />, title: "Local partner workflow", description: "Direct partnerships with verified local hosts ensure dependable stays." },
             ].map((feature, index) => (
               <ScrollReveal key={feature.title} delay={index * 0.07}>
                 <TrustFeature {...feature} />
@@ -318,19 +325,19 @@ export default function Home() {
             <div className="relative grid gap-10 lg:grid-cols-[1fr_auto] lg:items-center">
               <div className="max-w-2xl">
                 <p className="mb-3 text-sm font-bold tracking-[0.14em] text-[#bcece4] uppercase">
-                  Built with local partners in mind
+                  For property hosts & managers
                 </p>
                 <h2 className="font-display text-3xl font-extrabold tracking-[-0.045em] sm:text-4xl">
                   Run your Bali property with one connected workspace.
                 </h2>
                 <p className="mt-4 max-w-xl leading-7 text-white/75">
-                  Keep rates, room availability, guest details, and reservations
-                  organized in one simple workspace.
+                  Manage seasonal rates, live calendar availability, guest bookings, and reservations
+                  all from a single, intuitive dashboard.
                 </p>
               </div>
               <div className="flex flex-col items-start gap-3 lg:items-end">
                 <Button asChild className="bg-white text-primary hover:bg-brand-teal-subtle" size="lg"><Link href="/partner-application">Apply as a partner<ArrowRight className="size-5" aria-hidden="true" /></Link></Button>
-                <Link className="text-xs text-white/70 underline-offset-4 hover:text-white hover:underline" href="/sign-in?callbackUrl=/partner">Already approved? Sign in</Link>
+                <Link className="text-xs text-white/70 underline-offset-4 hover:text-white hover:underline" href="/sign-in?callbackUrl=/partner">Already a partner? Sign in</Link>
               </div>
             </div>
           </ScrollReveal>
@@ -343,11 +350,11 @@ export default function Home() {
             <div className="max-w-sm">
               <StayBaliLogo />
               <p className="mt-4 text-sm leading-6 text-muted-foreground">
-                Thoughtfully selected stays, transparent prices, and a simpler way
+                Thoughtfully curated stays, transparent pricing, and a simpler way
                 to experience Bali.
               </p>
             </div>
-            <div><p className="mb-4 text-xs font-bold tracking-[0.12em] text-muted-foreground uppercase">Explore</p><div className="grid gap-3 text-sm font-semibold"><Link className="hover:text-primary" href="/search?location=all&guests=2">All stays</Link><Link className="hover:text-primary" href="#destinations">Destinations</Link><Link className="hover:text-primary" href="#stays">Published stays</Link></div></div>
+            <div><p className="mb-4 text-xs font-bold tracking-[0.12em] text-muted-foreground uppercase">Explore</p><div className="grid gap-3 text-sm font-semibold"><Link className="hover:text-primary" href="/search?location=all&guests=2">All stays</Link><Link className="hover:text-primary" href="#destinations">Destinations</Link><Link className="hover:text-primary" href="#stays">Featured stays</Link></div></div>
             <div><p className="mb-4 text-xs font-bold tracking-[0.12em] text-muted-foreground uppercase">Stay types</p><div className="grid gap-3 text-sm font-semibold"><Link className="hover:text-primary" href="/search?location=all&type=villa&guests=2">Private villas</Link><Link className="hover:text-primary" href="/search?location=all&type=hotel&guests=2">Hotels</Link><Link className="hover:text-primary" href="/search?location=all&type=homestay&guests=2">Homestays</Link></div></div>
             <div><p className="mb-4 text-xs font-bold tracking-[0.12em] text-muted-foreground uppercase">Account</p><div className="grid gap-3 text-sm font-semibold"><Link className="hover:text-primary" href="/account">My bookings</Link><Link className="hover:text-primary" href="/sign-up">Create account</Link><Link className="hover:text-primary" href="/sign-in">Sign in</Link><Link className="hover:text-primary" href="/partner-application">For partners</Link></div></div>
           </div>
